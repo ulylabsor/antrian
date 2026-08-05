@@ -35,9 +35,22 @@ export function initDb() {
 
     INSERT OR IGNORE INTO antrian_counter (id, last_number) VALUES (1, 0);
 
+    CREATE TABLE IF NOT EXISTS settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL
+    );
+
+    INSERT OR IGNORE INTO settings (key, value) VALUES ('jumlah_loket', '3');
+
     CREATE INDEX IF NOT EXISTS idx_peserta_status ON peserta(status);
     CREATE INDEX IF NOT EXISTS idx_peserta_nomor ON peserta(nomor_antrian);
   `);
+
+  // Guarded migration — ALTER tidak idempoten, cek dulu kolom counter ada atau belum
+  const cols = db.prepare(`PRAGMA table_info(peserta)`).all();
+  if (!cols.some(c => c.name === 'counter')) {
+    db.exec(`ALTER TABLE peserta ADD COLUMN counter INTEGER`);
+  }
 }
 
 export function insertPeserta(namaLengkap, ttl, noSeri, sheetsRow) {
@@ -96,7 +109,7 @@ export function getAntrianByNomor(nomor) {
 
 export function getDaftarAntrian(status) {
   const stmt = db.prepare(`
-    SELECT nomor_antrian, nama_lengkap, no_seri, status, waktu_daftar
+    SELECT nomor_antrian, nama_lengkap, no_seri, status, waktu_daftar, counter
     FROM peserta
     WHERE status = ? AND nomor_antrian IS NOT NULL
     ORDER BY nomor_antrian
@@ -110,6 +123,23 @@ export function updateStatus(nomor, status) {
 
 export function setWaktuSelesai(nomor) {
   db.prepare(`UPDATE peserta SET waktu_selesai = datetime('now') WHERE nomor_antrian = ?`).run(nomor);
+}
+
+export function setCounter(nomor, counter) {
+  db.prepare('UPDATE peserta SET counter = ? WHERE nomor_antrian = ?').run(counter, nomor);
+}
+
+export function getJumlahLoket() {
+  const row = db.prepare(`SELECT value FROM settings WHERE key = 'jumlah_loket'`).get();
+  const n = parseInt(row?.value, 10);
+  return Number.isFinite(n) && n > 0 ? n : 3;
+}
+
+export function setJumlahLoket(n) {
+  db.prepare(`
+    INSERT INTO settings (key, value) VALUES ('jumlah_loket', ?)
+    ON CONFLICT(key) DO UPDATE SET value = excluded.value
+  `).run(String(n));
 }
 
 export function getStatistik() {

@@ -1,7 +1,7 @@
 import { test, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert';
 import fs from 'node:fs';
-import { initDb, closeDb, getPesertaByNama, getPesertaById, ambilNomorAntrian, getAntrianByNomor, getDaftarAntrian, updateStatus, setWaktuSelesai, getStatistik, insertPeserta } from '../src/db.js';
+import { initDb, closeDb, getPesertaByNama, getPesertaById, ambilNomorAntrian, getAntrianByNomor, getDaftarAntrian, updateStatus, setWaktuSelesai, getStatistik, insertPeserta, setCounter, getJumlahLoket, setJumlahLoket } from '../src/db.js';
 
 const TEST_DB = './test-database.sqlite';
 
@@ -90,4 +90,59 @@ test('getStatistik return counter', () => {
   assert.equal(stat.total, 2);
   assert.equal(stat.menunggu, 1);
   assert.equal(stat.selesai, 1);
+});
+
+// === Tests untuk fitur loket (counter) ===
+
+test('initDb seeds settings table dengan jumlah_loket=3', () => {
+  // initDb sudah dipanggil di beforeEach; cek default value
+  assert.equal(getJumlahLoket(), 3);
+});
+
+test('initDb idempoten — kolom counter tidak diduplikasi', () => {
+  // Panggil initDb lagi (DB sudah ada). Tidak boleh throw "duplicate column".
+  assert.doesNotThrow(() => initDb());
+  // Verifikasi kolom counter ada — pakai peserta 2 yang belum di-ambil nomornya di test ini
+  const peserta = ambilNomorAntrian(2);
+  const antrian = getAntrianByNomor(peserta);
+  assert.equal(antrian.counter, null); // kolom ada, value null sebelum dipanggil
+});
+
+test('getJumlahLoket return 3 default', () => {
+  assert.equal(getJumlahLoket(), 3);
+});
+
+test('setJumlahLoket lalu getJumlahLoket return nilai baru', () => {
+  setJumlahLoket(5);
+  assert.equal(getJumlahLoket(), 5);
+});
+
+test('setCounter persist counter peserta', () => {
+  // Pakai peserta baru agar tidak bentrok dengan test lain yang ambil nomor peserta 1/2
+  const id = insertPeserta('Cici Lestari', 'Semarang, 3 Maret 1992', '0012099', 99);
+  const nomor = ambilNomorAntrian(id);
+  setCounter(nomor, 2);
+  const antrian = getAntrianByNomor(nomor);
+  assert.equal(antrian.counter, 2);
+});
+
+test('getDaftarAntrian include kolom counter', () => {
+  const id = insertPeserta('Dodi Wibowo', 'Tegal, 4 April 1993', '0012100', 100);
+  const nomor = ambilNomorAntrian(id);
+  updateStatus(nomor, 'dipanggil');
+  setCounter(nomor, 3);
+  const daftar = getDaftarAntrian('dipanggil');
+  // Filter hanya peserta ini (mungkin ada peserta dipanggil lain dari test concurrent)
+  const row = daftar.find(d => d.nomor_antrian === nomor);
+  assert.ok(row, 'peserta harus muncul di daftar dipanggil');
+  assert.equal(row.counter, 3);
+});
+
+test('setCounter dengan null clear counter', () => {
+  const id = insertPeserta('Eka Putri', 'Pekalongan, 5 Mei 1994', '0012101', 101);
+  const nomor = ambilNomorAntrian(id);
+  setCounter(nomor, 2);
+  setCounter(nomor, null);
+  const antrian = getAntrianByNomor(nomor);
+  assert.equal(antrian.counter, null);
 });
