@@ -140,7 +140,13 @@ async function pilihPeserta(id) {
   hasilPencarian.innerHTML = '';
   inputNama.value = '';
 
-  // Tampilkan detail
+  // Kalau peserta sudah punya nomor antrian (sudah ambil sebelumnya) — tampilkan card status langsung
+  if (peserta.nomor_antrian && (peserta.status === 'dipanggil' || peserta.status === 'selesai' || peserta.status === 'menunggu')) {
+    tampilkanCardStatus(peserta);
+    return;
+  }
+
+  // Tampilkan detail untuk konfirmasi ambil antrian
   detailPeserta.classList.remove('hidden');
   detailPeserta.innerHTML = `
     <div class="bg-blue-50 rounded-lg p-4 mb-4">
@@ -164,6 +170,32 @@ async function pilihPeserta(id) {
       Konfirmasi & Ambil Nomor Antrian
     </button>
   `;
+}
+
+// Tampilkan card antrian untuk peserta yang sudah ambil nomor sebelumnya
+function tampilkanCardStatus(peserta) {
+  // Pindah ke screen antrian
+  document.getElementById('screen-cari').classList.add('hidden');
+  document.getElementById('screen-antrian').classList.remove('hidden');
+
+  myNomorAntrian = peserta.nomor_antrian;
+  document.getElementById('nomor-antrian').textContent = peserta.nomor_antrian;
+
+  // Tampilkan info peserta
+  document.getElementById('info-peserta').innerHTML = `
+    <p><strong>Nama:</strong> ${peserta.nama_lengkap}</p>
+    <p><strong>No Seri:</strong> ${peserta.no_seri}</p>
+  `;
+
+  // Simpan waktu ambil untuk timelapse (dari DB)
+  waktuDaftar = peserta.waktu_daftar ? new Date(String(peserta.waktu_daftar).replace(' ', 'T')) : new Date();
+  updateTimelapse();
+
+  // Join socket room untuk update status
+  socket.emit('peserta:join', peserta.nomor_antrian);
+
+  // Set status display sesuai status peserta
+  updateStatusDisplay(peserta.status, peserta.counter ?? null);
 }
 
 async function ambilAntrian() {

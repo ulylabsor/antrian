@@ -124,7 +124,7 @@ export function ambilNomorAntrian(pesertaId) {
     `).run(newNumber);
     db.prepare(`
       UPDATE peserta
-      SET nomor_antrian = ?, status = 'menunggu', waktu_daftar = datetime('now')
+      SET nomor_antrian = ?, status = 'menunggu', waktu_daftar = datetime('now', 'localtime')
       WHERE id = ?
     `).run(newNumber, pesertaId);
     return newNumber;
@@ -153,7 +153,7 @@ export function updateStatus(nomor, status) {
 }
 
 export function setWaktuSelesai(nomor) {
-  db.prepare(`UPDATE peserta SET waktu_selesai = datetime('now') WHERE nomor_antrian = ?`).run(nomor);
+  db.prepare(`UPDATE peserta SET waktu_selesai = datetime('now', 'localtime') WHERE nomor_antrian = ?`).run(nomor);
 }
 
 export function setCounter(nomor, counter) {
