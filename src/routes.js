@@ -8,6 +8,9 @@ import {
   updateStatus,
   setWaktuSelesai,
   getStatistik,
+  setCounter,
+  getJumlahLoket,
+  setJumlahLoket,
 } from './db.js';
 import { updateStatusInSheets } from './sheets.js';
 
@@ -66,10 +69,26 @@ export function createRouter(io) {
     const nomor = parseInt(req.params.nomor);
     const antrian = getAntrianByNomor(nomor);
     if (!antrian) return res.status(404).json({ error: 'Tidak ditemukan' });
+
+    // Validasi counter jika diberikan
+    let counter = null;
+    if (req.body && req.body.counter !== undefined && req.body.counter !== null) {
+      const c = parseInt(req.body.counter);
+      const max = getJumlahLoket();
+      if (!Number.isInteger(c) || c < 1 || c > max) {
+        return res.status(400).json({ error: 'counter tidak valid' });
+      }
+      counter = c;
+    }
+
     updateStatus(nomor, 'dipanggil');
-    if (io) io.to(`peserta:${nomor}`).emit('antrian:panggil', { nomor, peserta: getAntrianByNomor(nomor) });
+    setCounter(nomor, counter);
+
+    const payload = { nomor, counter, peserta: getAntrianByNomor(nomor) };
+    if (io) io.to(`peserta:${nomor}`).emit('antrian:panggil', payload);
+    if (io) io.emit('antrian:panggil', { nomor, counter }); // broadcast ke dashboard panitia lain
     if (io) io.emit('statistik:update', getStatistik());
-    res.json({ success: true });
+    res.json({ success: true, nomor, counter });
   });
 
   // Selesai (sync ke Sheets)
@@ -91,6 +110,21 @@ export function createRouter(io) {
     }
 
     res.json({ success: true });
+  });
+
+  // Settings loket
+  router.get('/settings/loket', (req, res) => {
+    res.json({ jumlah_loket: getJumlahLoket() });
+  });
+
+  router.post('/settings/loket', (req, res) => {
+    const n = parseInt(req.body?.jumlah_loket);
+    if (!Number.isInteger(n) || n < 1 || n > 20) {
+      return res.status(400).json({ error: 'jumlah_loket harus integer 1-20' });
+    }
+    setJumlahLoket(n);
+    if (io) io.emit('settings:loket', { jumlah_loket: n });
+    res.json({ success: true, jumlah_loket: n });
   });
 
   // Statistik

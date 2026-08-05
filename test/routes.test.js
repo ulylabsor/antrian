@@ -159,3 +159,107 @@ test('POST /api/antrian/selesai/:nomor returns success even when Sheets sync fai
   const data = await res.json();
   assert.equal(data.success, true);
 });
+
+// === Tests untuk fitur loket (counter) ===
+
+test('GET /api/settings/loket returns 200 dengan jumlah_loket default 3', async () => {
+  const res = await fetch(`${baseUrl}/api/settings/loket`);
+  assert.equal(res.status, 200);
+  const data = await res.json();
+  assert.equal(data.jumlah_loket, 3);
+});
+
+test('POST /api/settings/loket dengan valid value persists', async () => {
+  const res = await fetch(`${baseUrl}/api/settings/loket`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ jumlah_loket: 5 }),
+  });
+  assert.equal(res.status, 200);
+  const data = await res.json();
+  assert.equal(data.success, true);
+  assert.equal(data.jumlah_loket, 5);
+
+  // Verify persisted
+  const get = await fetch(`${baseUrl}/api/settings/loket`);
+  const getData = await get.json();
+  assert.equal(getData.jumlah_loket, 5);
+});
+
+test('POST /api/settings/loket dengan invalid value returns 400', async () => {
+  const res = await fetch(`${baseUrl}/api/settings/loket`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ jumlah_loket: 0 }),
+  });
+  assert.equal(res.status, 400);
+});
+
+test('POST /api/antrian/panggil/:nomor dengan counter valid returns 200 dan set counter', async () => {
+  // Ambil nomor dulu
+  const cari = await fetch(`${baseUrl}/api/peserta/cari?nama=Andi Wijaya`);
+  const peserta = (await cari.json())[0];
+  const ambil = await fetch(`${baseUrl}/api/antrian/ambil`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ pesertaId: peserta.id }),
+  });
+  const { nomor_antrian } = await ambil.json();
+
+  // Panggil dengan counter 2
+  const res = await fetch(`${baseUrl}/api/antrian/panggil/${nomor_antrian}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ counter: 2 }),
+  });
+  assert.equal(res.status, 200);
+  const data = await res.json();
+  assert.equal(data.success, true);
+  assert.equal(data.counter, 2);
+
+  // Verify counter tersimpan — cek via daftar dipanggil
+  const daftar = await fetch(`${baseUrl}/api/antrian/daftar?status=dipanggil`);
+  const daftarData = await daftar.json();
+  const row = daftarData.find((d) => d.nomor_antrian === nomor_antrian);
+  assert.ok(row);
+  assert.equal(row.counter, 2);
+});
+
+test('POST /api/antrian/panggil/:nomor dengan counter di atas jumlah_loket returns 400', async () => {
+  const cari = await fetch(`${baseUrl}/api/peserta/cari?nama=Andi Saputra`);
+  const peserta = (await cari.json())[0];
+  const ambil = await fetch(`${baseUrl}/api/antrian/ambil`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ pesertaId: peserta.id }),
+  });
+  const { nomor_antrian } = await ambil.json();
+
+  // counter 99 jauh di atas default jumlah_loket=3
+  const res = await fetch(`${baseUrl}/api/antrian/panggil/${nomor_antrian}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ counter: 99 }),
+  });
+  assert.equal(res.status, 400);
+});
+
+test('POST /api/antrian/panggil/:nomor tanpa body returns 200 dengan counter null (legacy)', async () => {
+  const cari = await fetch(`${baseUrl}/api/peserta/cari?nama=Budi Santoso`);
+  const peserta = (await cari.json())[0];
+  const ambil = await fetch(`${baseUrl}/api/antrian/ambil`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ pesertaId: peserta.id }),
+  });
+  const { nomor_antrian } = await ambil.json();
+
+  // Panggil tanpa body (legacy)
+  const res = await fetch(`${baseUrl}/api/antrian/panggil/${nomor_antrian}`, {
+    method: 'POST',
+  });
+  assert.equal(res.status, 200);
+  const data = await res.json();
+  assert.equal(data.success, true);
+  assert.equal(data.counter, null);
+});
