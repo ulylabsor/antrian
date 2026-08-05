@@ -7,3 +7,4 @@ node_modules/
 qr-code.png
 .playwright-mcp/
 server.log
+.superpowers/
