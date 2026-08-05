@@ -116,9 +116,11 @@ async function ambilAntrian() {
   updateStatusDisplay('menunggu');
 }
 
-function updateStatusDisplay(status) {
+function updateStatusDisplay(status, counter = null) {
   const statusText = document.getElementById('status-text');
   const statusBox = document.getElementById('status-box');
+  const counterDisplay = document.getElementById('counter-display');
+  const counterNumber = document.getElementById('counter-number');
 
   const statusMap = {
     'menunggu': { text: 'Menunggu', class: 'bg-yellow-100 text-yellow-800' },
@@ -132,13 +134,21 @@ function updateStatusDisplay(status) {
 
   if (status === 'dipanggil') {
     document.querySelector('#screen-antrian .bg-white').classList.add('flash-dipanggil');
+    if (counter !== null && counter !== undefined) {
+      counterNumber.textContent = `Counter ${counter}`;
+      counterDisplay.classList.remove('hidden');
+    } else {
+      counterDisplay.classList.add('hidden'); // legacy / no-counter call
+    }
+  } else {
+    counterDisplay.classList.add('hidden');
   }
 }
 
 // Listen untuk update status
 socket.on('antrian:panggil', (data) => {
   if (data.nomor === myNomorAntrian) {
-    updateStatusDisplay('dipanggil');
+    updateStatusDisplay('dipanggil', data.counter ?? null);
   }
 });
 
