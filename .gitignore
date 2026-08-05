@@ -5,3 +5,5 @@ node_modules/
 *.sqlite-wal
 *.sqlite-shm
 qr-code.png
+.playwright-mcp/
+server.log
