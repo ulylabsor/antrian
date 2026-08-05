@@ -243,6 +243,47 @@ document.addEventListener('DOMContentLoaded', () => {
       setTimeout(() => { status.textContent = ''; }, 2000);
     }
   });
+
+  // Sync ke Google Sheets
+  document.getElementById('btn-sync').addEventListener('click', async () => {
+    const btn = document.getElementById('btn-sync');
+    const icon = document.getElementById('sync-icon');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '⏳ Syncing...';
+    try {
+      const res = await fetch('/api/sync/sheets', { method: 'POST' });
+      const data = await res.json();
+      if (data.error) {
+        alert('Gagal sync: ' + data.error);
+      } else {
+        alert(`Sync selesai! ${data.synced} peserta berhasil di-sync ke Google Sheets.${data.errors > 0 ? ` ${data.errors} error.` : ''}`);
+      }
+    } catch (err) {
+      alert('Gagal sync ke Google Sheets: ' + err.message);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+    }
+  });
+    const res = await fetch('/api/settings/loket', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jumlah_loket: n }),
+    });
+    const data = await res.json();
+    const status = document.getElementById('settings-status');
+    if (data.error) {
+      status.textContent = data.error;
+      status.className = 'text-xs text-red-600';
+    } else {
+      status.textContent = 'Tersimpan';
+      status.className = 'text-xs text-green-600';
+      jumlahLoket = data.jumlah_loket;
+      renderLoketDropdown();
+      setTimeout(() => { status.textContent = ''; }, 2000);
+    }
+  });
 });
 
 // Expose

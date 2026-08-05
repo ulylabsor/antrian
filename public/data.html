@@ -70,17 +70,28 @@
         <table class="w-full text-sm">
           <thead class="bg-gray-50 text-gray-600">
             <tr>
-              <th class="px-4 py-3 text-left font-semibold">No</th>
-              <th class="px-4 py-3 text-left font-semibold">Nama Lengkap</th>
-              <th class="px-4 py-3 text-left font-semibold">No Seri</th>
-              <th class="px-4 py-3 text-left font-semibold">Antrian</th>
-              <th class="px-4 py-3 text-left font-semibold">Status</th>
-              <th class="px-4 py-3 text-left font-semibold">Waktu Ambil</th>
+              <th class="px-4 py-3 text-left font-semibold cursor-pointer select-none hover:bg-gray-100" onclick="sortBy('nama_lengkap')">
+                Nama Lengkap <span id="sort-nama_lengkap" class="text-gray-400"></span>
+              </th>
+              <th class="px-4 py-3 text-left font-semibold cursor-pointer select-none hover:bg-gray-100" onclick="sortBy('no_seri')">
+                No Seri <span id="sort-no_seri" class="text-gray-400"></span>
+              </th>
+              <th class="px-4 py-3 text-left font-semibold cursor-pointer select-none hover:bg-gray-100" onclick="sortBy('nomor_antrian')">
+                Antrian <span id="sort-nomor_antrian" class="text-gray-400"></span>
+              </th>
+              <th class="px-4 py-3 text-left font-semibold cursor-pointer select-none hover:bg-gray-100" onclick="sortBy('status')">
+                Status <span id="sort-status" class="text-gray-400"></span>
+              </th>
+              <th class="px-4 py-3 text-left font-semibold cursor-pointer select-none hover:bg-gray-100" onclick="sortBy('waktu_selesai')">
+                Waktu Ambil <span id="sort-waktu_selesai" class="text-gray-400"></span>
+              </th>
             </tr>
           </thead>
           <tbody id="tbody" class="divide-y divide-gray-100"></tbody>
         </table>
       </div>
+      <!-- Pagination -->
+      <div id="pagination" class="flex items-center justify-center gap-1 p-4 border-t border-gray-100 flex-wrap"></div>
     </div>
   </div>
 
@@ -90,6 +101,10 @@
     let allData = [];
     let currentFilter = 'all';
     let searchQuery = '';
+    let sortKey = null;      // kolom yang di-sort
+    let sortDir = 1;         // 1 = asc, -1 = desc
+    let currentPage = 1;
+    const PAGE_SIZE = 25;
 
     function esc(s) {
       if (s == null) return '';
@@ -131,8 +146,38 @@
       return '<span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-xs font-semibold">Belum Ambil</span>';
     }
 
+    function sortBy(key) {
+      if (sortKey === key) {
+        sortDir = -sortDir; // toggle arah
+      } else {
+        sortKey = key;
+        sortDir = 1;
+      }
+      currentPage = 1; // reset ke halaman 1 saat sort berubah
+      renderTable();
+    }
+
+    function compareValues(a, b, key) {
+      let va = a[key], vb = b[key];
+      // Null/undefined paling belakang
+      if (va == null && vb == null) return 0;
+      if (va == null) return 1;
+      if (vb == null) return -1;
+      // Numerik jika bisa
+      const na = Number(va), nb = Number(vb);
+      if (!isNaN(na) && !isNaN(nb) && String(va).trim() !== '' && String(vb).trim() !== '') {
+        return na - nb;
+      }
+      // Status custom order
+      if (key === 'status') {
+        const order = { 'belum': 0, 'menunggu': 1, 'dipanggil': 2, 'selesai': 3 };
+        return (order[va] ?? 9) - (order[vb] ?? 9);
+      }
+      return String(va).localeCompare(String(vb), 'id', { numeric: true, sensitivity: 'base' });
+    }
+
     function renderTable() {
-      let data = allData;
+      let data = allData.slice(); // copy agar tidak ubah allData
       // Filter status
       if (currentFilter === 'belum') data = data.filter(p => !p.nomor_antrian);
       else if (currentFilter === 'selesai') data = data.filter(p => p.status === 'selesai');
@@ -147,29 +192,81 @@
         );
       }
 
-      document.getElementById('count-show').textContent = data.length;
-      document.getElementById('count-total').textContent = allData.length;
-
-      const tbody = document.getElementById('tbody');
-      if (data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-6 text-center text-gray-400">Tidak ada data</td></tr>';
-        return;
+      // Sorting
+      if (sortKey) {
+        data.sort((a, b) => sortDir * compareValues(a, b, sortKey));
       }
 
-      tbody.innerHTML = data.map((p, i) => `
-        <tr class="hover:bg-gray-50">
-          <td class="px-4 py-3 text-gray-500">${i + 1}</td>
-          <td class="px-4 py-3 font-medium text-gray-800">${esc(p.nama_lengkap)}</td>
-          <td class="px-4 py-3 text-gray-600">${esc(p.no_seri)}</td>
-          <td class="px-4 py-3 text-gray-600">${p.nomor_antrian ? '#' + esc(p.nomor_antrian) : '-'}</td>
-          <td class="px-4 py-3">${statusBadge(p)}</td>
-          <td class="px-4 py-3 text-gray-500">${p.waktu_selesai ? formatWaktu(p.waktu_selesai) : '-'}</td>
-        </tr>
-      `).join('');
+      const totalFiltered = data.length;
+      document.getElementById('count-show').textContent = totalFiltered;
+      document.getElementById('count-total').textContent = allData.length;
+
+      // Pagination
+      const totalPages = Math.max(1, Math.ceil(totalFiltered / PAGE_SIZE));
+      if (currentPage > totalPages) currentPage = totalPages;
+      const startIdx = (currentPage - 1) * PAGE_SIZE;
+      const pageData = data.slice(startIdx, startIdx + PAGE_SIZE);
+
+      // Update indikator sort di header
+      ['nama_lengkap', 'no_seri', 'nomor_antrian', 'status', 'waktu_selesai'].forEach(k => {
+        const el = document.getElementById('sort-' + k);
+        if (el) el.textContent = (sortKey === k) ? (sortDir === 1 ? '↑' : '↓') : '';
+      });
+
+      const tbody = document.getElementById('tbody');
+      if (pageData.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-6 text-center text-gray-400">Tidak ada data</td></tr>';
+      } else {
+        tbody.innerHTML = pageData.map((p, i) => `
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-3 font-medium text-gray-800">${esc(p.nama_lengkap)}</td>
+            <td class="px-4 py-3 text-gray-600">${esc(p.no_seri)}</td>
+            <td class="px-4 py-3 text-gray-600">${p.nomor_antrian ? '#' + esc(p.nomor_antrian) : '-'}</td>
+            <td class="px-4 py-3">${statusBadge(p)}</td>
+            <td class="px-4 py-3 text-gray-500">${p.waktu_selesai ? formatWaktu(p.waktu_selesai) : '-'}</td>
+          </tr>
+        `).join('');
+      }
+
+      renderPagination(totalPages);
+    }
+
+    function renderPagination(totalPages) {
+      const pg = document.getElementById('pagination');
+      if (!pg) return;
+      if (totalPages <= 1) {
+        pg.innerHTML = '';
+        return;
+      }
+      let html = '';
+      html += `<button onclick="goPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''} class="px-3 py-1 rounded text-sm ${currentPage === 1 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}">‹ Prev</button>`;
+      // Nomor halaman — tampilkan maks 7
+      let start = Math.max(1, currentPage - 3);
+      let end = Math.min(totalPages, start + 6);
+      if (end - start < 6) start = Math.max(1, end - 6);
+      if (start > 1) {
+        html += `<button onclick="goPage(1)" class="px-3 py-1 rounded text-sm bg-gray-200 hover:bg-gray-300 text-gray-700">1</button>`;
+        if (start > 2) html += `<span class="px-2 text-gray-400">…</span>`;
+      }
+      for (let i = start; i <= end; i++) {
+        html += `<button onclick="goPage(${i})" class="px-3 py-1 rounded text-sm ${i === currentPage ? 'bg-blue-600 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}">${i}</button>`;
+      }
+      if (end < totalPages) {
+        if (end < totalPages - 1) html += `<span class="px-2 text-gray-400">…</span>`;
+        html += `<button onclick="goPage(${totalPages})" class="px-3 py-1 rounded text-sm bg-gray-200 hover:bg-gray-300 text-gray-700">${totalPages}</button>`;
+      }
+      html += `<button onclick="goPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''} class="px-3 py-1 rounded text-sm ${currentPage === totalPages ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}">Next ›</button>`;
+      pg.innerHTML = html;
+    }
+
+    function goPage(n) {
+      currentPage = n;
+      renderTable();
     }
 
     function setFilter(f) {
       currentFilter = f;
+      currentPage = 1; // reset ke halaman 1 saat filter berubah
       ['all', 'belum', 'selesai', 'antri'].forEach(k => {
         const btn = document.getElementById('btn-' + k);
         const active = k === f;
@@ -187,6 +284,7 @@
       const v = e.target.value.trim();
       cariTimeout = setTimeout(() => {
         searchQuery = v;
+        currentPage = 1; // reset ke halaman 1 saat search berubah
         renderTable();
       }, 250);
     });
@@ -201,6 +299,8 @@
     loadData();
     setFilter('all');
     window.setFilter = setFilter;
+    window.sortBy = sortBy;
+    window.goPage = goPage;
   </script>
 </body>
 </html>

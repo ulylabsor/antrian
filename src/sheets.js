@@ -137,6 +137,73 @@ export async function updateStatusInSheets(rowNumber, status, nomorAntrian, wakt
   });
 }
 
+// Sync semua peserta yang perlu ke Sheets (status, nomor_antrian, waktu_ambil)
+// Dipanggil manual lewat tombol di dashboard. Return {synced: N, errors: M}.
+export async function syncAllToSheets(pesertaList) {
+  const sheets = getSheetsClient();
+  const spreadsheetId = process.env.GOOGLE_SHEETS_ID;
+
+  // Pastikan kolom STATUS/NOMOR_ANTRIAN/WAKTU_AMBIL ada
+  const headerRes = await sheets.spreadsheets.values.get({
+    spreadsheetId,
+    range: 'A1:Z1',
+  });
+  const headers = headerRes.data.values[0];
+  let statusCol = headers.findIndex(h => h && h.toUpperCase() === 'STATUS');
+  let nomorCol = headers.findIndex(h => h && h.toUpperCase() === 'NOMOR_ANTRIAN');
+  let waktuCol = headers.findIndex(h => h && h.toUpperCase() === 'WAKTU_AMBIL');
+
+  const headerUpdates = [];
+  if (statusCol === -1) {
+    statusCol = headers.length; headers.push('STATUS');
+    headerUpdates.push({ range: `${columnLetter(statusCol)}1`, values: [['STATUS']] });
+  }
+  if (nomorCol === -1) {
+    nomorCol = headers.length; headers.push('NOMOR_ANTRIAN');
+    headerUpdates.push({ range: `${columnLetter(nomorCol)}1`, values: [['NOMOR_ANTRIAN']] });
+  }
+  if (waktuCol === -1) {
+    waktuCol = headers.length; headers.push('WAKTU_AMBIL');
+    headerUpdates.push({ range: `${columnLetter(waktuCol)}1`, values: [['WAKTU_AMBIL']] });
+  }
+  if (headerUpdates.length > 0) {
+    await sheets.spreadsheets.values.batchUpdate({
+      spreadsheetId,
+      requestBody: { valueInputOption: 'RAW', data: headerUpdates },
+    });
+  }
+
+  // Siapkan data updates untuk semua peserta
+  const dataUpdates = [];
+  for (const p of pesertaList) {
+    const row = p.sheets_row;
+    if (!row) continue;
+    dataUpdates.push({ range: `${columnLetter(statusCol)}${row}`, values: [[p.status || '']] });
+    dataUpdates.push({ range: `${columnLetter(nomorCol)}${row}`, values: [[p.nomor_antrian ?? '']] });
+    dataUpdates.push({ range: `${columnLetter(waktuCol)}${row}`, values: [[p.waktu_selesai || '']] });
+  }
+
+  // Sheets batchUpdate max ~1000 value ranges per request — pecah jadi chunks
+  let synced = 0;
+  let errors = 0;
+  const CHUNK = 200;
+  for (let i = 0; i < dataUpdates.length; i += CHUNK) {
+    const chunk = dataUpdates.slice(i, i + CHUNK);
+    try {
+      await sheets.spreadsheets.values.batchUpdate({
+        spreadsheetId,
+        requestBody: { valueInputOption: 'RAW', data: chunk },
+      });
+      synced += chunk.length / 3; // 3 kolom per peserta
+    } catch (err) {
+      console.error('Sheets sync chunk error:', err.message);
+      errors += chunk.length / 3;
+    }
+  }
+
+  return { synced: Math.round(synced), errors: Math.round(errors) };
+}
+
 function columnLetter(index) {
   let result = '';
   let n = index;

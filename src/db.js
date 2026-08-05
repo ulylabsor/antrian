@@ -147,6 +147,17 @@ export function getAllPeserta() {
   return stmt.all();
 }
 
+// Ambil peserta yang perlu di-sync ke Sheets (sudah ambil antrian / status berubah)
+export function getPesertaNeedSync() {
+  const stmt = db.prepare(`
+    SELECT sheets_row, status, nomor_antrian, waktu_selesai
+    FROM peserta
+    WHERE nomor_antrian IS NOT NULL
+    ORDER BY sheets_row
+  `);
+  return stmt.all();
+}
+
 export function setJumlahLoket(n) {
   db.prepare(`
     INSERT INTO settings (key, value) VALUES ('jumlah_loket', ?)

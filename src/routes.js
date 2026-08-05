@@ -12,8 +12,9 @@ import {
   getJumlahLoket,
   setJumlahLoket,
   getAllPeserta,
+  getPesertaNeedSync,
 } from './db.js';
-import { updateStatusInSheets } from './sheets.js';
+import { updateStatusInSheets, syncAllToSheets } from './sheets.js';
 
 export function createRouter(io) {
   const router = Router();
@@ -31,6 +32,21 @@ export function createRouter(io) {
   // Semua peserta (untuk halaman data keseluruhan) — HARUS sebelum /peserta/:id
   router.get('/peserta/all', (req, res) => {
     res.json(getAllPeserta());
+  });
+
+  // Sync semua data ke Google Sheets (manual trigger dari dashboard)
+  router.post('/sync/sheets', async (req, res) => {
+    try {
+      const pesertaList = getPesertaNeedSync();
+      if (pesertaList.length === 0) {
+        return res.json({ success: true, synced: 0, errors: 0, message: 'Tidak ada data untuk disinkronkan' });
+      }
+      const result = await syncAllToSheets(pesertaList);
+      res.json({ success: true, ...result });
+    } catch (err) {
+      console.error('Sync sheets error:', err.message);
+      res.status(503).json({ error: 'Gagal sync ke Google Sheets: ' + err.message });
+    }
   });
 
   // Detail peserta
