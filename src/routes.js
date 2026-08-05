@@ -67,7 +67,7 @@ export function createRouter(io) {
     const antrian = getAntrianByNomor(nomor);
     if (!antrian) return res.status(404).json({ error: 'Tidak ditemukan' });
     updateStatus(nomor, 'dipanggil');
-    if (io) io.emit('antrian:panggil', { nomor, peserta: getAntrianByNomor(nomor) });
+    if (io) io.to(`peserta:${nomor}`).emit('antrian:panggil', { nomor, peserta: getAntrianByNomor(nomor) });
     if (io) io.emit('statistik:update', getStatistik());
     res.json({ success: true });
   });
@@ -79,7 +79,7 @@ export function createRouter(io) {
     if (!antrian) return res.status(404).json({ error: 'Tidak ditemukan' });
     updateStatus(nomor, 'selesai');
     setWaktuSelesai(nomor);
-    if (io) io.emit('antrian:selesai', { nomor });
+    if (io) io.to(`peserta:${nomor}`).emit('antrian:selesai', { nomor });
     if (io) io.emit('statistik:update', getStatistik());
 
     // Sync ke Google Sheets (non-blocking, jangan block response)

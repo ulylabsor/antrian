@@ -1,6 +1,7 @@
 const socket = io();
 
 let pesertaTerpilih = null;
+let myNomorAntrian = null;
 
 const inputNama = document.getElementById('input-nama');
 const hasilPencarian = document.getElementById('hasil-pencarian');
@@ -100,6 +101,7 @@ async function ambilAntrian() {
   document.getElementById('screen-cari').classList.add('hidden');
   document.getElementById('screen-antrian').classList.remove('hidden');
 
+  myNomorAntrian = data.nomor_antrian;
   document.getElementById('nomor-antrian').textContent = data.nomor_antrian;
 
   // Tampilkan info peserta
@@ -135,11 +137,15 @@ function updateStatusDisplay(status) {
 
 // Listen untuk update status
 socket.on('antrian:panggil', (data) => {
-  updateStatusDisplay('dipanggil');
+  if (data.nomor === myNomorAntrian) {
+    updateStatusDisplay('dipanggil');
+  }
 });
 
 socket.on('antrian:selesai', (data) => {
-  updateStatusDisplay('selesai');
+  if (data.nomor === myNomorAntrian) {
+    updateStatusDisplay('selesai');
+  }
 });
 
 // Expose ke window untuk onclick handlers
