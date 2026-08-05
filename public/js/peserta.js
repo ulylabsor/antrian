@@ -4,31 +4,25 @@ let pesertaTerpilih = null;
 let myNomorAntrian = null;
 
 // ============================================================
-// TTS — Text-to-Speech bahasa Indonesia
+// TTS — Text-to-Speech bahasa Indonesia (via Google TTS server-side)
+// Web Speech API sering jatuh ke voice English di Windows, jadi kita
+// pakai Google TTS yang punya suara Indonesia asli.
 // ============================================================
 
+let audioPanggilan = null; // instance Audio yang sedang/sudah diputar
+
 function ucapkanPanggilan(nomor, loket) {
-  if (!('speechSynthesis' in window)) return; // browser tidak support
-
-  const teks = `Panggilan nomor ${nomor}, harap menuju ke loket ${loket}`;
-  const u = new SpeechSynthesisUtterance(teks);
-  u.lang = 'id-ID';
-  u.rate = 0.9;        // sedikit lebih lambat — terdengar jelas & resmi
-  u.pitch = 1;
-
-  // Cari voice bahasa Indonesia kalau ada
-  const voices = window.speechSynthesis.getVoices();
-  const idVoice = voices.find(v => v.lang === 'id-ID') || voices.find(v => v.lang.startsWith('id'));
-  if (idVoice) u.voice = idVoice;
-
-  // Cancel utterance sebelumnya kalau ada (jangan tumpuk)
-  window.speechSynthesis.cancel();
-  window.speechSynthesis.speak(u);
-}
-
-// Beberapa browser load voices async — pastikan siap
-if ('speechSynthesis' in window) {
-  window.speechSynthesis.onvoiceschanged = () => {};
+  // Stop audio sebelumnya kalau ada
+  if (audioPanggilan) {
+    audioPanggilan.pause();
+    audioPanggilan = null;
+  }
+  // Bangun URL endpoint TTS kita yang proxy ke Google TTS (lang=id)
+  const url = `/api/tts?nomor=${encodeURIComponent(nomor)}&loket=${encodeURIComponent(loket)}`;
+  audioPanggilan = new Audio(url);
+  audioPanggilan.play().catch(err => {
+    console.error('Gagal memutar panggilan:', err.message);
+  });
 }
 
 function panggilLagi() {

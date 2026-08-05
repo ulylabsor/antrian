@@ -132,5 +132,26 @@ export function createRouter(io) {
     res.json(getStatistik());
   });
 
+  // TTS — generate audio panggilan bahasa Indonesia via Google TTS
+  // Mengembalikan URL audio yang bisa diputar di <audio> / new Audio()
+  router.get('/tts', async (req, res) => {
+    const nomor = req.query.nomor;
+    const loket = req.query.loket;
+    if (nomor === undefined || loket === undefined) {
+      return res.status(400).json({ error: 'nomor dan loket wajib' });
+    }
+    const teks = `Panggilan nomor ${nomor}, harap menuju ke loket ${loket}`;
+    try {
+      // Import dinamis agar tidak crash jika package bermasalah
+      const { getAudioUrl } = await import('google-tts-api');
+      const url = await getAudioUrl(teks, { lang: 'id', slow: false });
+      // Redirect ke URL audio Google — browser stream langsung
+      res.redirect(url);
+    } catch (err) {
+      console.error('TTS error:', err.message);
+      res.status(503).json({ error: 'Gagal generate suara' });
+    }
+  });
+
   return router;
 }
