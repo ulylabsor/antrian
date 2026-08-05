@@ -222,7 +222,12 @@ function updateStatusDisplay(status, counter = null) {
   statusBox.className = `py-3 px-4 rounded-lg mb-4 ${config.class}`;
 
   if (status === 'dipanggil') {
-    document.querySelector('#screen-antrian .bg-white').classList.add('flash-dipanggil');
+    // Force re-trigger animasi: hapus class dulu, lalu tambah lagi (untuk panggil ulang)
+    const card = document.querySelector('#screen-antrian .bg-white');
+    card.classList.remove('flash-dipanggil');
+    // Paksa reflow agar animasi trigger lagi
+    void card.offsetWidth;
+    card.classList.add('flash-dipanggil');
     const replayBtn = document.getElementById('replay-btn');
     if (counter !== null && counter !== undefined) {
       counterNumber.textContent = `Counter ${counter}`;
@@ -251,6 +256,18 @@ socket.on('antrian:panggil', (data) => {
 socket.on('antrian:selesai', (data) => {
   if (data.nomor === myNomorAntrian) {
     updateStatusDisplay('selesai');
+  }
+});
+
+// Panitia memanggil ulang — animasi lagi + putar audio lagi
+socket.on('antrian:panggil-ulang', (data) => {
+  if (data.nomor === myNomorAntrian) {
+    // Trigger animasi panggil lagi (flash + pulse) — pakai mekanisme yang sama dengan panggil awal
+    updateStatusDisplay('dipanggil', data.counter ?? null);
+    // Putar audio panggilan lagi
+    if (data.counter !== null && data.counter !== undefined) {
+      ucapkanPanggilan(myNomorAntrian, data.counter);
+    }
   }
 });
 

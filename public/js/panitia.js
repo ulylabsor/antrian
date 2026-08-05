@@ -141,19 +141,17 @@ function timelapse(s) {
   return `${diffDay} hari lalu`;
 }
 
-// Putar panggilan ulang dari dashboard panitia
-async function putarPanggilan(nomor, loket) {
+// Panggil ulang dari dashboard panitia — trigger animasi + audio di halaman peserta
+async function putarPanggilan(nomor, _loket) {
   try {
-    const url = `/api/tts?nomor=${encodeURIComponent(nomor)}&loket=${encodeURIComponent(loket)}`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error('TTS gagal');
-    const blob = await res.blob();
-    const objectUrl = URL.createObjectURL(blob);
-    const audio = new Audio(objectUrl);
-    audio.onended = () => { URL.revokeObjectURL(objectUrl); };
-    await audio.play();
+    const res = await fetch(`/api/antrian/panggil-ulang/${nomor}`, { method: 'POST' });
+    const data = await res.json();
+    if (data.error) {
+      alert('Gagal memanggil ulang: ' + data.error);
+    }
+    // Peserta akan animasi + putar audio via socket event (tidak perlu audio di sini)
   } catch (err) {
-    alert('Gagal memutar panggilan: ' + err.message);
+    alert('Gagal memanggil ulang: ' + err.message);
   }
 }
 

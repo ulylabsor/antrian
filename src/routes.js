@@ -229,6 +229,20 @@ export function createRouter(io) {
     res.json({ success: true, nomor, counter });
   });
 
+  // Panggil ulang — emit event ke peserta agar animasi + putar audio lagi
+  router.post('/antrian/panggil-ulang/:nomor', (req, res) => {
+    const nomor = parseInt(req.params.nomor);
+    const antrian = getAntrianByNomor(nomor);
+    if (!antrian) return res.status(404).json({ error: 'Tidak ditemukan' });
+    if (antrian.status !== 'dipanggil') {
+      return res.status(400).json({ error: 'Peserta belum dipanggil' });
+    }
+    const counter = antrian.counter;
+    // Emit ke peserta agar animasi lagi + putar audio
+    if (io) io.to(`peserta:${nomor}`).emit('antrian:panggil-ulang', { nomor, counter });
+    res.json({ success: true, nomor, counter });
+  });
+
   // Selesai (sync ke Sheets)
   router.post('/antrian/selesai/:nomor', async (req, res) => {
     const nomor = parseInt(req.params.nomor);
