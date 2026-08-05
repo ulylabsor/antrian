@@ -2,6 +2,55 @@ const socket = io();
 
 let pesertaTerpilih = null;
 let myNomorAntrian = null;
+let waktuDaftar = null; // waktu peserta ambil antrian (untuk timelapse)
+
+// ============================================================
+// Waktu sekarang — update tiap detik di halaman cari
+// ============================================================
+function updateWaktuSekarang() {
+  const el = document.getElementById('waktu-sekarang');
+  if (!el) return;
+  const now = new Date();
+  const hari = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+  const bulan = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+  const hariIni = hari[now.getDay()];
+  const tanggal = now.getDate();
+  const bulanIni = bulan[now.getMonth()];
+  const tahun = now.getFullYear();
+  const jam = String(now.getHours()).padStart(2, '0');
+  const menit = String(now.getMinutes()).padStart(2, '0');
+  const detik = String(now.getSeconds()).padStart(2, '0');
+  el.textContent = `${hariIni}, ${tanggal} ${bulanIni} ${tahun} · ${jam}:${menit}:${detik}`;
+}
+// Update tiap detik
+updateWaktuSekarang();
+setInterval(updateWaktuSekarang, 1000);
+
+// ============================================================
+// Timelapse — "baru saja", "X menit lalu"
+// ============================================================
+function timelapse(dateObj) {
+  if (!dateObj) return '';
+  const now = new Date();
+  const diffMs = now - dateObj;
+  const diffSec = Math.floor(diffMs / 1000);
+  if (diffSec < 60) return 'baru saja';
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin} menit lalu`;
+  const diffHour = Math.floor(diffMin / 60);
+  const remMin = diffMin % 60;
+  if (diffHour < 24) return remMin > 0 ? `${diffHour} jam ${remMin} menit lalu` : `${diffHour} jam lalu`;
+  const diffDay = Math.floor(diffHour / 24);
+  return `${diffDay} hari lalu`;
+}
+
+function updateTimelapse() {
+  const el = document.getElementById('timelapse-container');
+  if (!el || !waktuDaftar) return;
+  el.textContent = `Anda ambil antrian ini ${timelapse(waktuDaftar)}`;
+}
+// Update tiap 30 detik
+setInterval(updateTimelapse, 30000);
 
 // ============================================================
 // TTS — Text-to-Speech bahasa Indonesia (via Google TTS server-side)
@@ -145,6 +194,10 @@ async function ambilAntrian() {
     <p><strong>Nama:</strong> ${pesertaTerpilih.nama_lengkap}</p>
     <p><strong>No Seri:</strong> ${pesertaTerpilih.no_seri}</p>
   `;
+
+  // Simpan waktu ambil untuk timelapse
+  waktuDaftar = new Date();
+  updateTimelapse();
 
   // Join socket room untuk update status
   socket.emit('peserta:join', data.nomor_antrian);

@@ -72,7 +72,7 @@ function readAllPesertaFromCsvContent(content) {
     tempat_tanggal_lahir: ttlIdx >= 0 ? (row[ttlIdx] || '').trim() : '',
     no_seri: (row[seriIdx] || '').trim(),
     row_number: i + 2,
-  })).filter(p => p.nama_lengkap && p.no_seri);
+  })).filter(p => p.nama_lengkap); // Tampilkan semua — termasuk yang no_seri kosong/invalid
 }
 
 export function createRouter(io) {

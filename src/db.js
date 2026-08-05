@@ -15,12 +15,38 @@ export function initDb() {
   db = new Database(dbPath);
   db.pragma('journal_mode = WAL');
 
+  // Migrasi: hapus UNIQUE dari no_seri agar bisa simpan peserta dengan no_seri kosong/duplikat
+  // Cek apakah schema lama punya UNIQUE di no_seri
+  const tblInfo = db.prepare(`SELECT sql FROM sqlite_master WHERE type='table' AND name='peserta'`).get();
+  if (tblInfo && /no_seri\s+TEXT\s+UNIQUE/i.test(tblInfo.sql)) {
+    // Migrasi: buat tabel baru tanpa UNIQUE, copy data, drop lama, rename
+    db.exec(`
+      BEGIN;
+      CREATE TABLE peserta_new (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        nama_lengkap TEXT NOT NULL,
+        tempat_tanggal_lahir TEXT,
+        no_seri TEXT,
+        nomor_antrian INTEGER,
+        status TEXT DEFAULT 'belum',
+        waktu_daftar DATETIME,
+        waktu_selesai DATETIME,
+        sheets_row INTEGER
+      );
+      INSERT INTO peserta_new (id, nama_lengkap, tempat_tanggal_lahir, no_seri, nomor_antrian, status, waktu_daftar, waktu_selesai, sheets_row)
+        SELECT id, nama_lengkap, tempat_tanggal_lahir, no_seri, nomor_antrian, status, waktu_daftar, waktu_selesai, sheets_row FROM peserta;
+      DROP TABLE peserta;
+      ALTER TABLE peserta_new RENAME TO peserta;
+      COMMIT;
+    `);
+  }
+
   db.exec(`
     CREATE TABLE IF NOT EXISTS peserta (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       nama_lengkap TEXT NOT NULL,
       tempat_tanggal_lahir TEXT,
-      no_seri TEXT UNIQUE,
+      no_seri TEXT,
       nomor_antrian INTEGER,
       status TEXT DEFAULT 'belum',
       waktu_daftar DATETIME,
@@ -54,8 +80,13 @@ export function initDb() {
 }
 
 export function insertPeserta(namaLengkap, ttl, noSeri, sheetsRow) {
+  // Untuk no_seri non-kosong: skip jika sudah ada (cek manual agar kompatibel dengan UNIQUE schema lama)
+  if (noSeri && String(noSeri).trim() !== '') {
+    const existing = db.prepare('SELECT id FROM peserta WHERE no_seri = ?').get(noSeri);
+    if (existing) return 0; // duplikat, skip
+  }
   const stmt = db.prepare(`
-    INSERT OR IGNORE INTO peserta (nama_lengkap, tempat_tanggal_lahir, no_seri, sheets_row)
+    INSERT INTO peserta (nama_lengkap, tempat_tanggal_lahir, no_seri, sheets_row)
     VALUES (?, ?, ?, ?)
   `);
   const info = stmt.run(namaLengkap, ttl, noSeri, sheetsRow);
