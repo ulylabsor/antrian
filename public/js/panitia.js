@@ -104,8 +104,8 @@ async function loadDaftar(status) {
       ? `<span class="ml-2 px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-semibold">Counter ${p.counter}</span>`
       : '';
 
-    // Waktu daftar (data peserta masuk)
-    const waktuTxt = p.waktu_daftar ? formatWaktu(p.waktu_daftar) : '';
+    // Timelapse waktu sejak peserta masuk (font kecil)
+    const timelapseTxt = p.waktu_daftar ? timelapse(p.waktu_daftar) : '';
 
     return `
       <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
@@ -113,7 +113,8 @@ async function loadDaftar(status) {
           <div class="text-2xl font-bold text-blue-700 w-12">#${p.nomor_antrian}</div>
           <div>
             <div class="font-semibold text-gray-800">${p.nama_lengkap}${counterBadge}</div>
-            <div class="text-sm text-gray-500">No Seri: ${p.no_seri}${waktuTxt ? ' · - ' + waktuTxt : ''}</div>
+            <div class="text-sm text-gray-500">No Seri: ${p.no_seri}</div>
+            ${timelapseTxt ? `<div class="text-xs text-gray-400 mt-0.5">⏱ ${timelapseTxt}</div>` : ''}
           </div>
         </div>
         <div class="flex gap-2 items-center">${actions}</div>
@@ -122,12 +123,22 @@ async function loadDaftar(status) {
   }).join('');
 }
 
-// Format waktu dari DB (YYYY-MM-DD HH:MM:SS) ke HH:MM
-function formatWaktu(s) {
+// Timelapse — "baru saja", "5 menit lalu", "2 jam 15 menit lalu"
+function timelapse(s) {
   if (!s) return '';
-  const m = String(s).match(/(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/);
-  if (!m) return String(s);
-  return `${m[4]}:${m[5]}`;
+  const d = new Date(String(s).replace(' ', 'T'));
+  if (isNaN(d.getTime())) return '';
+  const now = new Date();
+  const diffMs = now - d;
+  const diffSec = Math.floor(diffMs / 1000);
+  if (diffSec < 60) return 'baru saja';
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin} menit lalu`;
+  const diffHour = Math.floor(diffMin / 60);
+  const remMin = diffMin % 60;
+  if (diffHour < 24) return remMin > 0 ? `${diffHour} jam ${remMin} menit lalu` : `${diffHour} jam lalu`;
+  const diffDay = Math.floor(diffHour / 24);
+  return `${diffDay} hari lalu`;
 }
 
 // Putar panggilan ulang dari dashboard panitia
@@ -161,6 +172,9 @@ async function panggil(nomor) {
 }
 
 async function selesai(nomor) {
+  if (!confirm(`Tandai sertifikat nomor antrian #${nomor} sudah diambil?`)) {
+    return; // batal
+  }
   await fetch(`/api/antrian/selesai/${nomor}`, { method: 'POST' });
   loadDaftar(currentFilter);
   loadStatistik();
