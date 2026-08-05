@@ -4,87 +4,76 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard Panitia - Antrian Sertifikat</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 </head>
-<body class="bg-gray-100 min-h-screen">
+<body style="background:var(--mist); min-height:100vh;">
 
-  <div class="max-w-6xl mx-auto p-4">
+  <div style="max-width:960px; margin:0 auto; padding:16px;">
     <!-- Header -->
-    <div class="bg-white rounded-xl shadow p-6 mb-4">
-      <div class="flex flex-wrap items-center justify-between gap-4">
+    <div class="dash-card" style="padding:24px; margin-bottom:16px;">
+      <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:16px;">
         <div>
-          <h1 class="text-2xl font-bold text-gray-800">Dashboard Panitia</h1>
-          <p class="text-gray-500 text-sm">Antrian Pengambilan Sertifikat</p>
+          <h1 class="dash-title" style="font-size:26px; letter-spacing:-0.01em;">Dashboard Panitia</h1>
+          <p style="color:var(--slate); font-size:13px; margin-top:2px;">Antrian Pengambilan Sertifikat</p>
         </div>
 
-        <div class="flex items-center gap-3">
-          <!-- Counter picker -->
-          <label class="flex items-center gap-2">
-            <span class="text-sm text-gray-600">Saya di Counter:</span>
-            <select id="select-loket"
-                    class="px-3 py-2 border border-gray-300 rounded-lg text-sm font-semibold text-gray-800">
-              <!-- options diisi oleh JS -->
-            </select>
+        <div style="display:flex; align-items:center; gap:12px;">
+          <label style="display:flex; align-items:center; gap:8px;">
+            <span style="font-family:var(--font-display); font-size:10px; color:var(--slate-mute); font-weight:600; letter-spacing:2px; text-transform:uppercase;">Saya di</span>
+            <select id="select-loket" class="loket-select"></select>
           </label>
 
-          <!-- Settings toggle -->
-          <button id="btn-settings"
-                  class="px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg text-sm font-medium">
-            Pengaturan
-          </button>
+          <button id="btn-settings" class="filter-pill" data-active="false">Pengaturan</button>
         </div>
       </div>
 
-      <!-- Settings panel (hidden by default) -->
-      <div id="panel-settings" class="hidden mt-4 pt-4 border-t border-gray-200">
-        <label class="flex items-center gap-2">
-          <span class="text-sm text-gray-600">Jumlah Counter:</span>
-          <input id="input-jumlah-loket" type="number" min="1" max="20"
-                 class="w-20 px-3 py-2 border border-gray-300 rounded-lg text-sm">
-          <button id="btn-simpan-loket"
-                  class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium">
-            Simpan
-          </button>
-          <span id="settings-status" class="text-xs text-gray-500"></span>
+      <!-- Settings panel -->
+      <div id="panel-settings" style="display:none; margin-top:20px; padding-top:20px; border-top:1px solid var(--mist);">
+        <label style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+          <span style="font-family:var(--font-display); font-size:10px; color:var(--slate-mute); font-weight:600; letter-spacing:2px; text-transform:uppercase;">Jumlah Loket</span>
+          <input id="input-jumlah-loket" type="number" min="1" max="20" style="width:70px; padding:8px 10px; border:1px solid var(--mist-2); border-radius:10px; font-family:var(--font-body); font-size:14px; color:var(--ink);">
+          <button id="btn-simpan-loket" class="action-btn panggil" style="background:var(--ink);">Simpan</button>
+          <span id="settings-status" style="font-size:12px; color:var(--slate-mute);"></span>
         </label>
       </div>
     </div>
 
     <!-- Statistik -->
-    <div id="statistik" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-      <div class="bg-white rounded-xl shadow p-4 text-center">
-        <div class="text-sm text-gray-500">Total Antrian</div>
-        <div id="stat-total" class="text-3xl font-bold text-gray-800">0</div>
+    <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:12px; margin-bottom:16px;" id="statistik-grid">
+      <div class="stat-card">
+        <div class="label">Total Antrian</div>
+        <div id="stat-total" class="value is-total">0</div>
       </div>
-      <div class="bg-white rounded-xl shadow p-4 text-center">
-        <div class="text-sm text-gray-500">Menunggu</div>
-        <div id="stat-menunggu" class="text-3xl font-bold text-yellow-600">0</div>
+      <div class="stat-card">
+        <div class="label">Menunggu</div>
+        <div id="stat-menunggu" class="value is-menunggu">0</div>
       </div>
-      <div class="bg-white rounded-xl shadow p-4 text-center">
-        <div class="text-sm text-gray-500">Dipanggil</div>
-        <div id="stat-dipanggil" class="text-3xl font-bold text-blue-600">0</div>
+      <div class="stat-card">
+        <div class="label">Dipanggil</div>
+        <div id="stat-dipanggil" class="value is-dipanggil">0</div>
       </div>
-      <div class="bg-white rounded-xl shadow p-4 text-center">
-        <div class="text-sm text-gray-500">Selesai</div>
-        <div id="stat-selesai" class="text-3xl font-bold text-green-600">0</div>
+      <div class="stat-card">
+        <div class="label">Selesai</div>
+        <div id="stat-selesai" class="value is-selesai">0</div>
       </div>
     </div>
 
     <!-- Filter & Daftar Antrian -->
-    <div class="bg-white rounded-xl shadow p-6">
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="text-lg font-bold text-gray-800">Daftar Antrian</h2>
-        <div class="flex gap-2">
-          <button onclick="loadDaftar('menunggu')" class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-lg text-sm font-medium">Menunggu</button>
-          <button onclick="loadDaftar('dipanggil')" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-lg text-sm font-medium">Dipanggil</button>
-          <button onclick="loadDaftar('selesai')" class="px-3 py-1 bg-green-100 text-green-800 rounded-lg text-sm font-medium">Selesai</button>
+    <div class="dash-card" style="padding:24px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; flex-wrap:wrap; gap:12px;">
+        <h2 class="dash-title" style="font-size:18px;">Daftar Antrian</h2>
+        <div style="display:flex; gap:8px;">
+          <button onclick="loadDaftar('menunggu')" id="pill-menunggu" class="filter-pill" data-active="true">Menunggu</button>
+          <button onclick="loadDaftar('dipanggil')" id="pill-dipanggil" class="filter-pill" data-active="false">Dipanggil</button>
+          <button onclick="loadDaftar('selesai')" id="pill-selesai" class="filter-pill" data-active="false">Selesai</button>
         </div>
       </div>
 
-      <div id="daftar-antrian" class="space-y-2">
-        <p class="text-gray-400 text-center py-4">Memuat data...</p>
+      <div id="daftar-antrian" style="display:flex; flex-direction:column; gap:8px;">
+        <p style="color:var(--slate-mute); text-align:center; padding:16px 0;">Memuat data...</p>
       </div>
     </div>
   </div>

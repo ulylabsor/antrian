@@ -1,30 +1,495 @@
-/* Custom styles - Tailwind via CDN */
-body {
-  font-family: 'Inter', sans-serif;
+/* ============================================================
+   Antrian Sertifikat — Elegan & Premium
+   Token system: deep slate + paper + gold accent (certificate world)
+   ============================================================ */
+
+:root {
+  /* Ink — premium base */
+  --ink: #0f172a;
+  --ink-2: #1e293b;
+
+  /* Paper & mist — calm backgrounds */
+  --paper: #ffffff;
+  --mist: #f1f5f9;
+  --mist-2: #e2e8f0;
+
+  /* Slate — body text */
+  --slate: #475569;
+  --slate-mute: #94a3b8;
+
+  /* Gold — the certificate accent */
+  --gold: #b45309;
+  --gold-deep: #92400e;
+  --gold-soft: #fef3c7;
+  --gold-line: #fde68a;
+  --gold-glow: rgba(180, 83, 9, 0.18);
+
+  /* Emerald — success only */
+  --emerald: #059669;
+  --emerald-soft: #d1fae5;
+
+  /* Radii & shadows */
+  --radius: 20px;
+  --radius-sm: 14px;
+  --radius-pill: 999px;
+  --shadow-card: 0 10px 40px -12px rgba(15, 23, 42, 0.12);
+  --shadow-card-dark: 0 24px 60px -16px rgba(0, 0, 0, 0.55);
+
+  /* Type */
+  --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
 }
+
+/* ============================================================
+   Base
+   ============================================================ */
+
+body {
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* ============================================================
+   Peserta — background states (the "spotlight" signature)
+   ============================================================ */
+
+.peserta-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(165deg, #f8fafc 0%, var(--mist-2) 100%);
+  transition: background 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.peserta-bg.dipanggil {
+  background: linear-gradient(165deg, var(--ink) 0%, var(--ink-2) 100%);
+}
+
+/* ============================================================
+   Peserta — card
+   ============================================================ */
+
+.peserta-card {
+  background: var(--paper);
+  border-radius: var(--radius);
+  padding: 40px 32px;
+  width: 100%;
+  max-width: 360px;
+  box-shadow: var(--shadow-card);
+  border: 1px solid var(--mist-2);
+  text-align: center;
+}
+
+.peserta-card.dipanggil {
+  box-shadow: var(--shadow-card-dark);
+  border: 1px solid var(--gold-line);
+  animation: card-rise 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Eyebrow label — serif, the formal-document voice */
+.eyebrow {
+  font-family: var(--font-display);
+  font-size: 10px;
+  color: var(--slate-mute);
+  font-weight: 600;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+
+/* The hero number */
+.queue-number {
+  font-family: var(--font-body);
+  font-size: 88px;
+  font-weight: 800;
+  color: var(--ink);
+  line-height: 1;
+  letter-spacing: -0.04em;
+  margin: 20px 0 24px;
+  animation: fade-pulse 4s ease-in-out infinite;
+}
+
+.queue-number.dipanggil {
+  font-size: 72px;
+  margin: 16px 0;
+  animation: none;
+}
+
+/* Status badge */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  background: var(--mist);
+  color: var(--slate);
+  padding: 7px 22px;
+  border-radius: var(--radius-pill);
+  font-weight: 500;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+}
+
+.status-badge .dot {
+  width: 7px;
+  height: 7px;
+  background: var(--slate-mute);
+  border-radius: 50%;
+  margin-right: 8px;
+  animation: dot-pulse 2s ease-in-out infinite;
+}
+
+.status-badge.dipanggil {
+  background: var(--ink);
+  color: var(--gold-soft);
+  animation: fade-pulse 2.5s ease-in-out infinite;
+}
+
+.status-badge.selesai {
+  background: var(--emerald-soft);
+  color: var(--emerald);
+  animation: none;
+}
+
+/* The "Loket X" box — gold, the certificate accent */
+.loket-box {
+  margin: 24px 0;
+  padding: 22px;
+  background: linear-gradient(135deg, #fffbeb, var(--gold-soft));
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--gold-line);
+  animation: soft-glow 3s ease-in-out infinite;
+}
+
+.loket-box .label {
+  font-family: var(--font-display);
+  font-size: 10px;
+  color: var(--gold-deep);
+  font-weight: 600;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+
+.loket-box .value {
+  font-family: var(--font-body);
+  font-size: 40px;
+  font-weight: 700;
+  color: var(--gold);
+  line-height: 1;
+  margin-top: 8px;
+  letter-spacing: -0.02em;
+}
+
+/* Info row — quiet, structured */
+.info-list {
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid var(--mist);
+  text-align: left;
+  font-size: 13px;
+}
+
+.info-list .row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.info-list .row:last-child {
+  margin-bottom: 0;
+}
+
+.info-list .row .k {
+  color: var(--slate-mute);
+}
+
+.info-list .row .v {
+  color: var(--ink-2);
+  font-weight: 600;
+}
+
+.footnote {
+  font-size: 11px;
+  color: var(--slate-mute);
+  margin-top: 20px;
+}
+
+/* Replay button — hear the call again */
+.replay-btn {
+  margin-top: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: 1px solid var(--gold-line);
+  color: var(--gold-deep);
+  padding: 8px 18px;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.replay-btn:hover {
+  background: var(--gold-soft);
+}
+
+/* ============================================================
+   Peserta — cari screen
+   ============================================================ */
+
+.search-input {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid var(--mist-2);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: 15px;
+  color: var(--ink);
+  background: var(--paper);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--gold-line);
+  box-shadow: 0 0 0 3px var(--gold-glow);
+}
+
+.search-input::placeholder {
+  color: var(--slate-mute);
+}
+
+.search-result {
+  width: 100%;
+  text-align: left;
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  border: none;
+  border-bottom: 1px solid var(--mist);
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.search-result:hover {
+  background: var(--mist);
+}
+
+.search-result .name {
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.search-result .seri {
+  font-size: 12px;
+  color: var(--slate-mute);
+}
+
+.confirm-btn {
+  width: 100%;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 15px;
+  padding: 15px;
+  border-radius: var(--radius-sm);
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.confirm-btn:hover {
+  background: var(--ink-2);
+}
+
+/* ============================================================
+   Panitia dashboard — cohesive tokens
+   ============================================================ */
+
+.dash-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.dash-card {
+  background: var(--paper);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  border: 1px solid var(--mist-2);
+}
+
+.stat-card {
+  background: var(--paper);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-card);
+  padding: 18px;
+  text-align: center;
+  border: 1px solid var(--mist-2);
+}
+
+.stat-card .label {
+  font-family: var(--font-display);
+  font-size: 10px;
+  color: var(--slate-mute);
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.stat-card .value {
+  font-family: var(--font-body);
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1.1;
+  margin-top: 6px;
+  letter-spacing: -0.02em;
+}
+
+.stat-card .value.is-menunggu { color: var(--gold); }
+.stat-card .value.is-dipanggil { color: var(--ink); }
+.stat-card .value.is-selesai { color: var(--emerald); }
+.stat-card .value.is-total { color: var(--ink); }
+
+.loket-select {
+  padding: 8px 12px;
+  border: 1px solid var(--mist-2);
+  border-radius: 10px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--paper);
+  cursor: pointer;
+}
+
+.loket-select:focus {
+  outline: none;
+  border-color: var(--gold-line);
+  box-shadow: 0 0 0 3px var(--gold-glow);
+}
+
+.filter-pill {
+  padding: 7px 16px;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.filter-pill[data-active="false"] {
+  background: var(--mist);
+  color: var(--slate);
+}
+
+.filter-pill[data-active="true"] {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.queue-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  background: var(--mist);
+  border-radius: var(--radius-sm);
+}
+
+.queue-row .num {
+  font-family: var(--font-body);
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--gold);
+  width: 48px;
+  letter-spacing: -0.02em;
+}
+
+.queue-row .name {
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.queue-row .seri {
+  font-size: 12px;
+  color: var(--slate-mute);
+}
+
+.loket-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 10px;
+  background: var(--gold-soft);
+  color: var(--gold-deep);
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.action-btn {
+  padding: 7px 14px;
+  border-radius: 10px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.action-btn:hover { opacity: 0.88; }
+.action-btn.panggil { background: var(--ink); color: var(--paper); }
+.action-btn.selesai { background: var(--emerald); color: var(--paper); }
+
+/* ============================================================
+   Animations — subtle, premium
+   ============================================================ */
+
+@keyframes fade-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.62; }
+}
+
+@keyframes dot-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(0.8); }
+}
+
+@keyframes card-rise {
+  0% { transform: translateY(22px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes soft-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(180, 83, 9, 0); }
+  50% { box-shadow: 0 0 28px 0 var(--gold-glow); }
+}
+
+/* Legacy compat — keep the old flash class from breaking */
+.flash-dipanggil { animation: none; }
+
+/* ============================================================
+   Reduced motion — respect it
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  .peserta-bg { transition: none; }
+}
+
+/* ============================================================
+   Print
+   ============================================================ */
 
 @media print {
-  .no-print {
-    display: none;
-  }
-}
-
-/* Animasi pulse untuk nomor antrian */
-@keyframes pulse-large {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-}
-
-.animate-pulse-large {
-  animation: pulse-large 2s ease-in-out infinite;
-}
-
-/* Highlight saat dipanggil */
-@keyframes flash {
-  0%, 100% { background-color: #fef3c7; }
-  50% { background-color: #fde68a; }
-}
-
-.flash-dipanggil {
-  animation: flash 1s ease-in-out 3;
+  .no-print { display: none; }
 }
