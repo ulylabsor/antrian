@@ -1,0 +1,30 @@
+/* Custom styles - Tailwind via CDN */
+body {
+  font-family: 'Inter', sans-serif;
+}
+
+@media print {
+  .no-print {
+    display: none;
+  }
+}
+
+/* Animasi pulse untuk nomor antrian */
+@keyframes pulse-large {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.animate-pulse-large {
+  animation: pulse-large 2s ease-in-out infinite;
+}
+
+/* Highlight saat dipanggil */
+@keyframes flash {
+  0%, 100% { background-color: #fef3c7; }
+  50% { background-color: #fde68a; }
+}
+
+.flash-dipanggil {
+  animation: flash 1s ease-in-out 3;
+}
