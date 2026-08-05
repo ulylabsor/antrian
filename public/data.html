@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Data Peserta - Antrian Sertifikat</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+  <div class="max-w-6xl mx-auto p-4">
+    <!-- Header -->
+    <div class="bg-white rounded-xl shadow p-6 mb-4">
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-800">Data Peserta</h1>
+          <p class="text-gray-500 text-sm">Keseluruhan dari Excel — sudah & belum ambil sertifikat</p>
+        </div>
+        <a href="/panitia.html" class="px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg text-sm font-medium">← Kembali ke Dashboard</a>
+      </div>
+
+      <!-- Ringkasan -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-5">
+        <div class="bg-gray-50 rounded-lg p-3 text-center">
+          <div class="text-xs text-gray-500">Total Peserta</div>
+          <div id="sum-total" class="text-2xl font-bold text-gray-800">0</div>
+        </div>
+        <div class="bg-yellow-50 rounded-lg p-3 text-center">
+          <div class="text-xs text-gray-500">Belum Ambil</div>
+          <div id="sum-belum" class="text-2xl font-bold text-yellow-600">0</div>
+        </div>
+        <div class="bg-blue-50 rounded-lg p-3 text-center">
+          <div class="text-xs text-gray-500">Sudah Ambil</div>
+          <div id="sum-selesai" class="text-2xl font-bold text-blue-600">0</div>
+        </div>
+        <div class="bg-green-50 rounded-lg p-3 text-center">
+          <div class="text-xs text-gray-500">Sedang Antri</div>
+          <div id="sum-antri" class="text-2xl font-bold text-green-600">0</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter & Pencarian -->
+    <div class="bg-white rounded-xl shadow p-6 mb-4">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="flex gap-2 flex-wrap">
+          <button onclick="setFilter('all')" id="btn-all" class="px-3 py-1 bg-blue-600 text-white rounded-lg text-sm font-medium">Semua</button>
+          <button onclick="setFilter('belum')" id="btn-belum" class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-lg text-sm font-medium">Belum Ambil</button>
+          <button onclick="setFilter('selesai')" id="btn-selesai" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-lg text-sm font-medium">Sudah Ambil</button>
+          <button onclick="setFilter('antri')" id="btn-antri" class="px-3 py-1 bg-green-100 text-green-800 rounded-lg text-sm font-medium">Sedang Antri</button>
+        </div>
+        <input
+          type="text"
+          id="input-cari"
+          class="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          placeholder="Cari nama / no seri..."
+          autocomplete="off"
+        >
+      </div>
+      <div class="mt-3 text-xs text-gray-500">
+        Menampilkan <span id="count-show">0</span> dari <span id="count-total">0</span> peserta
+      </div>
+    </div>
+
+    <!-- Tabel -->
+    <div class="bg-white rounded-xl shadow overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 text-gray-600">
+            <tr>
+              <th class="px-4 py-3 text-left font-semibold">No</th>
+              <th class="px-4 py-3 text-left font-semibold">Nama Lengkap</th>
+              <th class="px-4 py-3 text-left font-semibold">No Seri</th>
+              <th class="px-4 py-3 text-left font-semibold">Antrian</th>
+              <th class="px-4 py-3 text-left font-semibold">Status</th>
+              <th class="px-4 py-3 text-left font-semibold">Waktu Ambil</th>
+            </tr>
+          </thead>
+          <tbody id="tbody" class="divide-y divide-gray-100"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    let allData = [];
+    let currentFilter = 'all';
+    let searchQuery = '';
+
+    function esc(s) {
+      if (s == null) return '';
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    }
+
+    function formatWaktu(s) {
+      if (!s) return '-';
+      const m = String(s).match(/(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/);
+      return m ? `${m[3]}/${m[2]}/${m[1]} ${m[4]}:${m[5]}` : String(s);
+    }
+
+    async function loadData() {
+      try {
+        const res = await fetch('/api/peserta/all');
+        allData = await res.json();
+        renderSummary();
+        renderTable();
+      } catch (err) {
+        document.getElementById('tbody').innerHTML = `<tr><td colspan="6" class="px-4 py-6 text-center text-red-500">Gagal memuat data: ${esc(err.message)}</td></tr>`;
+      }
+    }
+
+    function renderSummary() {
+      const total = allData.length;
+      const belum = allData.filter(p => !p.nomor_antrian).length;
+      const selesai = allData.filter(p => p.status === 'selesai').length;
+      const antri = total - belum - selesai;
+      document.getElementById('sum-total').textContent = total;
+      document.getElementById('sum-belum').textContent = belum;
+      document.getElementById('sum-selesai').textContent = selesai;
+      document.getElementById('sum-antri').textContent = antri;
+    }
+
+    function statusBadge(p) {
+      if (p.status === 'selesai') return '<span class="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-semibold">Sudah Ambil</span>';
+      if (p.status === 'dipanggil') return '<span class="px-2 py-1 bg-indigo-100 text-indigo-800 rounded text-xs font-semibold">Dipanggil</span>';
+      if (p.status === 'menunggu') return '<span class="px-2 py-1 bg-green-100 text-green-800 rounded text-xs font-semibold">Antri</span>';
+      return '<span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-xs font-semibold">Belum Ambil</span>';
+    }
+
+    function renderTable() {
+      let data = allData;
+      // Filter status
+      if (currentFilter === 'belum') data = data.filter(p => !p.nomor_antrian);
+      else if (currentFilter === 'selesai') data = data.filter(p => p.status === 'selesai');
+      else if (currentFilter === 'antri') data = data.filter(p => p.nomor_antrian && p.status !== 'selesai');
+
+      // Filter pencarian
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        data = data.filter(p =>
+          String(p.nama_lengkap || '').toLowerCase().includes(q) ||
+          String(p.no_seri || '').toLowerCase().includes(q)
+        );
+      }
+
+      document.getElementById('count-show').textContent = data.length;
+      document.getElementById('count-total').textContent = allData.length;
+
+      const tbody = document.getElementById('tbody');
+      if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-6 text-center text-gray-400">Tidak ada data</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = data.map((p, i) => `
+        <tr class="hover:bg-gray-50">
+          <td class="px-4 py-3 text-gray-500">${i + 1}</td>
+          <td class="px-4 py-3 font-medium text-gray-800">${esc(p.nama_lengkap)}</td>
+          <td class="px-4 py-3 text-gray-600">${esc(p.no_seri)}</td>
+          <td class="px-4 py-3 text-gray-600">${p.nomor_antrian ? '#' + esc(p.nomor_antrian) : '-'}</td>
+          <td class="px-4 py-3">${statusBadge(p)}</td>
+          <td class="px-4 py-3 text-gray-500">${p.waktu_selesai ? formatWaktu(p.waktu_selesai) : '-'}</td>
+        </tr>
+      `).join('');
+    }
+
+    function setFilter(f) {
+      currentFilter = f;
+      ['all', 'belum', 'selesai', 'antri'].forEach(k => {
+        const btn = document.getElementById('btn-' + k);
+        const active = k === f;
+        btn.className = active
+          ? 'px-3 py-1 bg-blue-600 text-white rounded-lg text-sm font-medium'
+          : 'px-3 py-1 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200';
+      });
+      renderTable();
+    }
+
+    // Pencarian debounce
+    let cariTimeout;
+    document.getElementById('input-cari').addEventListener('input', (e) => {
+      clearTimeout(cariTimeout);
+      const v = e.target.value.trim();
+      cariTimeout = setTimeout(() => {
+        searchQuery = v;
+        renderTable();
+      }, 250);
+    });
+
+    // Real-time update saat ada perubahan antrian
+    socket.on('statistik:update', () => { loadData(); });
+    socket.on('antrian:baru', () => { loadData(); });
+    socket.on('antrian:selesai', () => { loadData(); });
+    socket.on('antrian:panggil', () => { loadData(); });
+
+    // Init
+    loadData();
+    setFilter('all');
+    window.setFilter = setFilter;
+  </script>
+</body>
+</html>

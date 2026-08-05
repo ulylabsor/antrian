@@ -2,6 +2,7 @@ const socket = io();
 socket.emit('panitia:join');
 
 let currentFilter = 'menunggu';
+let searchQuery = '';
 
 // === State loket (counter) ===
 let jumlahLoket = 3;        // dari server, default 3
@@ -60,7 +61,17 @@ async function loadStatistik() {
 async function loadDaftar(status) {
   currentFilter = status;
   const res = await fetch(`/api/antrian/daftar?status=${status}`);
-  const data = await res.json();
+  let data = await res.json();
+
+  // Apply filter pencarian di sisi client (cari nama / no seri / nomor antrian)
+  if (searchQuery) {
+    const q = searchQuery.toLowerCase();
+    data = data.filter(p =>
+      String(p.nama_lengkap || '').toLowerCase().includes(q) ||
+      String(p.no_seri || '').toLowerCase().includes(q) ||
+      String(p.nomor_antrian || '').includes(q)
+    );
+  }
 
   const container = document.getElementById('daftar-antrian');
 
@@ -71,6 +82,11 @@ async function loadDaftar(status) {
 
   container.innerHTML = data.map(p => {
     let actions = '';
+    // Tombol panggil ulang (speaker) — muncul untuk peserta yang sudah dipanggil
+    const replayBtn = (p.status === 'dipanggil' && p.counter !== null && p.counter !== undefined)
+      ? `<button onclick="putarPanggilan(${p.nomor_antrian}, ${p.counter})" title="Putar panggilan lagi" class="px-2 py-1 bg-amber-100 text-amber-800 rounded-lg text-sm font-medium hover:bg-amber-200">🔊</button>`
+      : '';
+
     if (status === 'menunggu') {
       actions = `
         <button onclick="panggil(${p.nomor_antrian})" class="px-3 py-1 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">Panggil</button>
@@ -78,6 +94,7 @@ async function loadDaftar(status) {
       `;
     } else if (status === 'dipanggil') {
       actions = `
+        ${replayBtn}
         <button onclick="selesai(${p.nomor_antrian})" class="px-3 py-1 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700">Selesai</button>
       `;
     }
@@ -87,19 +104,46 @@ async function loadDaftar(status) {
       ? `<span class="ml-2 px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-semibold">Counter ${p.counter}</span>`
       : '';
 
+    // Waktu daftar (data peserta masuk)
+    const waktuTxt = p.waktu_daftar ? formatWaktu(p.waktu_daftar) : '';
+
     return `
       <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
         <div class="flex items-center gap-4">
           <div class="text-2xl font-bold text-blue-700 w-12">#${p.nomor_antrian}</div>
           <div>
             <div class="font-semibold text-gray-800">${p.nama_lengkap}${counterBadge}</div>
-            <div class="text-sm text-gray-500">No Seri: ${p.no_seri}</div>
+            <div class="text-sm text-gray-500">No Seri: ${p.no_seri}${waktuTxt ? ' · masuk ' + waktuTxt : ''}</div>
           </div>
         </div>
-        <div class="flex gap-2">${actions}</div>
+        <div class="flex gap-2 items-center">${actions}</div>
       </div>
     `;
   }).join('');
+}
+
+// Format waktu dari DB (YYYY-MM-DD HH:MM:SS) ke HH:MM
+function formatWaktu(s) {
+  if (!s) return '';
+  const m = String(s).match(/(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/);
+  if (!m) return String(s);
+  return `${m[4]}:${m[5]}`;
+}
+
+// Putar panggilan ulang dari dashboard panitia
+async function putarPanggilan(nomor, loket) {
+  try {
+    const url = `/api/tts?nomor=${encodeURIComponent(nomor)}&loket=${encodeURIComponent(loket)}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('TTS gagal');
+    const blob = await res.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    const audio = new Audio(objectUrl);
+    audio.onended = () => { URL.revokeObjectURL(objectUrl); };
+    await audio.play();
+  } catch (err) {
+    alert('Gagal memutar panggilan: ' + err.message);
+  }
 }
 
 async function panggil(nomor) {
@@ -159,6 +203,17 @@ document.addEventListener('DOMContentLoaded', () => {
   loadStatistik();
   loadDaftar('menunggu');
 
+  // Pencarian daftar antrian (debounce 250ms)
+  let cariTimeout;
+  document.getElementById('input-cari-antrian').addEventListener('input', (e) => {
+    clearTimeout(cariTimeout);
+    const v = e.target.value.trim();
+    cariTimeout = setTimeout(() => {
+      searchQuery = v;
+      loadDaftar(currentFilter);
+    }, 250);
+  });
+
   document.getElementById('select-loket').addEventListener('change', (e) => {
     const v = e.target.value;
     saveMyLoket(v === '' ? null : parseInt(v, 10));
@@ -194,3 +249,4 @@ document.addEventListener('DOMContentLoaded', () => {
 window.loadDaftar = loadDaftar;
 window.panggil = panggil;
 window.selesai = selesai;
+window.putarPanggilan = putarPanggilan;

@@ -135,6 +135,18 @@ export function getJumlahLoket() {
   return Number.isFinite(n) && n > 0 ? n : 3;
 }
 
+export function getAllPeserta() {
+  const stmt = db.prepare(`
+    SELECT id, nama_lengkap, tempat_tanggal_lahir, no_seri, nomor_antrian,
+           status, waktu_daftar, waktu_selesai, counter
+    FROM peserta
+    ORDER BY
+      CASE WHEN nomor_antrian IS NOT NULL THEN 0 ELSE 1 END,
+      nomor_antrian ASC
+  `);
+  return stmt.all();
+}
+
 export function setJumlahLoket(n) {
   db.prepare(`
     INSERT INTO settings (key, value) VALUES ('jumlah_loket', ?)

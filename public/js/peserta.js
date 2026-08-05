@@ -11,18 +11,24 @@ let myNomorAntrian = null;
 
 let audioPanggilan = null; // instance Audio yang sedang/sudah diputar
 
-function ucapkanPanggilan(nomor, loket) {
+async function ucapkanPanggilan(nomor, loket) {
   // Stop audio sebelumnya kalau ada
   if (audioPanggilan) {
     audioPanggilan.pause();
     audioPanggilan = null;
   }
-  // Bangun URL endpoint TTS kita yang proxy ke Google TTS (lang=id)
-  const url = `/api/tts?nomor=${encodeURIComponent(nomor)}&loket=${encodeURIComponent(loket)}`;
-  audioPanggilan = new Audio(url);
-  audioPanggilan.play().catch(err => {
+  try {
+    const url = `/api/tts?nomor=${encodeURIComponent(nomor)}&loket=${encodeURIComponent(loket)}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('TTS gagal');
+    const blob = await res.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    audioPanggilan = new Audio(objectUrl);
+    audioPanggilan.onended = () => { URL.revokeObjectURL(objectUrl); };
+    await audioPanggilan.play();
+  } catch (err) {
     console.error('Gagal memutar panggilan:', err.message);
-  });
+  }
 }
 
 function panggilLagi() {

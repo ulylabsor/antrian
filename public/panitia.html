@@ -34,6 +34,12 @@
                   class="px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg text-sm font-medium">
             Pengaturan
           </button>
+
+          <!-- Link ke halaman data keseluruhan -->
+          <a href="/data.html"
+             class="px-3 py-2 bg-indigo-100 hover:bg-indigo-200 text-indigo-800 rounded-lg text-sm font-medium">
+            Data Peserta
+          </a>
         </div>
       </div>
 
@@ -74,12 +80,21 @@
 
     <!-- Filter & Daftar Antrian -->
     <div class="bg-white rounded-xl shadow p-6">
-      <div class="flex justify-between items-center mb-4">
+      <div class="flex justify-between items-center mb-4 flex-wrap gap-3">
         <h2 class="text-lg font-bold text-gray-800">Daftar Antrian</h2>
-        <div class="flex gap-2">
-          <button onclick="loadDaftar('menunggu')" class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-lg text-sm font-medium">Menunggu</button>
-          <button onclick="loadDaftar('dipanggil')" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-lg text-sm font-medium">Dipanggil</button>
-          <button onclick="loadDaftar('selesai')" class="px-3 py-1 bg-green-100 text-green-800 rounded-lg text-sm font-medium">Selesai</button>
+        <div class="flex gap-2 items-center flex-wrap">
+          <input
+            type="text"
+            id="input-cari-antrian"
+            class="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            placeholder="Cari nama / no seri..."
+            autocomplete="off"
+          >
+          <div class="flex gap-2">
+            <button onclick="loadDaftar('menunggu')" class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-lg text-sm font-medium">Menunggu</button>
+            <button onclick="loadDaftar('dipanggil')" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-lg text-sm font-medium">Dipanggil</button>
+            <button onclick="loadDaftar('selesai')" class="px-3 py-1 bg-green-100 text-green-800 rounded-lg text-sm font-medium">Selesai</button>
+          </div>
         </div>
       </div>
 

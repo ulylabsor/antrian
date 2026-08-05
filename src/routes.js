@@ -11,6 +11,7 @@ import {
   setCounter,
   getJumlahLoket,
   setJumlahLoket,
+  getAllPeserta,
 } from './db.js';
 import { updateStatusInSheets } from './sheets.js';
 
@@ -25,6 +26,11 @@ export function createRouter(io) {
     }
     const hasil = getPesertaByNama(nama);
     res.json(hasil);
+  });
+
+  // Semua peserta (untuk halaman data keseluruhan) — HARUS sebelum /peserta/:id
+  router.get('/peserta/all', (req, res) => {
+    res.json(getAllPeserta());
   });
 
   // Detail peserta
@@ -133,7 +139,7 @@ export function createRouter(io) {
   });
 
   // TTS — generate audio panggilan bahasa Indonesia via Google TTS
-  // Mengembalikan URL audio yang bisa diputar di <audio> / new Audio()
+  // Stream audio buffer langsung dari server (hindari CORS redirect)
   router.get('/tts', async (req, res) => {
     const nomor = req.query.nomor;
     const loket = req.query.loket;
@@ -142,14 +148,16 @@ export function createRouter(io) {
     }
     const teks = `Panggilan nomor ${nomor}, harap menuju ke loket ${loket}`;
     try {
-      // Import dinamis agar tidak crash jika package bermasalah
-      const { getAudioUrl } = await import('google-tts-api');
-      const url = await getAudioUrl(teks, { lang: 'id', slow: false });
-      // Redirect ke URL audio Google — browser stream langsung
-      res.redirect(url);
+      const { getAudioBase64 } = await import('google-tts-api');
+      const result = await getAudioBase64(teks, { lang: 'id', slow: false });
+      const buffer = Buffer.from(result, 'base64');
+      res.set('Content-Type', 'audio/mpeg');
+      res.set('Content-Length', buffer.length);
+      res.set('Cache-Control', 'public, max-age=3600');
+      return res.send(buffer);
     } catch (err) {
       console.error('TTS error:', err.message);
-      res.status(503).json({ error: 'Gagal generate suara' });
+      return res.status(503).json({ error: 'Gagal generate suara' });
     }
   });
 
