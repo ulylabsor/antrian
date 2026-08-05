@@ -36,10 +36,17 @@ export function createRouter(io) {
 
   // Sync semua data ke Google Sheets (manual trigger dari dashboard)
   router.post('/sync/sheets', async (req, res) => {
+    // Cek credentials Google Sheets dulu
+    if (!process.env.GOOGLE_SHEETS_ID || !process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || !process.env.GOOGLE_PRIVATE_KEY) {
+      return res.status(400).json({
+        error: 'Google Sheets belum di-setup. Isi GOOGLE_SHEETS_ID, GOOGLE_SERVICE_ACCOUNT_EMAIL, dan GOOGLE_PRIVATE_KEY di file .env dulu.',
+        needSetup: true,
+      });
+    }
     try {
       const pesertaList = getPesertaNeedSync();
       if (pesertaList.length === 0) {
-        return res.json({ success: true, synced: 0, errors: 0, message: 'Tidak ada data untuk disinkronkan' });
+        return res.json({ success: true, synced: 0, errors: 0, message: 'Tidak ada data untuk disinkronkan. Import data dulu dengan npm run import.' });
       }
       const result = await syncAllToSheets(pesertaList);
       res.json({ success: true, ...result });

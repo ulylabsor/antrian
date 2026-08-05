@@ -267,8 +267,12 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const res = await fetch('/api/sync/sheets', { method: 'POST' });
       const data = await res.json();
-      if (data.error) {
+      if (data.needSetup) {
+        alert('Google Sheets belum di-setup!\n\n' + data.error);
+      } else if (data.error) {
         alert('Gagal sync: ' + data.error);
+      } else if (data.message) {
+        alert(data.message);
       } else {
         alert(`Sync selesai! ${data.synced} peserta berhasil di-sync ke Google Sheets.${data.errors > 0 ? ` ${data.errors} error.` : ''}`);
       }
