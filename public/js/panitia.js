@@ -215,6 +215,12 @@ document.addEventListener('DOMContentLoaded', () => {
   loadStatistik();
   loadDaftar('menunggu');
 
+  // Update timelapse tiap 30 detik tanpa reload penuh
+  setInterval(() => {
+    // Re-render daftar untuk update timelapse (data sudah di-cache di client)
+    loadDaftar(currentFilter);
+  }, 30000);
+
   // Pencarian daftar antrian (debounce 250ms)
   let cariTimeout;
   document.getElementById('input-cari-antrian').addEventListener('input', (e) => {
