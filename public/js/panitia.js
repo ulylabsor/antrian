@@ -258,26 +258,25 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Sync ke Google Sheets
+  // Sync — download data terbaru dari Google Sheets publik → import ke SQLite (skip duplikat)
   document.getElementById('btn-sync').addEventListener('click', async () => {
     const btn = document.getElementById('btn-sync');
     const originalText = btn.innerHTML;
     btn.disabled = true;
-    btn.innerHTML = '⏳ Syncing...';
+    btn.innerHTML = '⏳ Downloading...';
     try {
-      const res = await fetch('/api/sync/sheets', { method: 'POST' });
+      const res = await fetch('/api/sync/download', { method: 'POST' });
       const data = await res.json();
-      if (data.needSetup) {
-        alert('Google Sheets belum di-setup!\n\n' + data.error);
-      } else if (data.error) {
+      if (data.error) {
         alert('Gagal sync: ' + data.error);
-      } else if (data.message) {
-        alert(data.message);
       } else {
-        alert(`Sync selesai! ${data.synced} peserta berhasil di-sync ke Google Sheets.${data.errors > 0 ? ` ${data.errors} error.` : ''}`);
+        alert(data.message);
+        // Refresh statistik & daftar setelah sync
+        loadStatistik();
+        loadDaftar(currentFilter);
       }
     } catch (err) {
-      alert('Gagal sync ke Google Sheets: ' + err.message);
+      alert('Gagal sync: ' + err.message);
     } finally {
       btn.disabled = false;
       btn.innerHTML = originalText;
