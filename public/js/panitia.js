@@ -113,7 +113,7 @@ async function loadDaftar(status) {
           <div class="text-2xl font-bold text-blue-700 w-12">#${p.nomor_antrian}</div>
           <div>
             <div class="font-semibold text-gray-800">${p.nama_lengkap}${counterBadge}</div>
-            <div class="text-sm text-gray-500">No Seri: ${p.no_seri}${waktuTxt ? ' · masuk ' + waktuTxt : ''}</div>
+            <div class="text-sm text-gray-500">No Seri: ${p.no_seri}${waktuTxt ? ' · - ' + waktuTxt : ''}</div>
           </div>
         </div>
         <div class="flex gap-2 items-center">${actions}</div>
@@ -247,7 +247,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // Sync ke Google Sheets
   document.getElementById('btn-sync').addEventListener('click', async () => {
     const btn = document.getElementById('btn-sync');
-    const icon = document.getElementById('sync-icon');
     const originalText = btn.innerHTML;
     btn.disabled = true;
     btn.innerHTML = '⏳ Syncing...';
@@ -264,24 +263,6 @@ document.addEventListener('DOMContentLoaded', () => {
     } finally {
       btn.disabled = false;
       btn.innerHTML = originalText;
-    }
-  });
-    const res = await fetch('/api/settings/loket', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ jumlah_loket: n }),
-    });
-    const data = await res.json();
-    const status = document.getElementById('settings-status');
-    if (data.error) {
-      status.textContent = data.error;
-      status.className = 'text-xs text-red-600';
-    } else {
-      status.textContent = 'Tersimpan';
-      status.className = 'text-xs text-green-600';
-      jumlahLoket = data.jumlah_loket;
-      renderLoketDropdown();
-      setTimeout(() => { status.textContent = ''; }, 2000);
     }
   });
 });
