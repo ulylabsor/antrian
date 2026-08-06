@@ -9,7 +9,8 @@
     "dev": "nodemon server.js",
     "test": "node --test",
     "import": "node scripts/import-data.js",
-    "qr": "node scripts/generate-qr.js"
+    "qr": "node scripts/generate-qr.js",
+    "backup": "node scripts/backup-db.js"
   },
   "dependencies": {
     "@google-cloud/text-to-speech": "^6.4.1",
