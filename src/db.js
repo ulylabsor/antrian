@@ -77,6 +77,10 @@ export function initDb() {
   if (!cols.some(c => c.name === 'counter')) {
     db.exec(`ALTER TABLE peserta ADD COLUMN counter INTEGER`);
   }
+  // Guarded migration: kolom jumlah_dipanggil (berapa kali peserta dipanggil)
+  if (!cols.some(c => c.name === 'jumlah_dipanggil')) {
+    db.exec(`ALTER TABLE peserta ADD COLUMN jumlah_dipanggil INTEGER DEFAULT 0`);
+  }
 }
 
 export function insertPeserta(namaLengkap, ttl, noSeri, sheetsRow) {
@@ -140,12 +144,20 @@ export function getAntrianByNomor(nomor) {
 
 export function getDaftarAntrian(status) {
   const stmt = db.prepare(`
-    SELECT nomor_antrian, nama_lengkap, no_seri, status, waktu_daftar, counter
+    SELECT nomor_antrian, nama_lengkap, no_seri, status, waktu_daftar, counter, jumlah_dipanggil
     FROM peserta
     WHERE status = ? AND nomor_antrian IS NOT NULL
     ORDER BY nomor_antrian
   `);
   return stmt.all(status);
+}
+
+// Increment jumlah_dipanggil — dipanggil setiap kali peserta dipanggil/panggil ulang
+export function incrementJumlahDipanggil(nomor) {
+  db.prepare(`
+    UPDATE peserta SET jumlah_dipanggil = COALESCE(jumlah_dipanggil, 0) + 1
+    WHERE nomor_antrian = ?
+  `).run(nomor);
 }
 
 export function updateStatus(nomor, status) {

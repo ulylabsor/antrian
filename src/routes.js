@@ -14,6 +14,7 @@ import {
   getAllPeserta,
   getPesertaNeedSync,
   insertPeserta,
+  incrementJumlahDipanggil,
 } from './db.js';
 import { updateStatusInSheets, syncAllToSheets } from './sheets.js';
 import fs from 'fs';
@@ -221,6 +222,7 @@ export function createRouter(io) {
 
     updateStatus(nomor, 'dipanggil');
     setCounter(nomor, counter);
+    incrementJumlahDipanggil(nomor);
 
     const payload = { nomor, counter, peserta: getAntrianByNomor(nomor) };
     if (io) io.to(`peserta:${nomor}`).emit('antrian:panggil', payload);
@@ -238,6 +240,7 @@ export function createRouter(io) {
       return res.status(400).json({ error: 'Peserta belum dipanggil' });
     }
     const counter = antrian.counter;
+    incrementJumlahDipanggil(nomor);
     // Emit ke peserta agar animasi lagi + putar audio
     if (io) io.to(`peserta:${nomor}`).emit('antrian:panggil-ulang', { nomor, counter });
     res.json({ success: true, nomor, counter });
@@ -282,6 +285,14 @@ export function createRouter(io) {
   // Statistik
   router.get('/statistik', (req, res) => {
     res.json(getStatistik());
+  });
+
+  // Data untuk layar informasi publik (nomor yang dipanggil + antrian berikutnya)
+  router.get('/info-antrian', (req, res) => {
+    const dipanggil = getDaftarAntrian('dipanggil');
+    const menunggu = getDaftarAntrian('menunggu');
+    const statistik = getStatistik();
+    res.json({ dipanggil, menunggu: menunggu.slice(0, 10), statistik });
   });
 
   // TTS — generate audio panggilan bahasa Indonesia via Google TTS

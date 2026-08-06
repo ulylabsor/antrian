@@ -104,6 +104,11 @@ async function loadDaftar(status) {
       ? `<span class="ml-2 px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-semibold">Counter ${p.counter}</span>`
       : '';
 
+    // Info jumlah dipanggil (berapa kali peserta dipanggil)
+    const jumlahTxt = (p.status === 'dipanggil' && p.jumlah_dipanggil > 0)
+      ? `<div class="text-xs text-amber-600 font-medium mt-0.5">🔔 dipanggil ${p.jumlah_dipanggil}x</div>`
+      : '';
+
     // Timelapse waktu sejak peserta masuk (font kecil)
     const timelapseTxt = p.waktu_daftar ? timelapse(p.waktu_daftar) : '';
 
@@ -115,6 +120,7 @@ async function loadDaftar(status) {
             <div class="font-semibold text-gray-800">${p.nama_lengkap}${counterBadge}</div>
             <div class="text-sm text-gray-500">No Seri: ${p.no_seri}</div>
             ${timelapseTxt ? `<div class="text-xs text-gray-400 mt-0.5">⏱ ${timelapseTxt}</div>` : ''}
+            ${jumlahTxt}
           </div>
         </div>
         <div class="flex gap-2 items-center">${actions}</div>
