@@ -1,26 +1,24 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Informasi Antrian - Pengambilan Sertifikat</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    :root {
+    :root, [data-theme="dark"] {
       --bg-1: #070b16;
       --bg-2: #0d1424;
       --card: rgba(255,255,255,0.05);
       --card-border: rgba(255,255,255,0.1);
-      --card-hover: rgba(255,255,255,0.08);
       --gold: #e8b04b;
       --gold-deep: #c99a3f;
       --gold-soft: rgba(232,176,75,0.15);
       --gold-line: rgba(232,176,75,0.4);
       --emerald: #34d399;
       --emerald-soft: rgba(52,211,153,0.15);
-      --emerald-line: rgba(52,211,153,0.4);
       --blue: #60a5fa;
       --blue-soft: rgba(96,165,250,0.15);
       --paper: #ffffff;
@@ -28,48 +26,53 @@
       --paper-mute: rgba(255,255,255,0.45);
       --font-display: 'Playfair Display', Georgia, serif;
       --font-body: 'Inter', system-ui, sans-serif;
-      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    [data-theme="light"] {
+      --bg-1: #f0f4f8;
+      --bg-2: #e2e8f0;
+      --card: rgba(15,23,42,0.05);
+      --card-border: rgba(15,23,42,0.12);
+      --gold: #b45309;
+      --gold-deep: #92400e;
+      --gold-soft: rgba(180,83,9,0.12);
+      --gold-line: rgba(180,83,9,0.3);
+      --emerald: #059669;
+      --emerald-soft: rgba(5,150,105,0.12);
+      --blue: #2563eb;
+      --blue-soft: rgba(37,99,235,0.12);
+      --paper: #0f172a;
+      --paper-dim: rgba(15,23,42,0.75);
+      --paper-mute: rgba(15,23,42,0.5);
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
+    html, body { height: 100%; overflow: hidden; }
+
     body {
       font-family: var(--font-body);
       background:
-        radial-gradient(ellipse at 15% 20%, rgba(232,176,75,0.05) 0%, transparent 50%),
-        radial-gradient(ellipse at 85% 80%, rgba(52,211,153,0.04) 0%, transparent 50%),
+        radial-gradient(ellipse at 15% 20%, var(--gold-soft) 0%, transparent 50%),
+        radial-gradient(ellipse at 85% 80%, var(--emerald-soft) 0%, transparent 50%),
         linear-gradient(165deg, var(--bg-1) 0%, var(--bg-2) 100%);
       color: var(--paper);
-      min-height: 100vh;
-      overflow-x: hidden;
       -webkit-font-smoothing: antialiased;
       position: relative;
+      display: flex;
+      flex-direction: column;
+      transition: background 0.4s ease, color 0.4s ease;
     }
 
-    /* Grid pattern background — subtle, terminal-inspired */
-    body::before {
+    [data-theme="dark"] body::before,
+    [data-theme="light"] body::before {
       content: '';
       position: fixed;
       inset: 0;
       background-image:
-        linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+        linear-gradient(var(--card-border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--card-border) 1px, transparent 1px);
       background-size: 40px 40px;
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    /* Scanline effect — very subtle */
-    body::after {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background: repeating-linear-gradient(
-        0deg,
-        rgba(255,255,255,0.01) 0px,
-        transparent 1px,
-        transparent 2px
-      );
       pointer-events: none;
       z-index: 0;
       opacity: 0.5;
@@ -78,16 +81,45 @@
     .container {
       position: relative;
       z-index: 1;
-      max-width: 1000px;
+      max-width: 1100px;
       margin: 0 auto;
-      padding: 24px;
+      padding: 20px 24px;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      width: 100%;
+    }
+
+    /* ===== Theme toggle ===== */
+    .theme-toggle {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 100;
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 999px;
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      color: var(--paper-dim);
+      font-size: 13px;
+      font-weight: 600;
+      backdrop-filter: blur(8px);
+      transition: border-color 0.2s ease;
+    }
+    .theme-toggle:hover { border-color: var(--gold-line); }
+    .theme-toggle .icon {
+      width: 18px; height: 18px;
+      display: flex; align-items: center; justify-content: center;
     }
 
     /* ===== Header ===== */
     .header {
       text-align: center;
-      padding: 28px 24px 20px;
-      margin-bottom: 8px;
+      padding: 8px 0 4px;
     }
     .header .eyebrow {
       font-family: var(--font-display);
@@ -99,92 +131,75 @@
     }
     .header h1 {
       font-family: var(--font-display);
-      font-size: 30px;
+      font-size: 26px;
       font-weight: 700;
       color: var(--paper);
       letter-spacing: -0.01em;
       margin-top: 6px;
     }
-    .header .sub {
-      color: var(--paper-mute);
-      font-size: 13px;
-      margin-top: 4px;
-    }
 
-    /* ===== Stats bar — informative cards ===== */
+    /* ===== Stats bar ===== */
     .stats-bar {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
-      margin: 20px 0;
+      gap: 10px;
+      margin: 14px 0;
     }
     .stat-card {
       background: var(--card);
       border: 1px solid var(--card-border);
-      border-radius: 14px;
-      padding: 16px 12px;
+      border-radius: 12px;
+      padding: 12px 10px;
       text-align: center;
       backdrop-filter: blur(8px);
     }
     .stat-card .num {
-      font-family: var(--font-mono);
-      font-size: 28px;
+      font-family: var(--font-display);
+      font-size: 26px;
       font-weight: 700;
       line-height: 1;
-      letter-spacing: -0.02em;
+      letter-spacing: -0.01em;
     }
     .stat-card .num.gold { color: var(--gold); }
     .stat-card .num.emerald { color: var(--emerald); }
     .stat-card .num.blue { color: var(--blue); }
     .stat-card .num.paper { color: var(--paper-dim); }
     .stat-card .lbl {
-      font-family: var(--font-display);
+      font-family: var(--font-body);
       font-size: 10px;
       color: var(--paper-mute);
       font-weight: 600;
-      letter-spacing: 2px;
+      letter-spacing: 1.5px;
       text-transform: uppercase;
-      margin-top: 6px;
+      margin-top: 5px;
     }
 
-    /* ===== Progress ===== */
-    .progress-wrap {
-      margin: 20px 0;
+    /* ===== Main layout: 3 kolom ===== */
+    .main-layout {
+      display: grid;
+      grid-template-columns: 1fr 1.3fr 1fr;
+      gap: 14px;
+      align-items: stretch;
+      flex: 1;
+      min-height: 0;
+      margin-bottom: 12px;
     }
-    .progress-label {
+
+    .side-col {
       display: flex;
-      justify-content: space-between;
-      font-size: 12px;
-      color: var(--paper-mute);
-      margin-bottom: 8px;
-    }
-    .progress-label .strong {
-      color: var(--gold);
-      font-weight: 600;
-      font-family: var(--font-mono);
-    }
-    .progress-bar {
-      height: 6px;
-      background: rgba(255,255,255,0.08);
-      border-radius: 999px;
-      overflow: hidden;
-    }
-    .progress-fill {
-      height: 100%;
-      background: linear-gradient(90deg, var(--gold), var(--emerald));
-      border-radius: 999px;
-      transition: width 0.6s ease;
+      flex-direction: column;
+      min-height: 0;
     }
 
-    /* ===== Hero — Sedang Dipanggil (kolom tengah) ===== */
+    /* ===== Hero — Sedang Dipanggil ===== */
     .hero-card {
-      background: linear-gradient(160deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
+      background: linear-gradient(160deg, var(--card-hover), var(--card));
       border: 1px solid var(--card-border);
-      border-radius: 24px;
-      padding: 40px 32px;
+      border-radius: 20px;
+      padding: 32px 28px;
       text-align: center;
       backdrop-filter: blur(16px);
-      box-shadow: 0 40px 100px -20px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.1);
+      box-shadow: 0 30px 80px -20px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05);
       width: 100%;
       position: relative;
       overflow: hidden;
@@ -192,7 +207,7 @@
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      min-height: 320px;
+      min-height: 340px;
     }
     .hero-card::before {
       content: '';
@@ -211,108 +226,95 @@
     }
     .hero-card .nomor {
       font-family: var(--font-display);
-      font-size: 110px;
+      font-size: 130px;
       font-weight: 800;
       color: var(--gold);
       line-height: 1;
       letter-spacing: -0.03em;
       margin: 12px 0 16px;
-      text-shadow: 0 0 50px rgba(232,176,75,0.4);
+      text-shadow: 0 0 50px var(--gold-line);
       animation: nomor-glow 3s ease-in-out infinite;
     }
     .hero-card .counter {
       display: inline-flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       background: var(--gold-soft);
       color: var(--gold);
-      padding: 10px 28px;
+      padding: 8px 22px;
       border-radius: 999px;
       font-weight: 700;
-      font-size: 18px;
+      font-size: 16px;
       border: 1px solid var(--gold-line);
-      font-family: var(--font-body);
     }
     .hero-card .nama {
-      margin-top: 20px;
+      margin-top: 14px;
       font-family: var(--font-display);
-      font-size: 22px;
+      font-size: 19px;
       font-weight: 600;
       color: var(--paper);
     }
     .hero-empty {
       color: var(--paper-mute);
       font-family: var(--font-display);
-      font-size: 22px;
+      font-size: 19px;
       text-align: center;
       line-height: 1.6;
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      min-height: 320px;
+      min-height: 340px;
       padding: 32px;
     }
 
-    /* ===== Main layout: 3 kolom horizontal (Antrian | Dipanggil | Info) ===== */
-    .main-layout {
-      display: grid;
-      grid-template-columns: 1fr 1.3fr 1fr;
-      gap: 16px;
-      align-items: stretch;
-      flex: 1;
-      min-height: 0;
-      margin-bottom: 12px;
-    }
-
-    .side-col {
+    /* ===== Side sections ===== */
+    .next-section, .info-section {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 18px;
+      backdrop-filter: blur(8px);
       display: flex;
       flex-direction: column;
       min-height: 0;
     }
-
-    .next-section {
-      background: var(--card);
-      border: 1px solid var(--card-border);
-      border-radius: 18px;
-      padding: 24px;
-      backdrop-filter: blur(8px);
-    }
-    .next-title {
+    .next-title, .info-title {
       font-family: var(--font-display);
       font-size: 12px;
       color: var(--paper-mute);
       font-weight: 600;
       letter-spacing: 3px;
       text-transform: uppercase;
-      margin-bottom: 16px;
-      padding-bottom: 12px;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
       border-bottom: 1px solid var(--card-border);
     }
     .next-list {
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      max-height: 280px;
+      gap: 7px;
       overflow-y: auto;
+      max-height: 260px;
     }
+    .next-list::-webkit-scrollbar { width: 4px; }
+    .next-list::-webkit-scrollbar-track { background: transparent; }
+    .next-list::-webkit-scrollbar-thumb { background: var(--card-border); border-radius: 2px; }
     .next-row {
       display: flex;
       align-items: center;
-      gap: 14px;
-      background: rgba(255,255,255,0.04);
+      gap: 12px;
+      background: var(--card-hover);
       border: 1px solid var(--card-border);
-      border-radius: 12px;
-      padding: 12px 16px;
-      transition: border-color 0.2s ease;
+      border-radius: 10px;
+      padding: 9px 12px;
     }
-    .next-row:hover { border-color: var(--gold-line); }
     .next-row .nomor {
-      font-family: var(--font-mono);
-      font-size: 20px;
+      font-family: var(--font-display);
+      font-size: 19px;
       font-weight: 700;
       color: var(--gold);
-      min-width: 48px;
+      min-width: 46px;
     }
     .next-row .info { flex: 1; min-width: 0; }
     .next-row .nama {
@@ -327,47 +329,28 @@
       font-size: 11px;
       color: var(--paper-mute);
       margin-top: 2px;
-      font-family: var(--font-mono);
     }
     .next-empty {
       color: var(--paper-mute);
       text-align: center;
-      padding: 24px;
+      padding: 20px;
       font-size: 14px;
     }
 
-    .info-section {
-      background: var(--card);
-      border: 1px solid var(--card-border);
-      border-radius: 18px;
-      padding: 24px;
-      backdrop-filter: blur(8px);
-    }
-    .info-title {
-      font-family: var(--font-display);
-      font-size: 12px;
-      color: var(--paper-mute);
-      font-weight: 600;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      margin-bottom: 16px;
-      padding-bottom: 12px;
-      border-bottom: 1px solid var(--card-border);
-    }
     .info-list {
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 12px;
     }
     .info-item {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 11px;
     }
     .info-item .icon {
-      width: 36px;
-      height: 36px;
-      border-radius: 10px;
+      width: 34px;
+      height: 34px;
+      border-radius: 9px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -378,15 +361,15 @@
     .info-item .icon.blue { background: var(--blue-soft); color: var(--blue); }
     .info-item .text { flex: 1; }
     .info-item .text .label {
-      font-size: 11px;
+      font-size: 10px;
       color: var(--paper-mute);
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 1px;
     }
     .info-item .text .value {
-      font-family: var(--font-mono);
-      font-size: 18px;
+      font-family: var(--font-display);
+      font-size: 17px;
       font-weight: 700;
       color: var(--paper);
       margin-top: 2px;
@@ -398,26 +381,29 @@
       color: var(--paper-dim);
     }
 
-    /* ===== Footer ===== */
+    /* ===== Footer — center rapi ===== */
     .footer {
       text-align: center;
-      padding: 16px 24px 28px;
+      padding: 10px 0;
       color: var(--paper-mute);
       font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
     }
     .footer .dot {
       display: inline-block;
       width: 6px; height: 6px;
       background: var(--emerald);
       border-radius: 50%;
-      margin-right: 8px;
       animation: dot-pulse 2s ease-in-out infinite;
     }
 
     /* ===== Animations ===== */
     @keyframes nomor-glow {
-      0%, 100% { text-shadow: 0 0 60px rgba(232,176,75,0.4); opacity: 1; }
-      50% { text-shadow: 0 0 90px rgba(232,176,75,0.7); opacity: 0.92; }
+      0%, 100% { text-shadow: 0 0 50px var(--gold-line); opacity: 1; }
+      50% { text-shadow: 0 0 80px var(--gold-line); opacity: 0.92; }
     }
     @keyframes dot-pulse {
       0%, 100% { opacity: 1; }
@@ -427,28 +413,35 @@
     @media (max-width: 768px) {
       .stats-bar { grid-template-columns: repeat(2, 1fr); }
       .main-layout { grid-template-columns: 1fr; }
-      .hero-card .nomor { font-size: 72px; }
-      .hero-card { padding: 24px 20px; min-height: 240px; }
-      .header h1 { font-size: 24px; }
-      .next-list { max-height: 140px; }
+      .hero-card .nomor { font-size: 80px; }
+      .hero-card { padding: 24px 20px; min-height: 260px; }
+      .next-list { max-height: 160px; }
+      .theme-toggle { top: 8px; right: 8px; padding: 6px 12px; font-size: 12px; }
     }
   </style>
 </head>
 <body>
+  <!-- Theme Toggle -->
+  <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" aria-label="Ganti tema">
+    <span class="icon" id="theme-icon">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+    </span>
+    <span id="theme-text">Mode Terang</span>
+  </button>
+
   <div class="container">
 
     <!-- Header -->
     <div class="header">
       <div class="eyebrow">Informasi Antrian</div>
       <h1>Pengambilan Sertifikat</h1>
-      <div class="sub">Mohon perhatikan nomor antrian Anda</div>
     </div>
 
     <!-- Stats Bar -->
     <div class="stats-bar" id="stats-bar" style="display:none;">
       <div class="stat-card">
         <div class="num paper" id="stat-total">0</div>
-        <div class="lbl">Total Antrian</div>
+        <div class="lbl">Total</div>
       </div>
       <div class="stat-card">
         <div class="num gold" id="stat-dipanggil">0</div>
@@ -464,18 +457,7 @@
       </div>
     </div>
 
-    <!-- Progress -->
-    <div class="progress-wrap" id="progress-wrap" style="display:none;">
-      <div class="progress-label">
-        <span>Progres pengambilan sertifikat</span>
-        <span class="strong" id="progress-text">0 / 0</span>
-      </div>
-      <div class="progress-bar">
-        <div class="progress-fill" id="progress-fill" style="width:0%"></div>
-      </div>
-    </div>
-
-    <!-- Main Layout: 3 kolom horizontal (Antrian | Dipanggil | Info) -->
+    <!-- Main Layout: 3 kolom -->
     <div class="main-layout">
 
       <!-- Kolom Kiri: Antrian Berikutnya -->
@@ -494,7 +476,7 @@
           <div class="label">Sedang Dipanggil</div>
           <div class="nomor" id="hero-nomor">-</div>
           <div class="counter" id="hero-counter">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg>
             <span id="hero-counter-text">Counter -</span>
           </div>
           <div class="nama" id="hero-nama"></div>
@@ -511,7 +493,7 @@
           <div class="info-list" id="info-list">
             <div class="info-item">
               <div class="icon gold">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
               </div>
               <div class="text">
                 <div class="label">Estimasi Tunggu</div>
@@ -520,7 +502,7 @@
             </div>
             <div class="info-item">
               <div class="icon blue">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
               </div>
               <div class="text">
                 <div class="label">Sisa Antrian</div>
@@ -529,29 +511,31 @@
             </div>
             <div class="info-item">
               <div class="icon emerald">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
               </div>
               <div class="text">
                 <div class="label">Selesai Hari Ini</div>
                 <div class="value" id="info-selesai">-</div>
+              </div>
             </div>
-          </div>
-          <div class="info-item">
-            <div class="icon gold">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg>
-            </div>
-            <div class="text">
-              <div class="label">Counter Aktif</div>
-              <div class="value" id="info-counter">-</div>
+            <div class="info-item">
+              <div class="icon gold">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg>
+              </div>
+              <div class="text">
+                <div class="label">Counter Aktif</div>
+                <div class="value" id="info-counter">-</div>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Footer -->
+    <!-- Footer — center rapi -->
     <div class="footer">
-      <span class="dot"></span>Update otomatis — informasi antrian real-time
+      <span class="dot"></span>
+      <span>Update otomatis — informasi antrian real-time</span>
     </div>
   </div>
 
@@ -559,19 +543,47 @@
   <script>
     const socket = io();
 
+    // Theme toggle
+    function toggleTheme() {
+      const html = document.documentElement;
+      const current = html.getAttribute('data-theme');
+      const next = current === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', next);
+      localStorage.setItem('info-theme', next);
+      updateThemeButton(next);
+    }
+
+    function updateThemeButton(theme) {
+      const icon = document.getElementById('theme-icon');
+      const text = document.getElementById('theme-text');
+      if (theme === 'dark') {
+        text.textContent = 'Mode Terang';
+        icon.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>';
+      } else {
+        text.textContent = 'Mode Gelap';
+        icon.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+      }
+    }
+
+    // Load saved theme
+    (function initTheme() {
+      const saved = localStorage.getItem('info-theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', saved);
+      updateThemeButton(saved);
+    })();
+
     function esc(s) {
       if (s == null) return '';
       return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
     }
 
-    // Estimasi waktu tunggu berdasarkan rata-rata (asumsi ~2 menit per peserta)
     function estimasiTunggu(menunggu) {
-      if (!menunggu || menunggu === 0) return 'Tidak ada antrian';
+      if (!menunggu || menunggu === 0) return 'Tidak ada';
       const menit = menunggu * 2;
       if (menit < 60) return `± ${menit} menit`;
       const jam = Math.floor(menit / 60);
       const sisa = menit % 60;
-      return sisa > 0 ? `± ${jam} jam ${sisa} menit` : `± ${jam} jam`;
+      return sisa > 0 ? `± ${jam}j ${sisa}m` : `± ${jam} jam`;
     }
 
     async function loadInfo() {
@@ -606,7 +618,7 @@
     function renderNext(menunggu) {
       const list = document.getElementById('next-list');
       if (!menunggu || menunggu.length === 0) {
-        list.innerHTML = '<div class="next-empty">Tidak ada antrian menunggu</div>';
+        list.innerHTML = '<div class="next-empty">Tidak ada antrian</div>';
         return;
       }
       list.innerHTML = menunggu.map(p => `
@@ -628,15 +640,6 @@
       document.getElementById('stat-menunggu').textContent = statistik.menunggu ?? 0;
       document.getElementById('stat-selesai').textContent = statistik.selesai ?? 0;
       document.getElementById('stats-bar').style.display = 'grid';
-
-      // Progress
-      if (total > 0) {
-        const selesai = statistik.selesai ?? 0;
-        const pct = Math.round((selesai / total) * 100);
-        document.getElementById('progress-text').textContent = `${selesai} / ${total} (${pct}%)`;
-        document.getElementById('progress-fill').style.width = pct + '%';
-        document.getElementById('progress-wrap').style.display = 'block';
-      }
     }
 
     function renderInfo(statistik) {
@@ -644,19 +647,16 @@
       document.getElementById('info-estimasi').textContent = estimasiTunggu(statistik.menunggu ?? 0);
       document.getElementById('info-sisa').textContent = statistik.menunggu ?? 0;
       document.getElementById('info-selesai').textContent = statistik.selesai ?? 0;
-      // Counter aktif = jumlah loket yang sedang dipanggil
       const counterAktif = statistik.dipanggil ?? 0;
-      document.getElementById('info-counter').textContent = counterAktif > 0 ? `${counterAktif} counter` : '0 counter';
+      document.getElementById('info-counter').textContent = counterAktif > 0 ? `${counterAktif}` : '0';
     }
 
-    // Real-time update
     socket.on('antrian:panggil', () => { loadInfo(); });
     socket.on('antrian:baru', () => { loadInfo(); });
     socket.on('antrian:selesai', () => { loadInfo(); });
     socket.on('antrian:panggil-ulang', () => { loadInfo(); });
     socket.on('statistik:update', () => { loadInfo(); });
 
-    // Init
     loadInfo();
     setInterval(loadInfo, 15000);
   </script>
