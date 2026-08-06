@@ -23,6 +23,20 @@ const io = new Server(server);
 
 app.use(cors());
 app.use(express.json());
+
+// Clean URLs: akses tanpa ekstensi .html (mis. /panitia → panitia.html).
+// Didefinisikan SEBELUM express.static supaya request clean-path dicegat dulu.
+// .html lama tetap berfungsi (express.static serve apa adanya) — kompatibel
+// dengan bookmark pengguna & cache Cloudflare yang mungkin masih pakai .html.
+const PAGES = ['panitia', 'info', 'data'];
+app.use((req, res, next) => {
+  const seg = req.path.split('/')[1];
+  if (seg && PAGES.includes(seg) && !req.path.includes('.')) {
+    req.url = '/' + seg + '.html';
+  }
+  next();
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 // API routes
@@ -35,7 +49,7 @@ const PORT = process.env.PORT || 3000;
 
 server.listen(PORT, '127.0.0.1', () => {
   console.log(`Server berjalan di http://localhost:${PORT}`);
-  console.log(`Dashboard panitia: http://localhost:${PORT}/panitia.html`);
+  console.log(`Dashboard panitia: http://localhost:${PORT}/panitia`);
 });
 
 export { app, server, io };
