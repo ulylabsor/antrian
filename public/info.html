@@ -583,6 +583,59 @@
       position: relative;
     }
     .hero-card .nomor.changed { animation: nomor-pop 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+
+    /* ===== Animasi panggil-ulang (recall) ===== */
+    /* Saat panitia memanggil ulang nomor yang sedang dipanggil, hero-card diberi
+       kelas .recalling: border berkedip emerald + ring sonar memuai keluar +
+       badge "Memanggil Ulang" muncul. Sinyal visual jelas bahwa sedang ada
+       pemanggilan ulang aktif — terbaca dari jarak jauh di layar info. */
+    .hero-card.recalling {
+      border-color: var(--emerald);
+      animation: recall-border 1.6s ease-out;
+    }
+    .hero-card.recalling .nomor {
+      animation: recall-pulse 1.6s ease-out;
+    }
+    .hero-card .recall-ring {
+      position: absolute;
+      top: 50%; left: 50%;
+      width: 120px; height: 120px;
+      margin: -60px 0 0 -60px;
+      border-radius: 50%;
+      border: 3px solid var(--emerald);
+      opacity: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .hero-card.recalling .recall-ring {
+      animation: recall-sonar 1.6s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .hero-card .recall-badge {
+      position: absolute;
+      top: 14px; right: 16px;
+      display: inline-flex; align-items: center; gap: 7px;
+      background: var(--emerald-soft);
+      color: var(--emerald);
+      border: 1px solid var(--emerald);
+      border-radius: 999px;
+      padding: 5px 12px;
+      font-family: var(--font-display);
+      font-size: 11px; font-weight: 700;
+      letter-spacing: 1.5px; text-transform: uppercase;
+      opacity: 0; transform: translateY(-6px);
+      pointer-events: none;
+      z-index: 2;
+    }
+    .hero-card.recalling .recall-badge {
+      animation: recall-badge 1.6s ease-out;
+    }
+    .hero-card .recall-badge .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--emerald);
+      box-shadow: 0 0 8px var(--emerald-line);
+      animation: dot-pulse 1s ease-in-out infinite;
+    }
     .hero-card .counter {
       display: inline-flex;
       align-items: center;
@@ -828,6 +881,34 @@
       60%  { transform: scale(0.98); opacity: 1; filter: blur(0); }
       100% { transform: scale(1); }
     }
+    /* Border berkedip emerald saat recall */
+    @keyframes recall-border {
+      0%, 100% { border-color: var(--card-border-strong); }
+      20%, 60% { border-color: var(--emerald); box-shadow: 0 0 32px var(--emerald-line), var(--shadow-hero); }
+      40%, 80% { border-color: var(--card-border-strong); }
+    }
+    /* Nomor "detak" — scale naik-turun halus menandai sedang dipanggil ulang */
+    @keyframes recall-pulse {
+      0%   { transform: scale(1); }
+      15%  { transform: scale(1.08); }
+      30%  { transform: scale(1); }
+      45%  { transform: scale(1.08); }
+      60%  { transform: scale(1); }
+      100% { transform: scale(1); }
+    }
+    /* Ring sonar memuai dari tengah hero → kesan "siaran ulang" */
+    @keyframes recall-sonar {
+      0%   { opacity: 0.7; transform: scale(0.4); }
+      70%  { opacity: 0; transform: scale(3.2); }
+      100% { opacity: 0; transform: scale(3.2); }
+    }
+    /* Badge "Memanggil Ulang" muncul di pojok kanan atas hero */
+    @keyframes recall-badge {
+      0%   { opacity: 0; transform: translateY(-6px) scale(0.9); }
+      15%  { opacity: 1; transform: translateY(0) scale(1); }
+      85%  { opacity: 1; transform: translateY(0) scale(1); }
+      100% { opacity: 0; transform: translateY(-6px) scale(0.9); }
+    }
     @keyframes row-in {
       from { opacity: 0; transform: translateY(6px); }
       to   { opacity: 1; transform: translateY(0); }
@@ -847,6 +928,12 @@
         transition-duration: 0.001ms !important;
       }
       .hero-card .nomor.changed { animation: none; }
+      .hero-card.recalling,
+      .hero-card.recalling .nomor,
+      .hero-card.recalling .recall-ring,
+      .hero-card.recalling .recall-badge { animation: none !important; }
+      .hero-card.recalling { border-color: var(--emerald); }
+      .hero-card.recalling .recall-badge { opacity: 1; transform: none; }
       .hero-empty .ring { animation: none; border-top-color: var(--gold); }
     }
 
@@ -963,6 +1050,8 @@
       <!-- Kanan: Sedang Dipanggil + Loket Aktif (full tinggi) -->
       <div class="center-col">
         <section class="hero-card" id="hero-card" style="display:none;" aria-live="polite" aria-atomic="true">
+          <div class="recall-ring" aria-hidden="true"></div>
+          <div class="recall-badge" aria-hidden="true"><span class="dot"></span>Memanggil Ulang</div>
           <div class="label">Sedang Dipanggil</div>
           <div class="nomor" id="hero-nomor">-</div>
           <div class="counter" id="hero-counter">
@@ -1195,12 +1284,14 @@
 
     let lastHeroNomor = null;
     let lastNextSig = null;
+    let recallNomor = null;   // nomor yang sedang dipanggil ulang (override renderHero)
+    let recallTimer = null;   // timer untuk melepas kelas .recalling
 
     async function loadInfo() {
       try {
         const res = await fetch('/api/info-antrian');
         const data = await res.json();
-        renderHero(data.dipanggil || []);
+        renderHero(data.dipanggil || [], recallNomor);
         renderCounters(data.dipanggil || []);
         renderNext(data.menunggu || []);
         renderStats(data.statistik);
@@ -1210,13 +1301,20 @@
       }
     }
 
-    function renderHero(dipanggil) {
+    function renderHero(dipanggil, overrideNomor) {
       const heroCard = document.getElementById('hero-card');
       const heroEmpty = document.getElementById('hero-empty');
       if (dipanggil.length > 0) {
         // urut descending: nomor terbesar = paling baru dipanggil
         const sorted = [...dipanggil].sort((a, b) => b.nomor_antrian - a.nomor_antrian);
-        const current = sorted[0];
+        // Bila ada recall aktif, prioritaskan tampilkan nomor yang dipanggil ulang
+        // (panitia bisa memanggil ulang nomor lama — hero harus ikut nomor itu, bukan
+        // nomor terbesar, supaya yang tampil di layar cocok dengan suara TTS).
+        let current = sorted[0];
+        if (overrideNomor !== null && overrideNomor !== undefined) {
+          const match = sorted.find(p => String(p.nomor_antrian) === String(overrideNomor));
+          if (match) current = match;
+        }
         const nomorEl = document.getElementById('hero-nomor');
         const newNomor = String(current.nomor_antrian);
         nomorEl.textContent = newNomor;
@@ -1310,8 +1408,40 @@
       document.getElementById('info-counter').textContent = aktif > 0 ? `${aktif} ruangan` : 'Tidak ada';
     }
 
+    /* Aktifkan sinyal visual "memanggil ulang" di kartu Sedang Dipanggil.
+       Menyetel override nomor (supaya renderHero ikut nomor ini), lalu memberi kelas
+       .recalling yang memicu: border berkedip emerald + ring sonar + badge. Animasi
+       dilepas otomatis setelah selesai; override tetap sampai recall berikutnya. */
+    function triggerRecall(nomor) {
+      recallNomor = nomor;
+      const heroCard = document.getElementById('hero-card');
+      if (!heroCard || heroCard.style.display === 'none') return;
+      // Lepas kelas lalu reflow supaya animasi bisa re-trigger bila recall beruntun.
+      heroCard.classList.remove('recalling');
+      void heroCard.offsetWidth;
+      heroCard.classList.add('recalling');
+      // Setelah animasi selesai: lepas kelas + hapus override nomor. Override hanya
+      // berlaku selama jendera recall — begitu selesai, polling berikutnya (loadInfo
+      // via socket/interval) kembali ke sorted[0] (nomor terbaru) supaya hero tidak
+      // "stuck" menampilkan nomor lama yang sudah selesai diperbarui recall-nya.
+      if (recallTimer) clearTimeout(recallTimer);
+      recallTimer = setTimeout(() => {
+        heroCard.classList.remove('recalling');
+        recallNomor = null;
+        recallTimer = null;
+        // Refresh sekali tanpa override agar hero kembali ke nomor terbaru.
+        loadInfo();
+      }, 1750);
+    }
+
     /* ===== Real-time events ===== */
     socket.on('antrian:panggil', (data) => {
+      // Panggilan baru: hapus override recall (nomor lama) supaya hero kembali ikut
+      // nomor terbesar/terbaru, dan lepas sinyal recall yang masih menyala.
+      recallNomor = null;
+      if (recallTimer) { clearTimeout(recallTimer); recallTimer = null; }
+      const hc = document.getElementById('hero-card');
+      if (hc) hc.classList.remove('recalling');
       loadInfo();
       // Putar panggilan suara untuk nomor yang baru dipanggil (sekali per nomor).
       // data = { nomor, counter } dari broadcast global (src/routes.js).
@@ -1324,11 +1454,18 @@
     socket.on('antrian:baru', () => loadInfo());
     socket.on('antrian:selesai', () => loadInfo());
     socket.on('antrian:panggil-ulang', (data) => {
-      loadInfo();
       // Panggil ulang: paksa putar ulang meski nomor sama (panitia minta ulang).
       if (data && data.nomor !== undefined && data.nomor !== null) {
         lastPanggilNomor = data.nomor;
+        // 1. Aktifkan override + animasi recall di hero-card DULU (sebelum loadInfo
+        //    agar renderHero menampilkan nomor yang dipanggil ulang, bukan sorted[0]).
+        triggerRecall(data.nomor);
+        // 2. Reload data — renderHero kini menampilkan nomor recall + data terbaru.
+        loadInfo();
+        // 3. Putar suara TTS (chime + neural) untuk nomor yang dipanggil ulang.
         ucapkanPanggilan(data.nomor, data.counter);
+      } else {
+        loadInfo();
       }
     });
     socket.on('statistik:update', () => loadInfo());
