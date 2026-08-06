@@ -6,228 +6,285 @@
   <title>Informasi Antrian - Pengambilan Sertifikat</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
     :root {
-      --ink: #0f172a;
-      --ink-2: #1e293b;
+      --bg-1: #0a0f1e;
+      --bg-2: #111a2e;
+      --card: rgba(255,255,255,0.05);
+      --card-border: rgba(255,255,255,0.1);
+      --gold: #e8b04b;
+      --gold-deep: #c99a3f;
+      --gold-soft: rgba(232,176,75,0.15);
+      --gold-line: rgba(232,176,75,0.4);
       --paper: #ffffff;
-      --mist: #f1f5f9;
-      --mist-2: #e2e8f0;
-      --slate: #475569;
-      --slate-mute: #94a3b8;
-      --gold: #b45309;
-      --gold-deep: #92400e;
-      --gold-soft: #fef3c7;
-      --gold-line: #fde68a;
-      --gold-glow: rgba(180, 83, 9, 0.25);
-      --emerald: #059669;
-      --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
-      --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+      --paper-dim: rgba(255,255,255,0.75);
+      --paper-mute: rgba(255,255,255,0.45);
+      --emerald: #34d399;
+      --emerald-soft: rgba(52,211,153,0.15);
+      --font-display: 'Playfair Display', Georgia, serif;
+      --font-body: 'Inter', system-ui, sans-serif;
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
       font-family: var(--font-body);
-      background: linear-gradient(165deg, var(--ink) 0%, var(--ink-2) 100%);
+      background:
+        radial-gradient(ellipse at 20% 10%, rgba(232,176,75,0.06) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 90%, rgba(52,211,153,0.04) 0%, transparent 50%),
+        linear-gradient(165deg, var(--bg-1) 0%, var(--bg-2) 100%);
       color: var(--paper);
       min-height: 100vh;
       overflow-x: hidden;
       -webkit-font-smoothing: antialiased;
+      display: flex;
+      flex-direction: column;
     }
 
     /* ===== Header ===== */
     .header {
       text-align: center;
-      padding: 32px 24px 24px;
-      border-bottom: 1px solid rgba(255,255,255,0.08);
+      padding: 36px 24px 20px;
     }
     .header .eyebrow {
       font-family: var(--font-display);
-      font-size: 11px;
-      color: var(--gold-soft);
+      font-size: 13px;
+      color: var(--gold);
       font-weight: 600;
-      letter-spacing: 4px;
+      letter-spacing: 5px;
       text-transform: uppercase;
-      opacity: 0.8;
     }
     .header h1 {
       font-family: var(--font-display);
-      font-size: 32px;
+      font-size: 34px;
       font-weight: 700;
       color: var(--paper);
       letter-spacing: -0.01em;
-      margin-top: 6px;
+      margin-top: 8px;
     }
     .header .sub {
-      color: var(--slate-mute);
+      color: var(--paper-mute);
       font-size: 14px;
-      margin-top: 4px;
+      margin-top: 6px;
+      font-weight: 400;
+    }
+    .header .divider {
+      width: 80px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold-line), transparent);
+      margin: 20px auto 0;
     }
 
-    /* ===== Sedang Dipanggil — the hero ===== */
+    /* ===== Progress bar ===== */
+    .progress-wrap {
+      padding: 0 40px;
+      margin: 20px auto 0;
+      max-width: 560px;
+    }
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--paper-mute);
+      margin-bottom: 8px;
+    }
+    .progress-label .strong {
+      color: var(--gold);
+      font-weight: 600;
+    }
+    .progress-bar {
+      height: 6px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--gold), var(--emerald));
+      border-radius: 999px;
+      transition: width 0.6s ease;
+    }
+
+    /* ===== Hero — Sedang Dipanggil ===== */
     .hero {
+      flex: 1;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 48px 24px;
-      min-height: 42vh;
+      padding: 40px 24px;
+      min-height: 46vh;
     }
     .hero-card {
-      background: var(--paper);
-      border-radius: 24px;
-      padding: 48px 56px;
+      background: linear-gradient(160deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
+      border: 1px solid var(--card-border);
+      border-radius: 28px;
+      padding: 56px 72px;
       text-align: center;
-      box-shadow: 0 32px 80px -16px rgba(0,0,0,0.6);
-      border: 1px solid var(--gold-line);
-      animation: hero-glow 3s ease-in-out infinite;
-      max-width: 560px;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 40px 100px -20px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.1);
+      max-width: 640px;
       width: 100%;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold-line), transparent);
     }
     .hero-card .label {
       font-family: var(--font-display);
-      font-size: 12px;
-      color: var(--slate-mute);
+      font-size: 14px;
+      color: var(--paper-mute);
       font-weight: 600;
-      letter-spacing: 4px;
+      letter-spacing: 5px;
       text-transform: uppercase;
     }
     .hero-card .nomor {
       font-family: var(--font-body);
-      font-size: 120px;
-      font-weight: 800;
+      font-size: 180px;
+      font-weight: 900;
       color: var(--gold);
       line-height: 1;
-      letter-spacing: -0.04em;
-      margin: 16px 0;
-      animation: nomor-pulse 2.5s ease-in-out infinite;
+      letter-spacing: -0.05em;
+      margin: 20px 0 24px;
+      text-shadow: 0 0 60px rgba(232,176,75,0.4);
+      animation: nomor-glow 3s ease-in-out infinite;
     }
     .hero-card .counter {
-      display: inline-block;
-      background: linear-gradient(135deg, #fffbeb, var(--gold-soft));
-      color: var(--gold-deep);
-      padding: 10px 28px;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--gold-soft);
+      color: var(--gold);
+      padding: 12px 32px;
       border-radius: 999px;
       font-weight: 700;
-      font-size: 18px;
+      font-size: 20px;
       letter-spacing: 0.5px;
       border: 1px solid var(--gold-line);
-      margin-top: 8px;
     }
     .hero-card .nama {
-      margin-top: 20px;
+      margin-top: 24px;
       font-family: var(--font-display);
-      font-size: 22px;
+      font-size: 24px;
       font-weight: 600;
-      color: var(--ink-2);
+      color: var(--paper);
     }
     .hero-empty {
-      color: var(--slate-mute);
+      color: var(--paper-mute);
       font-family: var(--font-display);
-      font-size: 22px;
+      font-size: 24px;
       text-align: center;
-      padding: 48px 24px;
+      line-height: 1.6;
+    }
+    .hero-empty .icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      opacity: 0.5;
     }
 
     /* ===== Antrian Berikutnya ===== */
     .next-section {
-      padding: 24px 32px 40px;
-      max-width: 720px;
+      padding: 24px 40px 48px;
+      max-width: 800px;
       margin: 0 auto;
+      width: 100%;
     }
-    .next-section .section-title {
+    .next-title {
       font-family: var(--font-display);
-      font-size: 13px;
-      color: var(--slate-mute);
+      font-size: 14px;
+      color: var(--paper-mute);
       font-weight: 600;
-      letter-spacing: 3px;
+      letter-spacing: 4px;
       text-transform: uppercase;
       text-align: center;
-      margin-bottom: 18px;
+      margin-bottom: 20px;
     }
-    .next-list {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
+    .next-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
     }
     .next-row {
       display: flex;
       align-items: center;
-      gap: 18px;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.08);
+      gap: 16px;
+      background: var(--card);
+      border: 1px solid var(--card-border);
       border-radius: 14px;
-      padding: 14px 20px;
+      padding: 16px 20px;
       backdrop-filter: blur(8px);
+      transition: border-color 0.2s ease, transform 0.2s ease;
+    }
+    .next-row:hover {
+      border-color: var(--gold-line);
+      transform: translateY(-2px);
     }
     .next-row .nomor {
       font-family: var(--font-body);
-      font-size: 22px;
+      font-size: 24px;
       font-weight: 800;
-      color: var(--gold-soft);
-      width: 56px;
+      color: var(--gold);
+      min-width: 56px;
       letter-spacing: -0.02em;
     }
+    .next-row .info { flex: 1; min-width: 0; }
     .next-row .nama {
       font-weight: 600;
       color: var(--paper);
       font-size: 15px;
-      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .next-row .seri {
       font-size: 12px;
-      color: var(--slate-mute);
+      color: var(--paper-mute);
+      margin-top: 2px;
     }
     .next-empty {
-      color: var(--slate-mute);
+      grid-column: 1 / -1;
+      color: var(--paper-mute);
       text-align: center;
-      padding: 24px;
-      font-size: 14px;
+      padding: 32px;
+      font-size: 15px;
     }
 
-    /* ===== Footer statistik ===== */
-    .footer-stats {
-      display: flex;
-      justify-content: center;
-      gap: 40px;
-      padding: 20px 24px 32px;
-      border-top: 1px solid rgba(255,255,255,0.08);
-    }
-    .stat {
+    /* ===== Footer ===== */
+    .footer {
       text-align: center;
+      padding: 20px 24px 32px;
+      color: var(--paper-mute);
+      font-size: 12px;
     }
-    .stat .num {
-      font-family: var(--font-body);
-      font-size: 28px;
-      font-weight: 800;
-      color: var(--gold-soft);
-      letter-spacing: -0.02em;
-    }
-    .stat .lbl {
-      font-family: var(--font-display);
-      font-size: 10px;
-      color: var(--slate-mute);
-      font-weight: 600;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      margin-top: 2px;
+    .footer .dot {
+      display: inline-block;
+      width: 6px; height: 6px;
+      background: var(--emerald);
+      border-radius: 50%;
+      margin-right: 8px;
+      animation: dot-pulse 2s ease-in-out infinite;
     }
 
     /* ===== Animations ===== */
-    @keyframes hero-glow {
-      0%, 100% { box-shadow: 0 32px 80px -16px rgba(0,0,0,0.6), 0 0 0 0 rgba(180,83,9,0); }
-      50% { box-shadow: 0 32px 80px -16px rgba(0,0,0,0.6), 0 0 40px 0 var(--gold-glow); }
+    @keyframes nomor-glow {
+      0%, 100% { text-shadow: 0 0 60px rgba(232,176,75,0.4); opacity: 1; }
+      50% { text-shadow: 0 0 90px rgba(232,176,75,0.7); opacity: 0.92; }
     }
-    @keyframes nomor-pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.9; transform: scale(1.02); }
+    @keyframes dot-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
     }
 
     @media (max-width: 640px) {
-      .hero-card .nomor { font-size: 80px; }
-      .hero-card { padding: 32px 24px; }
-      .header h1 { font-size: 24px; }
+      .hero-card .nomor { font-size: 110px; }
+      .hero-card { padding: 36px 28px; }
+      .header h1 { font-size: 26px; }
+      .next-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -237,44 +294,51 @@
   <div class="header">
     <div class="eyebrow">Informasi Antrian</div>
     <h1>Pengambilan Sertifikat</h1>
-    <div class="sub">Status antrian saat ini</div>
+    <div class="sub">Mohon perhatikan nomor antrian Anda</div>
+    <div class="divider"></div>
   </div>
 
-  <!-- Sedang Dipanggil -->
-  <div class="hero" id="hero">
+  <!-- Progress -->
+  <div class="progress-wrap" id="progress-wrap" style="display:none;">
+    <div class="progress-label">
+      <span>Progres pengambilan</span>
+      <span class="strong" id="progress-text">0 / 0</span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+    </div>
+  </div>
+
+  <!-- Hero — Sedang Dipanggil -->
+  <div class="hero">
     <div class="hero-card" id="hero-card" style="display:none;">
       <div class="label">Sedang Dipanggil</div>
       <div class="nomor" id="hero-nomor">-</div>
-      <div class="counter" id="hero-counter">Counter -</div>
+      <div class="counter" id="hero-counter">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg>
+        <span id="hero-counter-text">Counter -</span>
+      </div>
       <div class="nama" id="hero-nama"></div>
     </div>
     <div class="hero-empty" id="hero-empty">
-      Belum ada peserta yang dipanggil.<br>Mohon menunggu.
+      <div class="icon">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.4"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+      </div>
+      Belum ada peserta yang dipanggil.<br>Mohon menunggu dengan sabar.
     </div>
   </div>
 
   <!-- Antrian Berikutnya -->
   <div class="next-section">
-    <div class="section-title">Antrian Berikutnya</div>
-    <div class="next-list" id="next-list">
+    <div class="next-title">Antrian Berikutnya</div>
+    <div class="next-grid" id="next-grid">
       <div class="next-empty">Memuat data...</div>
     </div>
   </div>
 
-  <!-- Footer Statistik -->
-  <div class="footer-stats" id="footer-stats" style="display:none;">
-    <div class="stat">
-      <div class="num" id="stat-menunggu">0</div>
-      <div class="lbl">Menunggu</div>
-    </div>
-    <div class="stat">
-      <div class="num" id="stat-dipanggil">0</div>
-      <div class="lbl">Dipanggil</div>
-    </div>
-    <div class="stat">
-      <div class="num" id="stat-selesai">0</div>
-      <div class="lbl">Selesai</div>
-    </div>
+  <!-- Footer -->
+  <div class="footer">
+    <span class="dot"></span>Update otomatis — informasi antrian real-time
   </div>
 
   <script src="/socket.io/socket.io.js"></script>
@@ -292,7 +356,7 @@
         const data = await res.json();
         renderHero(data.dipanggil);
         renderNext(data.menunggu);
-        renderStats(data.statistik);
+        renderProgress(data.statistik);
       } catch (err) {
         console.error('Gagal memuat info antrian:', err);
       }
@@ -302,10 +366,9 @@
       const heroCard = document.getElementById('hero-card');
       const heroEmpty = document.getElementById('hero-empty');
       if (dipanggil && dipanggil.length > 0) {
-        // Tampilkan yang terakhir dipanggil (nomor terbesar = yang paling baru)
         const current = dipanggil[dipanggil.length - 1];
         document.getElementById('hero-nomor').textContent = current.nomor_antrian;
-        document.getElementById('hero-counter').textContent = current.counter ? `Counter ${current.counter}` : 'Counter';
+        document.getElementById('hero-counter-text').textContent = current.counter ? `Counter ${current.counter}` : 'Counter';
         document.getElementById('hero-nama').textContent = current.nama_lengkap;
         heroCard.style.display = 'block';
         heroEmpty.style.display = 'none';
@@ -316,26 +379,31 @@
     }
 
     function renderNext(menunggu) {
-      const list = document.getElementById('next-list');
+      const grid = document.getElementById('next-grid');
       if (!menunggu || menunggu.length === 0) {
-        list.innerHTML = '<div class="next-empty">Tidak ada antrian menunggu</div>';
+        grid.innerHTML = '<div class="next-empty">Tidak ada antrian menunggu</div>';
         return;
       }
-      list.innerHTML = menunggu.map(p => `
+      grid.innerHTML = menunggu.map(p => `
         <div class="next-row">
           <div class="nomor">#${esc(p.nomor_antrian)}</div>
-          <div class="nama">${esc(p.nama_lengkap)}</div>
-          <div class="seri">${esc(p.no_seri)}</div>
+          <div class="info">
+            <div class="nama">${esc(p.nama_lengkap)}</div>
+            <div class="seri">${esc(p.no_seri)}</div>
+          </div>
         </div>
       `).join('');
     }
 
-    function renderStats(statistik) {
+    function renderProgress(statistik) {
       if (!statistik) return;
-      document.getElementById('stat-menunggu').textContent = statistik.menunggu ?? 0;
-      document.getElementById('stat-dipanggil').textContent = statistik.dipanggil ?? 0;
-      document.getElementById('stat-selesai').textContent = statistik.selesai ?? 0;
-      document.getElementById('footer-stats').style.display = 'flex';
+      const total = (statistik.menunggu ?? 0) + (statistik.dipanggil ?? 0) + (statistik.selesai ?? 0);
+      if (total === 0) return;
+      const selesai = statistik.selesai ?? 0;
+      const pct = Math.round((selesai / total) * 100);
+      document.getElementById('progress-text').textContent = `${selesai} / ${total} (${pct}%)`;
+      document.getElementById('progress-fill').style.width = pct + '%';
+      document.getElementById('progress-wrap').style.display = 'block';
     }
 
     // Real-time update
@@ -347,7 +415,6 @@
 
     // Init
     loadInfo();
-    // Refresh berkala sebagai fallback
     setInterval(loadInfo, 15000);
   </script>
 </body>
