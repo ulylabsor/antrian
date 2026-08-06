@@ -17,6 +17,7 @@ import {
   incrementJumlahDipanggil,
 } from './db.js';
 import { updateStatusInSheets, syncAllToSheets } from './sheets.js';
+import { generatePanggilanAudio } from './tts.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -74,6 +75,57 @@ function readAllPesertaFromCsvContent(content) {
     no_seri: (row[seriIdx] || '').trim(),
     row_number: i + 2,
   })).filter(p => p.nama_lengkap); // Tampilkan semua — termasuk yang no_seri kosong/invalid
+}
+
+/**
+ * Pecah sebuah kata menjadi suku-kata berbasis aturan ejaan Indonesia.
+ * Tujuan: mencegah mesin TTS mengeja nama asing/OOV per huruf. Dengan memecah
+ * per suku (mis. "fazaria" → "fa-za-ri-a"), tiap suku dibaca sebagai kata pendek
+ * yang valid sehingga nama terdengar utuh.
+ *
+ * Heuristik: tarik satu atau dua konsonan awal (termasuk digraf ng/ny/kh/sy) +
+ * vokal, lalu kembangkan sampai habis. Sederhana tapi cukup untuk nama umum.
+ */
+const VOKAL = 'aeiouAEIOU';
+const DIGRAF = ['ng', 'ny', 'kh', 'sy', 'ts', 'ch', 'sh', 'th'];
+function sukukan(kata) {
+  if (!kata) return kata;
+  // Jangan pecah yang sudah pendek (≤3 huruf) atau mengandung non-huruf (angka/simbol).
+  if (kata.length <= 3 || /[^A-Za-z]/.test(kata)) return kata;
+  const adaVokal = (s) => s.split('').some(c => VOKAL.includes(c));
+  const suku = [];
+  let i = 0;
+  while (i < kata.length) {
+    let mulai = i;
+    // Ambil 1-2 konsonan awal (cek digraf dulu, lalu konsonan tunggal)
+    const dua = kata.slice(i, i + 2).toLowerCase();
+    if (DIGRAF.includes(dua)) { i += 2; }
+    else if (!VOKAL.includes(kata[i])) { i += 1; }
+    // Ambil vokal (rangkap vokal seperti "ai"/"au" ikut dalam satu suku)
+    while (i < kata.length && VOKAL.includes(kata[i])) i += 1;
+    // Konsonan penutup:
+    if (i < kata.length && !VOKAL.includes(kata[i])) {
+      // Bila tidak ada vokal lagi di sisa kata → semua konsonan sisanya jadi
+      // penutup akhir kata (mis. "fusdan" → "fus-dan", bukan "fus-da-n").
+      if (!adaVokal(kata.slice(i))) {
+        i = kata.length;
+      } else if (i + 1 < kata.length && !VOKAL.includes(kata[i + 1])) {
+        // Dua konsonan beruntun sebelum vokal berikutnya → ambil 1 sebagai penutup
+        i += 1;
+      }
+    }
+    const potong = kata.slice(mulai, i);
+    if (potong) suku.push(potong);
+    if (i === mulai) i++; // jaga agar tidak loop forever pada karakter aneh
+  }
+  // Gabung suku tanpa vokal (mis. "gg" di "anggraini") ke suku sebelumnya,
+  // supaya tidak ada potongan konsonan-murni yang bisa memicu eja per huruf.
+  const hasil = [];
+  for (const s of suku) {
+    if (hasil.length > 0 && !adaVokal(s)) hasil[hasil.length - 1] += s;
+    else hasil.push(s);
+  }
+  return hasil.length > 1 ? hasil.join('-') : kata;
 }
 
 export function createRouter(io) {
@@ -243,6 +295,8 @@ export function createRouter(io) {
     incrementJumlahDipanggil(nomor);
     // Emit ke peserta agar animasi lagi + putar audio
     if (io) io.to(`peserta:${nomor}`).emit('antrian:panggil-ulang', { nomor, counter });
+    // Broadcast global agar layar info.html juga putar ulang panggilan suara
+    if (io) io.emit('antrian:panggil-ulang', { nomor, counter });
     res.json({ success: true, nomor, counter });
   });
 
@@ -297,18 +351,42 @@ export function createRouter(io) {
 
   // TTS — generate audio panggilan bahasa Indonesia via Google TTS
   // Stream audio buffer langsung dari server (hindari CORS redirect)
+  // Termasuk nama peserta setelah nomor antrian (diambil dari DB via nomor).
   router.get('/tts', async (req, res) => {
     const nomor = req.query.nomor;
     const loket = req.query.loket;
     if (nomor === undefined || loket === undefined) {
       return res.status(400).json({ error: 'nomor dan loket wajib' });
     }
-    const teks = `Panggilan nomor ${nomor}, harap menuju ke loket ${loket}`;
+    // Ambil nama peserta dari database berdasarkan nomor antrian.
+    // Potong nama terlalu panjang supaya audio tidak bertele-tele (maks ~4 kata).
+    let namaBagian = '';
     try {
-      const { getAudioBase64 } = await import('google-tts-api');
-      const result = await getAudioBase64(teks, { lang: 'id', slow: false });
-      const buffer = Buffer.from(result, 'base64');
-      res.set('Content-Type', 'audio/mpeg');
+      const peserta = getAntrianByNomor(parseInt(nomor));
+      if (peserta && peserta.nama_lengkap) {
+        const kata = String(peserta.nama_lengkap).trim().split(/\s+/);
+        namaBagian = kata.length > 4 ? kata.slice(0, 4).join(' ') : peserta.nama_lengkap.trim();
+      }
+    } catch { /* abaikan — audio tetap dihasilkan tanpa nama */ }
+
+    // Pecah nama menjadi suku-kata dipisah tanda hubung (mis. "fazaria" → "fa-za-ri-a",
+    // "fusdan" → "fus-dan"). Mesin TTS kerap mengeja per huruf nama yang tidak ada di
+    // kamus (OOV); memecah per suku membuat tiap suku dibaca sebagai kata pendek yang
+    // valid, sehingga namanya terdengar menyatu seperti diucapkan, bukan dieja.
+    if (namaBagian) {
+      namaBagian = namaBagian.split(/\s+/).map(sukukan).join(' ');
+    }
+
+    // Format panggilan gaya bandara: "Panggilan untuk nomor X, [nama], menuju ruangan Y"
+    // Repetisi 2x + jeda ditangani di sisi client (mainkan audio dua kali dengan jeda).
+    const teks = namaBagian
+      ? `Panggilan untuk nomor ${nomor}, ${namaBagian}, silakan menuju ruangan ${loket}`
+      : `Panggilan untuk nomor ${nomor}, silakan menuju ruangan ${loket}`;
+    try {
+      // generatePanggilanAudio: Cloud TTS neural voice (bila dikonfigurasi) atau
+      // fallback ke Google Translate TTS — keduanya kembalikan buffer audio/mpeg.
+      const { buffer, contentType } = await generatePanggilanAudio(teks);
+      res.set('Content-Type', contentType);
       res.set('Content-Length', buffer.length);
       res.set('Cache-Control', 'public, max-age=3600');
       return res.send(buffer);

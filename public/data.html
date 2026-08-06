@@ -1,108 +1,518 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Data Peserta - Antrian Sertifikat</title>
+  <title>Data Peserta — Antrian Sertifikat</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    /* ===== Design tokens (shared with index.html + info.html + panitia.html) ===== */
+    :root, [data-theme="dark"] {
+      --bg-1: #060912; --bg-2: #0c1322; --bg-3: #111a2e;
+      --card: rgba(255,255,255,0.045); --card-hover: rgba(255,255,255,0.075); --card-strong: rgba(255,255,255,0.09);
+      --card-border: rgba(255,255,255,0.09); --card-border-strong: rgba(255,255,255,0.16);
+      --hairline: rgba(255,255,255,0.06);
+      --gold: #e8b04b; --gold-bright: #f3c869; --gold-deep: #c99a3f;
+      --gold-soft: rgba(232,176,75,0.14); --gold-line: rgba(232,176,75,0.38); --gold-glow: rgba(232,176,75,0.28);
+      --emerald: #34d399; --emerald-soft: rgba(52,211,153,0.14); --emerald-line: rgba(52,211,153,0.35);
+      --blue: #60a5fa; --blue-soft: rgba(96,165,250,0.14);
+      --rose: #fb7185; --rose-soft: rgba(251,113,133,0.14);
+      --paper: #ffffff; --paper-dim: rgba(255,255,255,0.72); --paper-mute: rgba(255,255,255,0.42); --paper-faint: rgba(255,255,255,0.22);
+      --shadow-card: 0 24px 60px -28px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.05);
+      --font-display: 'Plus Jakarta Sans', system-ui, sans-serif;
+      --font-body: 'Plus Jakarta Sans', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+    }
+    [data-theme="light"] {
+      --bg-1: #eef2f7; --bg-2: #e2e8f0; --bg-3: #d9e2ec;
+      --card: rgba(15,23,42,0.045); --card-hover: rgba(15,23,42,0.07); --card-strong: rgba(15,23,42,0.08);
+      --card-border: rgba(15,23,42,0.1); --card-border-strong: rgba(15,23,42,0.18);
+      --hairline: rgba(15,23,42,0.07);
+      --gold: #b45309; --gold-bright: #d97706; --gold-deep: #92400e;
+      --gold-soft: rgba(180,83,9,0.12); --gold-line: rgba(180,83,9,0.32); --gold-glow: rgba(180,83,9,0.18);
+      --emerald: #059669; --emerald-soft: rgba(5,150,105,0.12); --emerald-line: rgba(5,150,105,0.3);
+      --blue: #2563eb; --blue-soft: rgba(37,99,235,0.1);
+      --rose: #e11d48; --rose-soft: rgba(225,29,72,0.1);
+      --paper: #0f172a; --paper-dim: rgba(15,23,42,0.74); --paper-mute: rgba(15,23,42,0.5); --paper-faint: rgba(15,23,42,0.28);
+      --shadow-card: 0 18px 40px -24px rgba(15,23,42,0.25), inset 0 1px 0 rgba(255,255,255,0.6);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: var(--font-body);
+      background:
+        radial-gradient(ellipse 60% 50% at 12% 12%, var(--gold-soft) 0%, transparent 60%),
+        radial-gradient(ellipse 55% 45% at 88% 88%, var(--emerald-soft) 0%, transparent 60%),
+        radial-gradient(ellipse 70% 60% at 50% 50%, var(--bg-3) 0%, transparent 70%),
+        linear-gradient(165deg, var(--bg-1) 0%, var(--bg-2) 100%);
+      color: var(--paper); min-height: 100vh;
+      -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+      position: relative; display: flex; flex-direction: column;
+      transition: background 0.5s ease, color 0.4s ease;
+    }
+    body::before {
+      content: ''; position: fixed; inset: 0;
+      background-image:
+        linear-gradient(var(--hairline) 1px, transparent 1px),
+        linear-gradient(90deg, var(--hairline) 1px, transparent 1px);
+      background-size: 44px 44px;
+      mask-image: radial-gradient(ellipse 80% 70% at 50% 40%, #000 30%, transparent 80%);
+      pointer-events: none; z-index: 0;
+    }
+    .page { position: relative; z-index: 1; flex: 1; display: flex; flex-direction: column; }
+
+    /* ===== Top bar ===== */
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 24px; max-width: 1200px; margin: 0 auto; width: 100%; }
+    .brand { display: flex; align-items: center; gap: 14px; min-width: 0; }
+    .brand .mark { width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(145deg, var(--gold-soft), transparent); border: 1px solid var(--gold-line); display: flex; align-items: center; justify-content: center; color: var(--gold); flex-shrink: 0; box-shadow: inset 0 0 20px var(--gold-soft); }
+    .brand .eyebrow { font-family: var(--font-display); font-size: 11px; color: var(--gold); font-weight: 600; letter-spacing: 4px; text-transform: uppercase; }
+    .brand h1 { font-family: var(--font-display); font-size: 20px; font-weight: 700; color: var(--paper); letter-spacing: -0.01em; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    /* Logo institusi UIN Raden Fatah Palembang + logo PPG berdampingan */
+    .brand .brand-logos { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+    .brand .brand-logo { width: 42px; height: 42px; border-radius: 11px; background: #fff; border: 1px solid var(--gold-line); display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; box-shadow: inset 0 0 20px var(--gold-soft); }
+    .brand .brand-logo img { width: 100%; height: 100%; object-fit: contain; padding: 3px; }
+    /* Logo PPG: bentuk landscape (rasio ~3.7:1) — tanpa kotak putih, biarkan gambar tampil apa adanya.
+       Lebar disesuaikan proporsi agar seimbang dengan logo UIN persegi di sebelahnya. */
+    .brand .brand-logo.ppg { width: 64px; height: 30px; background: transparent; border: none; box-shadow: none; border-radius: 0; }
+    .brand .brand-logo.ppg img { padding: 0; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.18)); }
+    .brand .brand-sub { font-family: var(--font-display); font-size: 10.5px; font-weight: 600; color: var(--paper-mute); letter-spacing: 0.5px; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .clock { display: flex; flex-direction: column; align-items: center; line-height: 1; }
+    .clock .time { font-family: var(--font-mono); font-size: 20px; font-weight: 700; color: var(--paper); font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
+    .clock .date { font-size: 11px; color: var(--paper-mute); font-weight: 600; letter-spacing: 0.5px; margin-top: 4px; text-transform: capitalize; }
+    .theme-toggle { background: var(--card); border: 1px solid var(--card-border); border-radius: 999px; padding: 8px 14px; display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--paper-dim); font-size: 12px; font-weight: 600; backdrop-filter: blur(8px); flex-shrink: 0; transition: border-color 0.2s ease, color 0.2s ease, transform 0.15s ease; font-family: var(--font-body); }
+    .theme-toggle:hover { border-color: var(--gold-line); color: var(--paper); }
+    .theme-toggle:active { transform: scale(0.96); }
+    .theme-toggle:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+    /* ===== Content ===== */
+    .content { max-width: 1200px; width: 100%; margin: 0 auto; padding: 4px 24px 36px; z-index: 1; }
+    .panel-card { background: linear-gradient(165deg, var(--card-strong), var(--card)); border: 1px solid var(--card-border-strong); border-radius: 20px; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); box-shadow: var(--shadow-card); padding: 20px 22px; margin-bottom: 16px; }
+
+    .head-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+    .head-title { font-family: var(--font-display); font-size: 22px; font-weight: 800; color: var(--paper); }
+    .head-sub { font-size: 13px; color: var(--paper-mute); margin-top: 2px; }
+    .btn-back { display: inline-flex; align-items: center; gap: 6px; background: var(--card); color: var(--paper-dim); border: 1px solid var(--card-border); border-radius: 10px; padding: 8px 14px; font-size: 13px; font-weight: 600; text-decoration: none; transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease, transform 0.15s ease; }
+    .btn-back:hover { border-color: var(--gold-line); color: var(--paper); background: var(--card-hover); }
+    .btn-back:active { transform: scale(0.96); }
+    .btn-back:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+    /* ===== Summary grid ===== */
+    .sum-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 18px; }
+    @media (min-width: 768px) { .sum-grid { grid-template-columns: repeat(4, 1fr); } }
+    .sum-card { background: var(--card-hover); border: 1px solid var(--card-border); border-radius: 14px; padding: 14px 12px; text-align: center; }
+    .sum-label { font-size: 11px; color: var(--paper-mute); font-weight: 600; letter-spacing: 0.4px; text-transform: uppercase; }
+    .sum-value { font-family: var(--font-display); font-size: 28px; font-weight: 800; color: var(--paper); margin-top: 4px; font-variant-numeric: tabular-nums; line-height: 1; }
+    .sum-value.gold { color: var(--gold); }
+    .sum-value.emerald { color: var(--emerald); }
+    .sum-value.blue { color: var(--blue); }
+
+    /* ===== Filter bar + search ===== */
+    .filter-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+    .filter-bar { display: flex; gap: 6px; flex-wrap: wrap; }
+    .filter-btn { padding: 7px 14px; border-radius: 9px; font-size: 13px; font-weight: 600; cursor: pointer; background: var(--card); border: 1px solid var(--card-border); color: var(--paper-mute); transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease; }
+    .filter-btn:hover { color: var(--paper-dim); background: var(--card-hover); }
+    .filter-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+    .filter-btn.active { background: var(--gold-bright); border-color: var(--gold-deep); color: #1a1208; }
+    .search-input { background: var(--card-hover); color: var(--paper); border: 1px solid var(--card-border); border-radius: 10px; padding: 8px 12px; font-size: 14px; font-family: var(--font-body); width: 240px; transition: border-color 0.2s ease, box-shadow 0.2s ease; }
+    .search-input::placeholder { color: var(--paper-mute); }
+    .search-input:focus-visible { outline: none; border-color: var(--gold-line); box-shadow: 0 0 0 3px var(--gold-soft); }
+    .count-line { font-size: 12px; color: var(--paper-mute); margin-top: 14px; }
+
+    /* ===== Table ===== */
+    .table-wrap { overflow-x: auto; }
+    .data-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    .data-table thead th { padding: 12px 16px; text-align: left; font-weight: 700; color: var(--paper-mute); font-size: 11px; letter-spacing: 0.6px; text-transform: uppercase; border-bottom: 1px solid var(--card-border-strong); cursor: pointer; user-select: none; white-space: nowrap; transition: color 0.15s ease, background 0.15s ease; }
+    .data-table thead th:hover { color: var(--paper); background: var(--card-hover); }
+    .data-table thead th:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
+    .data-table thead th .sort-ind { color: var(--gold); margin-left: 4px; }
+    .data-table tbody td { padding: 12px 16px; border-bottom: 1px solid var(--hairline); color: var(--paper-dim); }
+    .data-table tbody tr { transition: background 0.15s ease; }
+    .data-table tbody tr:hover { background: var(--card-hover); }
+    .data-table tbody td.name-cell { font-weight: 700; color: var(--paper); }
+    .data-table tbody td.num-cell { font-family: var(--font-mono); font-weight: 700; color: var(--gold); }
+    .empty-row td { text-align: center; padding: 28px; color: var(--paper-mute); }
+
+    /* ===== Status badges ===== */
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; border: 1px solid transparent; }
+    .badge.selesai { background: var(--blue); color: #fff; border-color: var(--blue); }
+    .badge.dipanggil { background: #6366f1; color: #fff; border-color: #6366f1; }
+    .badge.menunggu { background: var(--emerald); color: #fff; border-color: var(--emerald); }
+    .badge.belum { background: var(--gold); color: #fff; border-color: var(--gold-deep); }
+
+    /* ===== Pagination ===== */
+    .pagination { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 16px; border-top: 1px solid var(--hairline); flex-wrap: wrap; }
+    .page-btn { min-width: 36px; padding: 6px 12px; border-radius: 9px; font-size: 13px; font-weight: 600; cursor: pointer; background: var(--card); border: 1px solid var(--card-border); color: var(--paper-dim); transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease; }
+    .page-btn:hover:not(:disabled) { background: var(--card-hover); color: var(--paper); border-color: var(--card-border-strong); }
+    .page-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+    .page-btn.active { background: linear-gradient(145deg, var(--gold-bright), var(--gold-deep)); color: #fff; border-color: var(--gold-deep); }
+    .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .page-ellipsis { padding: 0 6px; color: var(--paper-mute); }
+
+    /* ===== Responsive ===== */
+    @media (max-width: 640px) {
+      .topbar { padding: 14px 16px; gap: 10px; }
+      .brand h1 { font-size: 17px; }
+      .clock .time { font-size: 17px; }
+      .theme-toggle { padding: 7px 10px; }
+      .theme-toggle .label-txt { display: none; }
+      .content { padding: 4px 16px 28px; }
+      .filter-row { flex-direction: column; align-items: stretch; }
+      .search-input { width: 100%; }
+    }
+    @media (max-width: 380px) { .brand .eyebrow { display: none; } .brand .brand-sub { display: none; } .brand .brand-logo { width: 34px; height: 34px; } .brand .brand-logo.ppg { width: 52px; height: 24px; } .brand .brand-logos { gap: 4px; } }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; } }
+
+    /* ===== Tombol cetak ===== */
+    .btn-print { display: inline-flex; align-items: center; gap: 6px; background: var(--card); color: var(--paper-dim); border: 1px solid var(--card-border); border-radius: 10px; padding: 8px 14px; font-size: 13px; font-weight: 600; cursor: pointer; transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease, transform 0.15s ease; font-family: var(--font-body); }
+    .btn-print:hover { border-color: var(--gold-line); color: var(--paper); background: var(--card-hover); }
+    .btn-print:active { transform: scale(0.96); }
+    .btn-print:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+    .btn-print svg { width: 16px; height: 16px; }
+    .head-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+
+    /* ===== Print layout ===== */
+    @media print {
+      body { background: #fff !important; color: #000 !important; }
+      body::before { display: none !important; }
+      .page { display: block !important; }
+      .topbar, .filter-row, .search-input, .count-line, .pagination,
+      .btn-back, .btn-print, .head-actions, .theme-toggle, .clock,
+      .sum-grid, #stats-wrap { display: none !important; }
+      .content { max-width: 100% !important; padding: 0 !important; }
+      .panel-card { border: none !important; background: #fff !important; box-shadow: none !important; backdrop-filter: none !important; padding: 0 0 8px 0 !important; margin-bottom: 0 !important; }
+      .table-wrap { overflow: visible !important; }
+      .data-table { font-size: 11px !important; color: #000 !important; }
+      .data-table thead th { color: #000 !important; border-bottom: 2px solid #000 !important; background: #fff !important; padding: 6px 8px !important; }
+      .data-table tbody td { color: #000 !important; border-bottom: 1px solid #ccc !important; padding: 5px 8px !important; }
+      .data-table tbody tr:hover { background: #fff !important; }
+      .data-table tbody td.name-cell { color: #000 !important; }
+      .data-table tbody td.num-cell { color: #000 !important; }
+      .badge { border: 1px solid #000 !important; color: #000 !important; background: #fff !important; }
+      /* Saat cetak, tampilkan SEMUA baris (class .print-all ditambahkan via JS) */
+      .print-all .data-table tbody tr { display: table-row !important; }
+      /* Header cetak */
+      .print-header { display: none; }
+      .print-mode .print-header { display: block !important; margin-bottom: 12px; text-align: center; }
+      .print-header h2 { font-size: 16px; color: #000; font-weight: 800; }
+      .print-header p { font-size: 11px; color: #333; margin-top: 2px; }
+      .print-meta { font-size: 10px; color: #555; margin-top: 6px; }
+    }
+    .print-header { display: none; }
+
+    /* ===== Rekap harian + Grafik ===== */
+    .section-title { font-family: var(--font-display); font-size: 15px; font-weight: 700; color: var(--paper); display: flex; align-items: center; gap: 8px; }
+    .section-title .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 10px var(--gold-glow); flex-shrink: 0; }
+    .section-sub { font-size: 11.5px; color: var(--paper-mute); margin-top: 3px; }
+    .rekap-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+
+    /* KPI strip untuk rekap */
+    .kpi-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 18px; }
+    @media (min-width: 768px) { .kpi-grid { grid-template-columns: repeat(4, 1fr); } }
+    .kpi-card { background: var(--card-hover); border: 1px solid var(--card-border); border-radius: 12px; padding: 12px 14px; position: relative; overflow: hidden; }
+    .kpi-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--gold); opacity: 0.7; }
+    .kpi-card.emerald::before { background: var(--emerald); }
+    .kpi-card.blue::before { background: var(--blue); }
+    .kpi-card.rose::before { background: var(--rose); }
+    .kpi-label { font-size: 10.5px; color: var(--paper-mute); font-weight: 600; letter-spacing: 0.4px; text-transform: uppercase; }
+    .kpi-value { font-family: var(--font-display); font-size: 24px; font-weight: 800; color: var(--paper); margin-top: 3px; line-height: 1; font-variant-numeric: tabular-nums; }
+    .kpi-foot { font-size: 10.5px; color: var(--paper-faint); margin-top: 4px; }
+
+    /* Grid grafik */
+    .chart-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
+    @media (min-width: 900px) { .chart-grid { grid-template-columns: 1.4fr 1fr; } .chart-grid .chart-box.full { grid-column: 1 / -1; } }
+    .chart-box { background: var(--card-hover); border: 1px solid var(--card-border); border-radius: 14px; padding: 14px 16px; }
+    .chart-box h4 { font-family: var(--font-display); font-size: 13px; font-weight: 700; color: var(--paper); margin-bottom: 2px; }
+    .chart-box .chart-sub { font-size: 11px; color: var(--paper-mute); margin-bottom: 10px; }
+    .chart-canvas-wrap { position: relative; width: 100%; }
+    .chart-canvas-wrap.tall { height: 220px; }
+    .chart-canvas-wrap.med  { height: 180px; }
+    .chart-canvas-wrap.donut{ height: 180px; max-width: 200px; margin: 0 auto; }
+    .chart-legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; font-size: 11.5px; color: var(--paper-mute); }
+    .chart-legend .li { display: inline-flex; align-items: center; gap: 6px; }
+    .chart-legend .sw { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+
+    /* Tabel rekap harian */
+    .rekap-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .rekap-table thead th { padding: 9px 12px; text-align: left; font-weight: 700; color: var(--paper-mute); font-size: 10.5px; letter-spacing: 0.5px; text-transform: uppercase; border-bottom: 1px solid var(--card-border-strong); white-space: nowrap; }
+    .rekap-table thead th.num, .rekap-table tbody td.num { text-align: right; }
+    .rekap-table tbody td { padding: 9px 12px; border-bottom: 1px solid var(--hairline); color: var(--paper-dim); }
+    .rekap-table tbody tr.today { background: var(--gold-soft); }
+    .rekap-table tbody tr.today td { color: var(--paper); }
+    .rekap-table tbody tr.today td:first-child { font-weight: 700; }
+    .rekap-table tbody tr.today::after { content: ''; }
+    .today-tag { display: inline-block; margin-left: 8px; padding: 1px 7px; border-radius: 999px; background: var(--gold-bright); color: #1a1208; font-size: 9px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; vertical-align: middle; }
+    .day-date { font-family: var(--font-mono); font-weight: 700; color: var(--paper); font-variant-numeric: tabular-nums; }
+    .day-name { font-size: 11px; color: var(--paper-mute); margin-top: 1px; }
+    .num-strong { font-family: var(--font-mono); font-weight: 700; color: var(--paper); font-variant-numeric: tabular-nums; }
+    .num-emerald { color: var(--emerald); }
+    .num-blue { color: var(--blue); }
+    .num-gold { color: var(--gold); }
+    /* Progress bar % selesai */
+    .prog { display: flex; align-items: center; gap: 8px; justify-content: flex-end; }
+    .prog-track { width: 70px; height: 6px; border-radius: 999px; background: var(--hairline); overflow: hidden; flex-shrink: 0; }
+    .prog-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--emerald), var(--blue)); transition: width 0.6s ease; }
+    .prog-pct { font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: var(--paper-dim); min-width: 34px; text-align: right; font-variant-numeric: tabular-nums; }
+    .rekap-empty { text-align: center; padding: 24px; color: var(--paper-mute); font-size: 13px; }
+
+    /* Grafik & rekap disembunyikan saat cetak */
+    @media print {
+      .rekap-section, .chart-grid, .kpi-grid { display: none !important; }
+    }
+    @media (max-width: 640px) {
+      .prog-track { width: 48px; }
+      .chart-canvas-wrap.tall { height: 180px; }
+      .rekap-table { font-size: 12px; }
+      .rekap-table thead th, .rekap-table tbody td { padding: 7px 8px; }
+    }
+  </style>
 </head>
-<body class="bg-gray-100 min-h-screen">
+<body>
+  <div class="page">
 
-  <div class="max-w-6xl mx-auto p-4">
-    <!-- Header -->
-    <div class="bg-white rounded-xl shadow p-6 mb-4">
-      <div class="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 class="text-2xl font-bold text-gray-800">Data Peserta</h1>
-          <p class="text-gray-500 text-sm">Keseluruhan dari Excel — sudah & belum ambil sertifikat</p>
+    <!-- ===== Top bar ===== -->
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-logos">
+          <div class="brand-logo">
+            <img src="logo-radenfatah.png" alt="Logo UIN Raden Fatah Palembang" width="42" height="42">
+          </div>
+          <div class="brand-logo ppg">
+            <img src="ppg.png" alt="Logo PPG">
+          </div>
         </div>
-        <a href="/panitia.html" class="px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg text-sm font-medium">← Kembali ke Dashboard</a>
+        <div class="text">
+          <div class="eyebrow">Data Peserta</div>
+          <h1>Pengambilan Sertifikat</h1>
+          <div class="brand-sub">PPG UIN Raden Fatah Palembang</div>
+        </div>
       </div>
 
-      <!-- Ringkasan -->
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-5">
-        <div class="bg-gray-50 rounded-lg p-3 text-center">
-          <div class="text-xs text-gray-500">Total Peserta</div>
-          <div id="sum-total" class="text-2xl font-bold text-gray-800">0</div>
-        </div>
-        <div class="bg-yellow-50 rounded-lg p-3 text-center">
-          <div class="text-xs text-gray-500">Belum Ambil</div>
-          <div id="sum-belum" class="text-2xl font-bold text-yellow-600">0</div>
-        </div>
-        <div class="bg-blue-50 rounded-lg p-3 text-center">
-          <div class="text-xs text-gray-500">Sudah Ambil</div>
-          <div id="sum-selesai" class="text-2xl font-bold text-blue-600">0</div>
-        </div>
-        <div class="bg-green-50 rounded-lg p-3 text-center">
-          <div class="text-xs text-gray-500">Sedang Antri</div>
-          <div id="sum-antri" class="text-2xl font-bold text-green-600">0</div>
-        </div>
+      <div class="clock" aria-label="Jam dan tanggal sekarang">
+        <div class="time" id="clock-time">--:--:--</div>
+        <div class="date" id="clock-date">—</div>
       </div>
-    </div>
 
-    <!-- Filter & Pencarian -->
-    <div class="bg-white rounded-xl shadow p-6 mb-4">
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <div class="flex gap-2 flex-wrap">
-          <button onclick="setFilter('all')" id="btn-all" class="px-3 py-1 bg-blue-600 text-white rounded-lg text-sm font-medium">Semua</button>
-          <button onclick="setFilter('belum')" id="btn-belum" class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-lg text-sm font-medium">Belum Ambil</button>
-          <button onclick="setFilter('selesai')" id="btn-selesai" class="px-3 py-1 bg-blue-100 text-blue-800 rounded-lg text-sm font-medium">Sudah Ambil</button>
-          <button onclick="setFilter('antri')" id="btn-antri" class="px-3 py-1 bg-green-100 text-green-800 rounded-lg text-sm font-medium">Sedang Antri</button>
-        </div>
-        <input
-          type="text"
-          id="input-cari"
-          class="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          placeholder="Cari nama / no seri..."
-          autocomplete="off"
-        >
-      </div>
-      <div class="mt-3 text-xs text-gray-500">
-        Menampilkan <span id="count-show">0</span> dari <span id="count-total">0</span> peserta
-      </div>
-    </div>
+      <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" aria-label="Ganti tema terang atau gelap">
+        <span class="icon" id="theme-icon"></span>
+        <span id="theme-text" class="label-txt">Mode Terang</span>
+      </button>
+    </header>
 
-    <!-- Tabel -->
-    <div class="bg-white rounded-xl shadow overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="w-full text-sm">
-          <thead class="bg-gray-50 text-gray-600">
-            <tr>
-              <th class="px-4 py-3 text-left font-semibold cursor-pointer select-none hover:bg-gray-100" onclick="sortBy('nama_lengkap')">
-                Nama Lengkap <span id="sort-nama_lengkap" class="text-gray-400"></span>
-              </th>
-              <th class="px-4 py-3 text-left font-semibold cursor-pointer select-none hover:bg-gray-100" onclick="sortBy('no_seri')">
-                No Seri <span id="sort-no_seri" class="text-gray-400"></span>
-              </th>
-              <th class="px-4 py-3 text-left font-semibold cursor-pointer select-none hover:bg-gray-100" onclick="sortBy('nomor_antrian')">
-                Antrian <span id="sort-nomor_antrian" class="text-gray-400"></span>
-              </th>
-              <th class="px-4 py-3 text-left font-semibold cursor-pointer select-none hover:bg-gray-100" onclick="sortBy('status')">
-                Status <span id="sort-status" class="text-gray-400"></span>
-              </th>
-              <th class="px-4 py-3 text-left font-semibold cursor-pointer select-none hover:bg-gray-100" onclick="sortBy('waktu_selesai')">
-                Waktu Ambil <span id="sort-waktu_selesai" class="text-gray-400"></span>
-              </th>
-            </tr>
-          </thead>
-          <tbody id="tbody" class="divide-y divide-gray-100"></tbody>
-        </table>
-      </div>
-      <!-- Pagination -->
-      <div id="pagination" class="flex items-center justify-center gap-1 p-4 border-t border-gray-100 flex-wrap"></div>
-    </div>
+    <main class="content">
+
+      <!-- ===== Header + Summary ===== -->
+      <section class="panel-card">
+        <div class="head-row">
+          <div>
+            <div class="head-title">Data Peserta</div>
+            <div class="head-sub">Keseluruhan dari Excel — sudah & belum ambil sertifikat</div>
+          </div>
+          <div class="head-actions">
+            <button class="btn-print" id="btn-cetak" onclick="cetakData()" aria-label="Cetak data peserta">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+              <span>Cetak Data</span>
+            </button>
+            <a href="/panitia.html" class="btn-back">← Kembali ke Dashboard</a>
+          </div>
+        </div>
+
+        <div class="sum-grid">
+          <div class="sum-card">
+            <div class="sum-label">Total Peserta</div>
+            <div id="sum-total" class="sum-value">0</div>
+          </div>
+          <div class="sum-card">
+            <div class="sum-label">Belum Ambil</div>
+            <div id="sum-belum" class="sum-value gold">0</div>
+          </div>
+          <div class="sum-card">
+            <div class="sum-label">Sudah Ambil</div>
+            <div id="sum-selesai" class="sum-value blue">0</div>
+          </div>
+          <div class="sum-card">
+            <div class="sum-label">Sedang Antri</div>
+            <div id="sum-antri" class="sum-value emerald">0</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== Rekap Harian + Grafik ===== -->
+      <section class="panel-card rekap-section">
+        <div class="rekap-head">
+          <div>
+            <div class="section-title"><span class="dot"></span>Rekap Harian & Statistik</div>
+            <div class="section-sub">Ringkasan pengambilan sertifikat per hari + visualisasi aktivitas</div>
+          </div>
+        </div>
+
+        <!-- KPI strip -->
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-label">Hari Aktif</div>
+            <div class="kpi-value" id="kpi-hari">0</div>
+            <div class="kpi-foot">hari dengan aktivitas antrian</div>
+          </div>
+          <div class="kpi-card emerald">
+            <div class="kpi-label">Total Diambil</div>
+            <div class="kpi-value" id="kpi-ambil">0</div>
+            <div class="kpi-foot">peserta ambil nomor antrian</div>
+          </div>
+          <div class="kpi-card blue">
+            <div class="kpi-label">Total Selesai</div>
+            <div class="kpi-value" id="kpi-selesai">0</div>
+            <div class="kpi-foot">sertifikat sudah diambil</div>
+          </div>
+          <div class="kpi-card rose">
+            <div class="kpi-label">Rata² Selesai/Hari</div>
+            <div class="kpi-value" id="kpi-rata">0</div>
+            <div class="kpi-foot">efektivitas penyelesaian</div>
+          </div>
+        </div>
+
+        <!-- Grafik -->
+        <div class="chart-grid">
+          <div class="chart-box full">
+            <h4>Tren Pengambilan 14 Hari Terakhir</h4>
+            <div class="chart-sub">Sertifikat diambil (bar) vs selesai (garis) per hari</div>
+            <div class="chart-canvas-wrap tall"><canvas id="chart-trend"></canvas></div>
+          </div>
+          <div class="chart-box">
+            <h4>Distribusi Status</h4>
+            <div class="chart-sub">Komposisi peserta saat ini</div>
+            <div class="chart-canvas-wrap donut"><canvas id="chart-status"></canvas></div>
+            <div class="chart-legend" id="legend-status"></div>
+          </div>
+          <div class="chart-box">
+            <h4>Aktivitas per Jam</h4>
+            <div class="chart-sub">Jam berapa peserta paling ramai ambil antrian</div>
+            <div class="chart-canvas-wrap med"><canvas id="chart-hour"></canvas></div>
+          </div>
+          <div class="chart-box full">
+            <h4>Selesai per Ruangan</h4>
+            <div class="chart-sub">Distribusi penyelesaian per loket/ruangan</div>
+            <div class="chart-canvas-wrap med"><canvas id="chart-loket"></canvas></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== Tabel Rekap Harian ===== -->
+      <section class="panel-card rekap-section">
+        <div class="rekap-head">
+          <div>
+            <div class="section-title"><span class="dot"></span>Tabel Rekap Harian</div>
+            <div class="section-sub">Rincian per tanggal — hari ini disorot emas</div>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="rekap-table">
+            <thead>
+              <tr>
+                <th>Tanggal</th>
+                <th class="num">Ambil</th>
+                <th class="num">Selesai</th>
+                <th class="num">Sisa Antri</th>
+                <th class="num">% Selesai</th>
+              </tr>
+            </thead>
+            <tbody id="rekap-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ===== Filter & Pencarian ===== -->
+      <section class="panel-card">
+        <div class="filter-row">
+          <div class="filter-bar">
+            <button onclick="setFilter('all')" id="btn-all" class="filter-btn active">Semua</button>
+            <button onclick="setFilter('belum')" id="btn-belum" class="filter-btn">Belum Ambil</button>
+            <button onclick="setFilter('selesai')" id="btn-selesai" class="filter-btn">Sudah Ambil</button>
+            <button onclick="setFilter('antri')" id="btn-antri" class="filter-btn">Sedang Antri</button>
+          </div>
+          <input type="text" id="input-cari" class="search-input" placeholder="Cari nama / no seri..." autocomplete="off" aria-label="Cari peserta">
+        </div>
+        <div class="count-line">
+          Menampilkan <span id="count-show">0</span> dari <span id="count-total">0</span> peserta
+        </div>
+      </section>
+
+      <!-- ===== Tabel ===== -->
+      <section class="panel-card">
+        <!-- Header khusus cetak (hanya tampil saat print) -->
+        <div class="print-header">
+          <h2>DATA PESERTA — PENGAMBILAN SERTIFIKAT</h2>
+          <p>PPG UIN Raden Fatah Palembang</p>
+          <div class="print-meta" id="print-meta"></div>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th tabindex="0" onclick="sortBy('nama_lengkap')">Nama Lengkap <span id="sort-nama_lengkap" class="sort-ind"></span></th>
+                <th tabindex="0" onclick="sortBy('no_seri')">No Seri <span id="sort-no_seri" class="sort-ind"></span></th>
+                <th tabindex="0" onclick="sortBy('nomor_antrian')">Antrian <span id="sort-nomor_antrian" class="sort-ind"></span></th>
+                <th tabindex="0" onclick="sortBy('status')">Status <span id="sort-status" class="sort-ind"></span></th>
+                <th tabindex="0" onclick="sortBy('waktu_selesai')">Waktu Ambil <span id="sort-waktu_selesai" class="sort-ind"></span></th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+        <div id="pagination" class="pagination"></div>
+      </section>
+
+    </main>
+
   </div>
 
   <script src="/socket.io/socket.io.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script>
+    /* ===== Theme (shared key with index.html + info.html + panitia.html) ===== */
+    const SUN = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>';
+    const MOON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+    function updateThemeButton(theme) {
+      const icon = document.getElementById('theme-icon');
+      const text = document.getElementById('theme-text');
+      if (theme === 'dark') { text.textContent = 'Mode Terang'; icon.innerHTML = SUN; }
+      else { text.textContent = 'Mode Gelap'; icon.innerHTML = MOON; }
+    }
+    function toggleTheme() {
+      const html = document.documentElement;
+      const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', next);
+      localStorage.setItem('info-theme', next);
+      updateThemeButton(next);
+      rerenderOnTheme();
+    }
+    (function initTheme() {
+      const saved = localStorage.getItem('info-theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', saved);
+      updateThemeButton(saved);
+    })();
+
+    /* ===== Live clock ===== */
+    const timeFmt = new Intl.DateTimeFormat('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+    const dateFmt = new Intl.DateTimeFormat('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    function updateClock() {
+      const now = new Date();
+      document.getElementById('clock-time').textContent = timeFmt.format(now);
+      document.getElementById('clock-date').textContent = dateFmt.format(now);
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+  </script>
   <script>
     const socket = io();
     let allData = [];
     let currentFilter = 'all';
     let searchQuery = '';
-    let sortKey = null;      // kolom yang di-sort
-    let sortDir = 1;         // 1 = asc, -1 = desc
+    let sortKey = null;
+    let sortDir = 1;
     let currentPage = 1;
     const PAGE_SIZE = 25;
 
@@ -122,9 +532,11 @@
         const res = await fetch('/api/peserta/all');
         allData = await res.json();
         renderSummary();
+        renderCharts();
+        renderRekapTable();
         renderTable();
       } catch (err) {
-        document.getElementById('tbody').innerHTML = `<tr><td colspan="6" class="px-4 py-6 text-center text-red-500">Gagal memuat data: ${esc(err.message)}</td></tr>`;
+        document.getElementById('tbody').innerHTML = `<tr class="empty-row"><td colspan="5">Gagal memuat data: ${esc(err.message)}</td></tr>`;
       }
     }
 
@@ -139,36 +551,343 @@
       document.getElementById('sum-antri').textContent = antri;
     }
 
+    /* ============================================================
+       Rekap Harian + Grafik (Chart.js)
+       Semua dihitung dari allData di sisi client — tidak butuh endpoint
+       baru, jadi update real-time via socket langsung re-render grafik.
+       ============================================================ */
+    const HARI_ID = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+
+    // Ambil tanggal lokal (YYYY-MM-DD) dari string datetime DB
+    function tanggalLokal(s) {
+      if (!s) return null;
+      const m = String(s).match(/(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/);
+      if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+      const m2 = String(s).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if (m2) return `${m2[1]}-${m2[2]}-${m2[3]}`;
+      return null;
+    }
+    // Ambil jam lokal (0-23) dari string datetime DB
+    function jamLokal(s) {
+      if (!s) return null;
+      const m = String(s).match(/(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/);
+      return m ? parseInt(m[4], 10) : null;
+    }
+
+    // Hitung agregat per-hari dari allData.
+    // - ambil: peserta yang sudah punya nomor_antrian (waktu_daftar = hari ambil)
+    // - selesai: peserta status selesai (waktu_selesai = hari selesai)
+    // Kembalikan map tanggal → {ambil, selesai} + set semua tanggal yang muncul.
+    function hitungRekapHarian() {
+      const perHari = {};
+      const catat = (tgl) => {
+        if (!tgl) return null;
+        if (!perHari[tgl]) perHari[tgl] = { ambil: 0, selesai: 0 };
+        return perHari[tgl];
+      };
+      for (const p of allData) {
+        if (p.nomor_antrian != null) {
+          const tgl = tanggalLokal(p.waktu_daftar);
+          const r = catat(tgl); if (r) r.ambil++;
+        }
+        if (p.status === 'selesai') {
+          const tgl = tanggalLokal(p.waktu_selesai);
+          const r = catat(tgl); if (r) r.selesai++;
+        }
+      }
+      return perHari;
+    }
+
+    // Tanggal hari ini (lokal, YYYY-MM-DD)
+    function hariIniStr() {
+      const d = new Date();
+      const pad = (n) => String(n).padStart(2, '0');
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    }
+
+    // Buat rentang 14 hari terakhir (termasuk hari ini), dari lama→baru.
+    function rentang14Hari() {
+      const hari = [];
+      const hariIni = new Date();
+      hariIni.setHours(0, 0, 0, 0);
+      for (let i = 13; i >= 0; i--) {
+        const d = new Date(hariIni);
+        d.setDate(d.getDate() - i);
+        const pad = (n) => String(n).padStart(2, '0');
+        hari.push(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`);
+      }
+      return hari;
+    }
+
+    // Format tanggal untuk label grafik: "06/08" + nama hari singkat
+    function labelHari(tgl) {
+      const [y, m, d] = tgl.split('-').map(Number);
+      const dt = new Date(y, m - 1, d);
+      const nm = HARI_ID[dt.getDay()];
+      return { short: `${String(d).padStart(2,'0')}/${String(m).padStart(2,'0')}`, day: nm.slice(0,3), full: `${d} ${nm}` };
+    }
+
+    // ----- Chart.js: thema & default sesuai tema dark/gold -----
+    function cssVar(name) {
+      return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    }
+    function chartColors() {
+      return {
+        gold: cssVar('--gold') || '#e8b04b',
+        goldSoft: cssVar('--gold-soft') || 'rgba(232,176,75,0.2)',
+        emerald: cssVar('--emerald') || '#34d399',
+        emeraldSoft: cssVar('--emerald-soft') || 'rgba(52,211,153,0.2)',
+        blue: cssVar('--blue') || '#60a5fa',
+        blueSoft: cssVar('--blue-soft') || 'rgba(96,165,250,0.2)',
+        rose: cssVar('--rose') || '#fb7185',
+        roseSoft: cssVar('--rose-soft') || 'rgba(251,113,133,0.2)',
+        paper: cssVar('--paper') || '#fff',
+        paperMute: cssVar('--paper-mute') || 'rgba(255,255,255,0.4)',
+        cardBorder: cssVar('--card-border') || 'rgba(255,255,255,0.09)',
+      };
+    }
+    // Gradien untuk bar (harus dibuat dari ctx canvas)
+    function buatGradien(ctx, area, c1, c2) {
+      if (!area) return c1;
+      const g = ctx.createLinearGradient(0, area.top, 0, area.bottom);
+      g.addColorStop(0, c1);
+      g.addColorStop(1, c2);
+      return g;
+    }
+
+    let chartTrend = null, chartStatus = null, chartHour = null, chartLoket = null;
+
+    function baseChartOpts(c) {
+      return {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: cssVar('--bg-2') || '#0c1322',
+            titleColor: cssVar('--paper') || '#fff',
+            bodyColor: cssVar('--paper-dim') || 'rgba(255,255,255,0.7)',
+            borderColor: c.cardBorder, borderWidth: 1,
+            padding: 10, cornerRadius: 8, displayColors: true, boxPadding: 4,
+            titleFont: { family: 'Plus Jakarta Sans', weight: '700', size: 12 },
+            bodyFont: { family: 'Plus Jakarta Sans', size: 12 },
+          },
+        },
+        scales: {
+          x: { grid: { color: 'transparent', drawTicks: false }, ticks: { color: c.paperMute, font: { family: 'JetBrains Mono', size: 10 } }, border: { color: c.cardBorder } },
+          y: { grid: { color: c.cardBorder, drawTicks: false }, ticks: { color: c.paperMute, font: { family: 'JetBrains Mono', size: 10 }, precision: 0 }, border: { display: false }, beginAtZero: true },
+        },
+      };
+    }
+
+    function renderCharts() {
+      const c = chartColors();
+      const perHari = hitungRekapHarian();
+      const hariIni = hariIniStr();
+      const rentang = rentang14Hari();
+
+      // === 1. Tren 14 hari: bar Ambil + line Selesai ===
+      const labels = rentang.map(t => labelHari(t).short);
+      const dataAmbil = rentang.map(t => (perHari[t]?.ambil || 0));
+      const dataSelesai = rentang.map(t => (perHari[t]?.selesai || 0));
+      const ctxT = document.getElementById('chart-trend').getContext('2d');
+      if (chartTrend) chartTrend.destroy();
+      chartTrend = new Chart(ctxT, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [
+            {
+              type: 'bar', label: 'Diambil', data: dataAmbil,
+              backgroundColor: (ctx) => {
+                const a = ctx.chart.chartArea;
+                return buatGradien(ctx.chart.ctx, a, c.gold, c.goldSoft);
+              },
+              borderColor: c.gold, borderWidth: 0, borderRadius: 6, barPercentage: 0.62, categoryPercentage: 0.7, order: 2,
+            },
+            {
+              type: 'line', label: 'Selesai', data: dataSelesai,
+              borderColor: c.emerald, backgroundColor: c.emeraldSoft,
+              borderWidth: 2.5, tension: 0.35, pointRadius: 3, pointBackgroundColor: c.emerald,
+              pointBorderColor: c.emerald, pointHoverRadius: 5, fill: false, order: 1,
+            },
+          ],
+        },
+        options: { ...baseChartOpts(c), plugins: { ...baseChartOpts(c).plugins, legend: { display: true, labels: { color: c.paperMute, font: { family: 'Plus Jakarta Sans', size: 11, weight: '600' }, usePointStyle: true, pointStyle: 'circle', boxWidth: 8, boxHeight: 8, padding: 14 } } } },
+      });
+
+      // === 2. Distribusi status (doughnut) ===
+      const total = allData.length;
+      const sudah = allData.filter(p => p.status === 'selesai').length;
+      const antri = allData.filter(p => p.nomor_antrian && p.status !== 'selesai').length;
+      const blm = total - sudah - antri;
+      const ctxS = document.getElementById('chart-status').getContext('2d');
+      if (chartStatus) chartStatus.destroy();
+      chartStatus = new Chart(ctxS, {
+        type: 'doughnut',
+        data: {
+          labels: ['Sudah Ambil', 'Sedang Antri', 'Belum Ambil'],
+          datasets: [{ data: [sudah, antri, blm], backgroundColor: [c.blue, c.emerald, c.gold], borderColor: cssVar('--bg-2') || '#0c1322', borderWidth: 3, hoverOffset: 6 }],
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false, cutout: '68%',
+          plugins: { legend: { display: false }, tooltip: { backgroundColor: cssVar('--bg-2'), borderColor: c.cardBorder, borderWidth: 1, padding: 10, cornerRadius: 8, titleColor: cssVar('--paper'), bodyColor: cssVar('--paper-dim') } },
+        },
+      });
+      // Legenda manual (supaya gaya konsisten)
+      const legEl = document.getElementById('legend-status');
+      const items = [['Sudah Ambil', c.blue, sudah], ['Sedang Antri', c.emerald, antri], ['Belum Ambil', c.gold, blm]];
+      legEl.innerHTML = items.map(([lbl, col, val]) =>
+        `<span class="li"><span class="sw" style="background:${col}"></span>${esc(lbl)} <strong class="num-strong">${val}</strong></span>`
+      ).join('');
+
+      // === 3. Aktivitas per jam (0-23) ===
+      const perJam = new Array(24).fill(0);
+      for (const p of allData) {
+        if (p.nomor_antrian != null) {
+          const j = jamLokal(p.waktu_daftar);
+          if (j != null) perJam[j]++;
+        }
+      }
+      const jamLabels = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
+      const ctxH = document.getElementById('chart-hour').getContext('2d');
+      if (chartHour) chartHour.destroy();
+      chartHour = new Chart(ctxH, {
+        type: 'bar',
+        data: {
+          labels: jamLabels,
+          datasets: [{
+            label: 'Peserta ambil antrian', data: perJam,
+            backgroundColor: (ctx) => {
+              const a = ctx.chart.chartArea;
+              return buatGradien(ctx.chart.ctx, a, c.blue, c.blueSoft);
+            },
+            borderColor: c.blue, borderWidth: 0, borderRadius: 4, barPercentage: 0.8, categoryPercentage: 0.8,
+          }],
+        },
+        options: { ...baseChartOpts(c), plugins: { ...baseChartOpts(c).plugins, legend: { display: false } } },
+      });
+
+      // === 4. Selesai per ruangan ===
+      const perLoket = {};
+      for (const p of allData) {
+        if (p.status === 'selesai' && p.counter != null) {
+          const k = `Ruangan ${p.counter}`;
+          perLoket[k] = (perLoket[k] || 0) + 1;
+        }
+      }
+      const loketEntries = Object.entries(perLoket).sort((a, b) => {
+        const na = parseInt(a[0].replace(/\D/g, ''), 10), nb = parseInt(b[0].replace(/\D/g, ''), 10);
+        return na - nb;
+      });
+      const ctxL = document.getElementById('chart-loket').getContext('2d');
+      if (chartLoket) chartLoket.destroy();
+      if (loketEntries.length === 0) {
+        chartLoket = new Chart(ctxL, {
+          type: 'bar',
+          data: { labels: ['—'], datasets: [{ data: [0], backgroundColor: c.cardBorder, borderRadius: 6 }] },
+          options: { ...baseChartOpts(c), plugins: { ...baseChartOpts(c).plugins, legend: { display: false }, tooltip: { enabled: false } } },
+        });
+      } else {
+        const palette = [c.emerald, c.gold, c.blue, c.rose, c.emerald, c.gold, c.blue, c.rose];
+        chartLoket = new Chart(ctxL, {
+          type: 'bar',
+          data: {
+            labels: loketEntries.map(e => e[0]),
+            datasets: [{
+              label: 'Selesai', data: loketEntries.map(e => e[1]),
+              backgroundColor: loketEntries.map((_, i) => palette[i % palette.length]),
+              borderRadius: 6, barPercentage: 0.6, categoryPercentage: 0.7,
+            }],
+          },
+          options: { ...baseChartOpts(c), indexAxis: 'y',
+            scales: {
+              x: { ...baseChartOpts(c).scales.x, grid: { color: c.cardBorder, drawTicks: false }, ticks: { color: c.paperMute, font: { family: 'JetBrains Mono', size: 10 }, precision: 0 }, border: { display: false }, beginAtZero: true },
+              y: { ...baseChartOpts(c).scales.y, grid: { display: false }, ticks: { color: c.paperMute, font: { family: 'Plus Jakarta Sans', size: 11, weight: '600' } }, border: { color: c.cardBorder } },
+            },
+            plugins: { ...baseChartOpts(c).plugins, legend: { display: false } } },
+        });
+      }
+
+      // === KPI strip ===
+      const semuaTgl = Object.keys(perHari);
+      const hariAktif = semuaTgl.length;
+      const totalAmbil = semuaTgl.reduce((s, t) => s + perHari[t].ambil, 0);
+      const totalSelesai = semuaTgl.reduce((s, t) => s + perHari[t].selesai, 0);
+      const rata = hariAktif > 0 ? (totalSelesai / hariAktif) : 0;
+      document.getElementById('kpi-hari').textContent = hariAktif;
+      document.getElementById('kpi-ambil').textContent = totalAmbil;
+      document.getElementById('kpi-selesai').textContent = totalSelesai;
+      document.getElementById('kpi-rata').textContent = rata < 10 ? rata.toFixed(1).replace('.', ',') : Math.round(rata);
+    }
+
+    // === Tabel rekap harian ===
+    function renderRekapTable() {
+      const perHari = hitungRekapHarian();
+      const hariIni = hariIniStr();
+      // Urutkan tanggal dari baru → lama
+      const tglSort = Object.keys(perHari).sort((a, b) => b.localeCompare(a));
+      const tbody = document.getElementById('rekap-tbody');
+      if (tglSort.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="rekap-empty">Belum ada aktivitas antrian.</td></tr>';
+        return;
+      }
+      // Hitung total ambil semua hari (untuk sisa antri = ambil - selesai, minimal 0)
+      tbody.innerHTML = tglSort.map(tgl => {
+        const r = perHari[tgl];
+        const sisa = Math.max(0, r.ambil - r.selesai);
+        const pct = r.ambil > 0 ? Math.round((r.selesai / r.ambil) * 100) : 0;
+        const lb = labelHari(tgl);
+        const isToday = tgl === hariIni;
+        return `
+          <tr class="${isToday ? 'today' : ''}">
+            <td>
+              <div class="day-date">${lb.short}</div>
+              <div class="day-name">${lb.full}${isToday ? '<span class="today-tag">Hari Ini</span>' : ''}</div>
+            </td>
+            <td class="num num-strong num-gold">${r.ambil}</td>
+            <td class="num num-strong num-blue">${r.selesai}</td>
+            <td class="num num-strong ${sisa > 0 ? 'num-emerald' : ''}">${sisa}</td>
+            <td class="num">
+              <div class="prog">
+                <span class="prog-track"><span class="prog-fill" style="width:${pct}%"></span></span>
+                <span class="prog-pct">${pct}%</span>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // Re-render grafik saat tema berubah (warna token ikut berubah)
+    function rerenderOnTheme() {
+      // Beri sedikit jeda supaya CSS variable baru sudah terbaca
+      setTimeout(() => { if (allData.length) { renderCharts(); } }, 60);
+    }
+
     function statusBadge(p) {
-      if (p.status === 'selesai') return '<span class="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-semibold">Sudah Ambil</span>';
-      if (p.status === 'dipanggil') return '<span class="px-2 py-1 bg-indigo-100 text-indigo-800 rounded text-xs font-semibold">Dipanggil</span>';
-      if (p.status === 'menunggu') return '<span class="px-2 py-1 bg-green-100 text-green-800 rounded text-xs font-semibold">Antri</span>';
-      return '<span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-xs font-semibold">Belum Ambil</span>';
+      if (p.status === 'selesai') return '<span class="badge selesai">Sudah Ambil</span>';
+      if (p.status === 'dipanggil') return '<span class="badge dipanggil">Dipanggil</span>';
+      if (p.status === 'menunggu') return '<span class="badge menunggu">Antri</span>';
+      return '<span class="badge belum">Belum Ambil</span>';
     }
 
     function sortBy(key) {
-      if (sortKey === key) {
-        sortDir = -sortDir; // toggle arah
-      } else {
-        sortKey = key;
-        sortDir = 1;
-      }
-      currentPage = 1; // reset ke halaman 1 saat sort berubah
+      if (sortKey === key) { sortDir = -sortDir; }
+      else { sortKey = key; sortDir = 1; }
+      currentPage = 1;
       renderTable();
     }
 
     function compareValues(a, b, key) {
       let va = a[key], vb = b[key];
-      // Null/undefined paling belakang
       if (va == null && vb == null) return 0;
       if (va == null) return 1;
       if (vb == null) return -1;
-      // Numerik jika bisa
       const na = Number(va), nb = Number(vb);
       if (!isNaN(na) && !isNaN(nb) && String(va).trim() !== '' && String(vb).trim() !== '') {
         return na - nb;
       }
-      // Status custom order
       if (key === 'status') {
         const order = { 'belum': 0, 'menunggu': 1, 'dipanggil': 2, 'selesai': 3 };
         return (order[va] ?? 9) - (order[vb] ?? 9);
@@ -177,13 +896,11 @@
     }
 
     function renderTable() {
-      let data = allData.slice(); // copy agar tidak ubah allData
-      // Filter status
+      let data = allData.slice();
       if (currentFilter === 'belum') data = data.filter(p => !p.nomor_antrian);
       else if (currentFilter === 'selesai') data = data.filter(p => p.status === 'selesai');
       else if (currentFilter === 'antri') data = data.filter(p => p.nomor_antrian && p.status !== 'selesai');
 
-      // Filter pencarian
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
         data = data.filter(p =>
@@ -192,22 +909,17 @@
         );
       }
 
-      // Sorting
-      if (sortKey) {
-        data.sort((a, b) => sortDir * compareValues(a, b, sortKey));
-      }
+      if (sortKey) { data.sort((a, b) => sortDir * compareValues(a, b, sortKey)); }
 
       const totalFiltered = data.length;
       document.getElementById('count-show').textContent = totalFiltered;
       document.getElementById('count-total').textContent = allData.length;
 
-      // Pagination
       const totalPages = Math.max(1, Math.ceil(totalFiltered / PAGE_SIZE));
       if (currentPage > totalPages) currentPage = totalPages;
       const startIdx = (currentPage - 1) * PAGE_SIZE;
       const pageData = data.slice(startIdx, startIdx + PAGE_SIZE);
 
-      // Update indikator sort di header
       ['nama_lengkap', 'no_seri', 'nomor_antrian', 'status', 'waktu_selesai'].forEach(k => {
         const el = document.getElementById('sort-' + k);
         if (el) el.textContent = (sortKey === k) ? (sortDir === 1 ? '↑' : '↓') : '';
@@ -215,15 +927,15 @@
 
       const tbody = document.getElementById('tbody');
       if (pageData.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-6 text-center text-gray-400">Tidak ada data</td></tr>';
+        tbody.innerHTML = '<tr class="empty-row"><td colspan="5">Tidak ada data</td></tr>';
       } else {
-        tbody.innerHTML = pageData.map((p, i) => `
-          <tr class="hover:bg-gray-50">
-            <td class="px-4 py-3 font-medium text-gray-800">${esc(p.nama_lengkap)}</td>
-            <td class="px-4 py-3 text-gray-600">${esc(p.no_seri)}</td>
-            <td class="px-4 py-3 text-gray-600">${p.nomor_antrian ? '#' + esc(p.nomor_antrian) : '-'}</td>
-            <td class="px-4 py-3">${statusBadge(p)}</td>
-            <td class="px-4 py-3 text-gray-500">${p.waktu_selesai ? formatWaktu(p.waktu_selesai) : '-'}</td>
+        tbody.innerHTML = pageData.map(p => `
+          <tr>
+            <td class="name-cell">${esc(p.nama_lengkap)}</td>
+            <td>${esc(p.no_seri)}</td>
+            <td class="num-cell">${p.nomor_antrian ? '#' + esc(p.nomor_antrian) : '-'}</td>
+            <td>${statusBadge(p)}</td>
+            <td>${p.waktu_selesai ? formatWaktu(p.waktu_selesai) : '-'}</td>
           </tr>
         `).join('');
       }
@@ -234,73 +946,121 @@
     function renderPagination(totalPages) {
       const pg = document.getElementById('pagination');
       if (!pg) return;
-      if (totalPages <= 1) {
-        pg.innerHTML = '';
-        return;
-      }
+      if (totalPages <= 1) { pg.innerHTML = ''; return; }
       let html = '';
-      html += `<button onclick="goPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''} class="px-3 py-1 rounded text-sm ${currentPage === 1 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}">‹ Prev</button>`;
-      // Nomor halaman — tampilkan maks 7
+      html += `<button onclick="goPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''} class="page-btn">‹ Prev</button>`;
       let start = Math.max(1, currentPage - 3);
       let end = Math.min(totalPages, start + 6);
       if (end - start < 6) start = Math.max(1, end - 6);
       if (start > 1) {
-        html += `<button onclick="goPage(1)" class="px-3 py-1 rounded text-sm bg-gray-200 hover:bg-gray-300 text-gray-700">1</button>`;
-        if (start > 2) html += `<span class="px-2 text-gray-400">…</span>`;
+        html += `<button onclick="goPage(1)" class="page-btn">1</button>`;
+        if (start > 2) html += `<span class="page-ellipsis">…</span>`;
       }
       for (let i = start; i <= end; i++) {
-        html += `<button onclick="goPage(${i})" class="px-3 py-1 rounded text-sm ${i === currentPage ? 'bg-blue-600 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}">${i}</button>`;
+        html += `<button onclick="goPage(${i})" class="page-btn${i === currentPage ? ' active' : ''}">${i}</button>`;
       }
       if (end < totalPages) {
-        if (end < totalPages - 1) html += `<span class="px-2 text-gray-400">…</span>`;
-        html += `<button onclick="goPage(${totalPages})" class="px-3 py-1 rounded text-sm bg-gray-200 hover:bg-gray-300 text-gray-700">${totalPages}</button>`;
+        if (end < totalPages - 1) html += `<span class="page-ellipsis">…</span>`;
+        html += `<button onclick="goPage(${totalPages})" class="page-btn">${totalPages}</button>`;
       }
-      html += `<button onclick="goPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''} class="px-3 py-1 rounded text-sm ${currentPage === totalPages ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}">Next ›</button>`;
+      html += `<button onclick="goPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''} class="page-btn">Next ›</button>`;
       pg.innerHTML = html;
     }
 
-    function goPage(n) {
-      currentPage = n;
-      renderTable();
-    }
+    function goPage(n) { currentPage = n; renderTable(); }
 
     function setFilter(f) {
       currentFilter = f;
-      currentPage = 1; // reset ke halaman 1 saat filter berubah
+      currentPage = 1;
       ['all', 'belum', 'selesai', 'antri'].forEach(k => {
-        const btn = document.getElementById('btn-' + k);
-        const active = k === f;
-        btn.className = active
-          ? 'px-3 py-1 bg-blue-600 text-white rounded-lg text-sm font-medium'
-          : 'px-3 py-1 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200';
+        document.getElementById('btn-' + k).classList.toggle('active', k === f);
       });
       renderTable();
     }
 
-    // Pencarian debounce
+    /* ===== Cetak: render semua data (filter+search aktif, tanpa pagination) ===== */
+    function cetakData() {
+      if (!allData.length) {
+        // Tidak ada data — tetap buka dialog cetak (menampilkan header kosong)
+      }
+      // Terapkan filter & pencarian yang sama seperti renderTable, tapi tanpa slice pagination
+      let data = allData.slice();
+      if (currentFilter === 'belum') data = data.filter(p => !p.nomor_antrian);
+      else if (currentFilter === 'selesai') data = data.filter(p => p.status === 'selesai');
+      else if (currentFilter === 'antri') data = data.filter(p => p.nomor_antrian && p.status !== 'selesai');
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        data = data.filter(p =>
+          String(p.nama_lengkap || '').toLowerCase().includes(q) ||
+          String(p.no_seri || '').toLowerCase().includes(q)
+        );
+      }
+      if (sortKey) { data.sort((a, b) => sortDir * compareValues(a, b, sortKey)); }
+
+      // Isi meta cetak: tanggal cetak + jumlah baris + filter aktif
+      const now = new Date();
+      const tgl = now.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+      const jam = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+      const filterLabel = { all: 'Semua', belum: 'Belum Ambil', selesai: 'Sudah Ambil', antri: 'Sedang Antri' }[currentFilter] || 'Semua';
+      const meta = document.getElementById('print-meta');
+      if (meta) meta.textContent = `Filter: ${filterLabel} · ${data.length} peserta · Dicetak ${tgl} ${jam}`;
+
+      // Render semua baris ke tbody
+      const tbody = document.getElementById('tbody');
+      if (data.length === 0) {
+        tbody.innerHTML = '<tr class="empty-row"><td colspan="5">Tidak ada data</td></tr>';
+      } else {
+        tbody.innerHTML = data.map(p => `
+          <tr>
+            <td class="name-cell">${esc(p.nama_lengkap)}</td>
+            <td>${esc(p.no_seri)}</td>
+            <td class="num-cell">${p.nomor_antrian ? '#' + esc(p.nomor_antrian) : '-'}</td>
+            <td>${statusBadge(p)}</td>
+            <td>${p.waktu_selesai ? formatWaktu(p.waktu_selesai) : '-'}</td>
+          </tr>
+        `).join('');
+      }
+
+      // Sembunyikan pagination saat cetak & aktifkan mode cetak
+      document.body.classList.add('print-mode');
+      const panel = document.querySelector('.data-table').closest('.panel-card');
+      if (panel) panel.classList.add('print-all');
+
+      // Setelah dialog cetak selesai/tutup, kembalikan ke tampilan pagination normal
+      const cleanup = () => {
+        document.body.classList.remove('print-mode');
+        if (panel) panel.classList.remove('print-all');
+        renderTable();
+        window.removeEventListener('afterprint', cleanup);
+      };
+      window.addEventListener('afterprint', cleanup);
+
+      // Trigger dialog cetak browser
+      window.print();
+    }
+
     let cariTimeout;
     document.getElementById('input-cari').addEventListener('input', (e) => {
       clearTimeout(cariTimeout);
       const v = e.target.value.trim();
       cariTimeout = setTimeout(() => {
         searchQuery = v;
-        currentPage = 1; // reset ke halaman 1 saat search berubah
+        currentPage = 1;
         renderTable();
       }, 250);
     });
 
-    // Real-time update saat ada perubahan antrian
     socket.on('statistik:update', () => { loadData(); });
     socket.on('antrian:baru', () => { loadData(); });
     socket.on('antrian:selesai', () => { loadData(); });
     socket.on('antrian:panggil', () => { loadData(); });
 
-    // Init
     loadData();
-    setFilter('all');
     window.setFilter = setFilter;
     window.sortBy = sortBy;
     window.goPage = goPage;
+    window.cetakData = cetakData;
+    window.toggleTheme = toggleTheme;
   </script>
 </body>
 </html>

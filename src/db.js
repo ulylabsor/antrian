@@ -144,7 +144,7 @@ export function getAntrianByNomor(nomor) {
 
 export function getDaftarAntrian(status) {
   const stmt = db.prepare(`
-    SELECT nomor_antrian, nama_lengkap, no_seri, status, waktu_daftar, counter, jumlah_dipanggil
+    SELECT nomor_antrian, nama_lengkap, no_seri, status, waktu_daftar, waktu_selesai, counter, jumlah_dipanggil
     FROM peserta
     WHERE status = ? AND nomor_antrian IS NOT NULL
     ORDER BY nomor_antrian

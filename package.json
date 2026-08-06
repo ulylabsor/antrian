@@ -12,6 +12,7 @@
     "qr": "node scripts/generate-qr.js"
   },
   "dependencies": {
+    "@google-cloud/text-to-speech": "^6.4.1",
     "better-sqlite3": "^12.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.0",

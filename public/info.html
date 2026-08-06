@@ -6,44 +6,84 @@
   <title>Informasi Antrian - Pengambilan Sertifikat</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   <style>
     :root, [data-theme="dark"] {
-      --bg-1: #070b16;
-      --bg-2: #0d1424;
-      --card: rgba(255,255,255,0.05);
-      --card-border: rgba(255,255,255,0.1);
+      --bg-1: #060912;
+      --bg-2: #0c1322;
+      --bg-3: #111a2e;
+      --card: rgba(255,255,255,0.045);
+      --card-hover: rgba(255,255,255,0.075);
+      --card-strong: rgba(255,255,255,0.09);
+      --card-border: rgba(255,255,255,0.09);
+      --card-border-strong: rgba(255,255,255,0.16);
+      --hairline: rgba(255,255,255,0.06);
+
       --gold: #e8b04b;
+      --gold-bright: #f3c869;
       --gold-deep: #c99a3f;
-      --gold-soft: rgba(232,176,75,0.15);
-      --gold-line: rgba(232,176,75,0.4);
+      --gold-soft: rgba(232,176,75,0.14);
+      --gold-line: rgba(232,176,75,0.38);
+      --gold-glow: rgba(232,176,75,0.28);
+
       --emerald: #34d399;
-      --emerald-soft: rgba(52,211,153,0.15);
+      --emerald-soft: rgba(52,211,153,0.14);
+      --emerald-line: rgba(52,211,153,0.35);
+
       --blue: #60a5fa;
-      --blue-soft: rgba(96,165,250,0.15);
+      --blue-soft: rgba(96,165,250,0.14);
+
+      --rose: #fb7185;
+      --rose-soft: rgba(251,113,133,0.14);
+
       --paper: #ffffff;
-      --paper-dim: rgba(255,255,255,0.75);
-      --paper-mute: rgba(255,255,255,0.45);
-      --font-display: 'Playfair Display', Georgia, serif;
-      --font-body: 'Inter', system-ui, sans-serif;
+      --paper-dim: rgba(255,255,255,0.72);
+      --paper-mute: rgba(255,255,255,0.42);
+      --paper-faint: rgba(255,255,255,0.22);
+
+      --shadow-card: 0 24px 60px -28px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.05);
+      --shadow-hero: 0 40px 100px -30px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.06);
+
+      --font-display: 'Plus Jakarta Sans', system-ui, sans-serif;
+      --font-body: 'Plus Jakarta Sans', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', ui-monospace, monospace;
     }
 
     [data-theme="light"] {
-      --bg-1: #f0f4f8;
+      --bg-1: #eef2f7;
       --bg-2: #e2e8f0;
-      --card: rgba(15,23,42,0.05);
-      --card-border: rgba(15,23,42,0.12);
+      --bg-3: #d9e2ec;
+      --card: rgba(15,23,42,0.045);
+      --card-hover: rgba(15,23,42,0.07);
+      --card-strong: rgba(15,23,42,0.08);
+      --card-border: rgba(15,23,42,0.1);
+      --card-border-strong: rgba(15,23,42,0.18);
+      --hairline: rgba(15,23,42,0.07);
+
       --gold: #b45309;
+      --gold-bright: #d97706;
       --gold-deep: #92400e;
       --gold-soft: rgba(180,83,9,0.12);
-      --gold-line: rgba(180,83,9,0.3);
+      --gold-line: rgba(180,83,9,0.32);
+      --gold-glow: rgba(180,83,9,0.18);
+
       --emerald: #059669;
       --emerald-soft: rgba(5,150,105,0.12);
+      --emerald-line: rgba(5,150,105,0.3);
+
       --blue: #2563eb;
-      --blue-soft: rgba(37,99,235,0.12);
+      --blue-soft: rgba(37,99,235,0.1);
+
+      --rose: #e11d48;
+      --rose-soft: rgba(225,29,72,0.1);
+
       --paper: #0f172a;
-      --paper-dim: rgba(15,23,42,0.75);
+      --paper-dim: rgba(15,23,42,0.74);
       --paper-mute: rgba(15,23,42,0.5);
+      --paper-faint: rgba(15,23,42,0.28);
+
+      --shadow-card: 0 18px 40px -24px rgba(15,23,42,0.25), inset 0 1px 0 rgba(255,255,255,0.6);
+      --shadow-hero: 0 30px 70px -30px rgba(15,23,42,0.28), inset 0 1px 0 rgba(255,255,255,0.7);
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -53,207 +93,558 @@
     body {
       font-family: var(--font-body);
       background:
-        radial-gradient(ellipse at 15% 20%, var(--gold-soft) 0%, transparent 50%),
-        radial-gradient(ellipse at 85% 80%, var(--emerald-soft) 0%, transparent 50%),
+        radial-gradient(ellipse 60% 50% at 12% 15%, var(--gold-soft) 0%, transparent 60%),
+        radial-gradient(ellipse 55% 45% at 88% 85%, var(--emerald-soft) 0%, transparent 60%),
+        radial-gradient(ellipse 70% 60% at 50% 50%, var(--bg-3) 0%, transparent 70%),
         linear-gradient(165deg, var(--bg-1) 0%, var(--bg-2) 100%);
       color: var(--paper);
       -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
       position: relative;
       display: flex;
       flex-direction: column;
-      transition: background 0.4s ease, color 0.4s ease;
+      transition: background 0.5s ease, color 0.4s ease;
     }
 
-    [data-theme="dark"] body::before,
-    [data-theme="light"] body::before {
+    /* Subtle grid backdrop */
+    body::before {
       content: '';
       position: fixed;
       inset: 0;
       background-image:
-        linear-gradient(var(--card-border) 1px, transparent 1px),
-        linear-gradient(90deg, var(--card-border) 1px, transparent 1px);
-      background-size: 40px 40px;
+        linear-gradient(var(--hairline) 1px, transparent 1px),
+        linear-gradient(90deg, var(--hairline) 1px, transparent 1px);
+      background-size: 44px 44px;
+      mask-image: radial-gradient(ellipse 80% 70% at 50% 40%, #000 30%, transparent 80%);
       pointer-events: none;
       z-index: 0;
-      opacity: 0.5;
     }
 
     .container {
       position: relative;
       z-index: 1;
-      max-width: 1100px;
+      max-width: 1280px;
       margin: 0 auto;
-      padding: 20px 24px;
+      padding: 16px 24px 14px;
       display: flex;
       flex-direction: column;
       height: 100%;
       width: 100%;
+      gap: 12px;
     }
 
-    /* ===== Theme toggle ===== */
+    /* ===== Top bar ===== */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: nowrap;
+    }
+    .brand { display: flex; align-items: center; gap: 14px; min-width: 0; }
+    .brand .mark {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      background: linear-gradient(145deg, var(--gold-soft), transparent);
+      border: 1px solid var(--gold-line);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--gold);
+      flex-shrink: 0;
+      box-shadow: inset 0 0 20px var(--gold-soft);
+    }
+    .brand .text { min-width: 0; }
+    .brand .eyebrow {
+      font-family: var(--font-display);
+      font-size: 11px;
+      color: var(--gold);
+      font-weight: 600;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+    }
+    .brand h1 {
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--paper);
+      letter-spacing: -0.01em;
+      line-height: 1.1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    /* Logo institusi UIN Raden Fatah Palembang + logo PPG berdampingan */
+    .brand .brand-logos {
+      display: flex; align-items: center; gap: 6px; flex-shrink: 0;
+    }
+    .brand .brand-logo {
+      width: 42px; height: 42px; border-radius: 11px;
+      background: #fff; border: 1px solid var(--gold-line);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; overflow: hidden;
+      box-shadow: inset 0 0 20px var(--gold-soft);
+    }
+    .brand .brand-logo img {
+      width: 100%; height: 100%; object-fit: contain; padding: 3px;
+    }
+    /* Logo PPG: bentuk landscape (rasio ~3.7:1) — tanpa kotak putih, biarkan gambar tampil apa adanya. */
+    .brand .brand-logo.ppg { width: 64px; height: 30px; background: transparent; border: none; box-shadow: none; border-radius: 0; }
+    .brand .brand-logo.ppg img { padding: 0; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.18)); }
+    /* Baris nama institusi di bawah h1 */
+    .brand .brand-sub {
+      font-family: var(--font-display); font-size: 10.5px; font-weight: 600;
+      color: var(--paper-mute); letter-spacing: 0.5px;
+      margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    .clock {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      line-height: 1;
+    }
+    .clock .time {
+      font-family: var(--font-mono);
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--paper);
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.02em;
+    }
+    .clock .date {
+      font-size: 11px;
+      color: var(--paper-mute);
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      margin-top: 4px;
+      text-transform: capitalize;
+    }
+
+    /* Theme toggle */
     .theme-toggle {
-      position: fixed;
-      top: 16px;
-      right: 16px;
-      z-index: 100;
       background: var(--card);
       border: 1px solid var(--card-border);
       border-radius: 999px;
-      padding: 8px 16px;
+      padding: 8px 14px;
       display: flex;
       align-items: center;
       gap: 8px;
       cursor: pointer;
       color: var(--paper-dim);
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 600;
       backdrop-filter: blur(8px);
-      transition: border-color 0.2s ease;
+      transition: border-color 0.2s ease, color 0.2s ease, transform 0.15s ease;
+      flex-shrink: 0;
     }
-    .theme-toggle:hover { border-color: var(--gold-line); }
-    .theme-toggle .icon {
-      width: 18px; height: 18px;
-      display: flex; align-items: center; justify-content: center;
-    }
+    .theme-toggle:hover { border-color: var(--gold-line); color: var(--paper); }
+    .theme-toggle:active { transform: scale(0.96); }
+    .theme-toggle:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+    .theme-toggle .icon { display: flex; }
 
-    /* ===== Header ===== */
-    .header {
-      text-align: center;
-      padding: 8px 0 4px;
+    /* ===== Top actions (audio badge + theme toggle) ===== */
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
     }
-    .header .eyebrow {
-      font-family: var(--font-display);
+    .audio-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--card);
+      border: 1px solid var(--rose);
+      border-radius: 999px;
+      padding: 8px 14px;
+      color: var(--rose);
       font-size: 12px;
-      color: var(--gold);
       font-weight: 600;
-      letter-spacing: 5px;
-      text-transform: uppercase;
+      backdrop-filter: blur(8px);
+      cursor: pointer;
+      transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+      animation: badge-pulse 2s ease-in-out infinite;
     }
-    .header h1 {
-      font-family: var(--font-display);
-      font-size: 26px;
-      font-weight: 700;
-      color: var(--paper);
-      letter-spacing: -0.01em;
-      margin-top: 6px;
+    .audio-badge svg { width: 16px; height: 16px; flex-shrink: 0; }
+    .audio-badge .ab-text { white-space: nowrap; }
+    .audio-badge:hover { border-color: var(--gold-line); color: var(--paper); }
+    .audio-badge.active {
+      border-color: var(--emerald);
+      color: var(--emerald);
+      animation: none;
+    }
+    @keyframes badge-pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.0); }
+      50% { box-shadow: 0 0 0 4px rgba(244, 63, 94, 0.12); }
     }
 
-    /* ===== Stats bar ===== */
+    /* ===== Stats + progress ===== */
+    .stats-wrap {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
     .stats-bar {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 10px;
-      margin: 14px 0;
     }
     .stat-card {
       background: var(--card);
       border: 1px solid var(--card-border);
-      border-radius: 12px;
-      padding: 12px 10px;
-      text-align: center;
+      border-radius: 14px;
+      padding: 12px 14px;
       backdrop-filter: blur(8px);
+      box-shadow: var(--shadow-card);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      position: relative;
+      overflow: hidden;
     }
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 3px;
+      background: var(--accent, var(--paper-faint));
+      opacity: 0.8;
+    }
+    .stat-card.gold { --accent: var(--gold); }
+    .stat-card.emerald { --accent: var(--emerald); }
+    .stat-card.blue { --accent: var(--blue); }
+    .stat-card.paper { --accent: var(--paper-mute); }
     .stat-card .num {
       font-family: var(--font-display);
-      font-size: 26px;
-      font-weight: 700;
+      font-size: 28px;
+      font-weight: 800;
       line-height: 1;
-      letter-spacing: -0.01em;
+      letter-spacing: -0.02em;
+      font-variant-numeric: tabular-nums;
     }
-    .stat-card .num.gold { color: var(--gold); }
-    .stat-card .num.emerald { color: var(--emerald); }
-    .stat-card .num.blue { color: var(--blue); }
-    .stat-card .num.paper { color: var(--paper-dim); }
+    .stat-card.gold .num { color: var(--gold); }
+    .stat-card.emerald .num { color: var(--emerald); }
+    .stat-card.blue .num { color: var(--blue); }
+    .stat-card.paper .num { color: var(--paper); }
     .stat-card .lbl {
-      font-family: var(--font-body);
       font-size: 10px;
       color: var(--paper-mute);
-      font-weight: 600;
-      letter-spacing: 1.5px;
+      font-weight: 700;
+      letter-spacing: 1.6px;
       text-transform: uppercase;
-      margin-top: 5px;
     }
 
-    /* ===== Main layout: 3 kolom ===== */
+    /* Progress card */
+    .progress-card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 12px 16px;
+      backdrop-filter: blur(8px);
+      box-shadow: var(--shadow-card);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 8px;
+    }
+    .progress-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+    }
+    .progress-head .lbl {
+      font-size: 10px;
+      color: var(--paper-mute);
+      font-weight: 700;
+      letter-spacing: 1.6px;
+      text-transform: uppercase;
+    }
+    .progress-head .pct {
+      font-family: var(--font-mono);
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--emerald);
+      font-variant-numeric: tabular-nums;
+    }
+    .progress-track {
+      height: 10px;
+      border-radius: 999px;
+      background: var(--card-hover);
+      overflow: hidden;
+      position: relative;
+    }
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--gold), var(--emerald));
+      box-shadow: 0 0 16px var(--emerald-line);
+      transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .progress-meta {
+      font-size: 11px;
+      color: var(--paper-mute);
+      font-weight: 600;
+    }
+    .progress-meta b { color: var(--paper-dim); font-weight: 700; }
+
+    /* ===== Main layout: 2 kolom ===== */
     .main-layout {
       display: grid;
-      grid-template-columns: 1fr 1.3fr 1fr;
+      grid-template-columns: 1fr 1.6fr;   /* kiri lebih sempit, kanan dominan untuk hero */
+      grid-template-rows: 1fr auto;       /* kiri row1 = antrian (scroll), kiri row2 = info (auto) */
       gap: 14px;
       align-items: stretch;
       flex: 1;
       min-height: 0;
-      margin-bottom: 12px;
     }
+    .main-layout .panel-next  { grid-column: 1; grid-row: 1; }
+    .main-layout .center-col  { grid-column: 2; grid-row: 1 / span 2; }  /* hero full tinggi */
+    .main-layout .panel-info  { grid-column: 1; grid-row: 2; }
 
-    .side-col {
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      padding: 18px;
+      backdrop-filter: blur(10px);
+      box-shadow: var(--shadow-card);
       display: flex;
       flex-direction: column;
       min-height: 0;
     }
+    .panel-title {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-family: var(--font-display);
+      font-size: 12px;
+      color: var(--paper-mute);
+      font-weight: 600;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--card-border);
+    }
+    .panel-title .pip {
+      width: 7px; height: 7px;
+      border-radius: 2px;
+      background: var(--gold);
+      box-shadow: 0 0 8px var(--gold-line);
+    }
+    .panel-title.emerald .pip { background: var(--emerald); box-shadow: 0 0 8px var(--emerald-line); }
+    .panel-title.blue .pip { background: var(--blue); }
 
-    /* ===== Hero — Sedang Dipanggil ===== */
-    .hero-card {
-      background: linear-gradient(160deg, var(--card-hover), var(--card));
+    /* ===== Left: Antrian Berikutnya ===== */
+    .next-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      overflow-y: auto;
+      flex: 1;
+      min-height: 0;
+      padding-right: 4px;
+    }
+    .next-list::-webkit-scrollbar { width: 4px; }
+    .next-list::-webkit-scrollbar-track { background: transparent; }
+    .next-list::-webkit-scrollbar-thumb { background: var(--card-border-strong); border-radius: 2px; }
+    .next-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--card-hover);
       border: 1px solid var(--card-border);
+      border-radius: 11px;
+      padding: 10px 13px;
+      animation: row-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+    .next-row .badge {
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--gold);
+      min-width: 44px;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.01em;
+    }
+    .next-row .info { flex: 1; min-width: 0; }
+    .next-row .nama {
+      font-weight: 600;
+      color: var(--paper);
+      font-size: 14px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.25;
+    }
+    .next-row .seri-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+      background: var(--blue-soft);
+      color: var(--blue);
+      border: 1px solid var(--blue);
+      border-radius: 8px;
+      padding: 4px 10px;
+      font-family: var(--font-mono);
+      white-space: nowrap;
+      max-width: 42%;
+    }
+    .next-row .seri-chip .lbl {
+      font-family: var(--font-display);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--paper-mute);
+      flex-shrink: 0;
+    }
+    .next-row .seri-chip .val {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .next-row.lead {
+      border-color: var(--gold-line);
+      background: linear-gradient(100deg, var(--gold-soft), var(--card-hover) 60%);
+    }
+    .next-row.lead .badge { color: var(--gold-bright); }
+    .next-empty {
+      color: var(--paper-mute);
+      text-align: center;
+      padding: 28px 16px;
+      font-size: 14px;
+      line-height: 1.6;
+      margin: auto 0;
+    }
+
+    /* ===== Center: Hero ===== */
+    .center-col {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-height: 0;
+    }
+    .hero-card {
+      background: linear-gradient(165deg, var(--card-strong), var(--card));
+      border: 1px solid var(--card-border-strong);
       border-radius: 20px;
-      padding: 32px 28px;
+      padding: 24px 26px;
       text-align: center;
       backdrop-filter: blur(16px);
-      box-shadow: 0 30px 80px -20px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05);
-      width: 100%;
+      box-shadow: var(--shadow-hero);
       position: relative;
       overflow: hidden;
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      min-height: 340px;
+      flex: 1;
+      min-height: 0;
     }
     .hero-card::before {
       content: '';
       position: absolute;
-      top: 0; left: 0; right: 0;
+      top: 0; left: 12%; right: 12%;
       height: 2px;
       background: linear-gradient(90deg, transparent, var(--gold-line), transparent);
     }
+    .hero-card::after {
+      content: '';
+      position: absolute;
+      inset: -40% -20% auto auto;
+      width: 60%; height: 80%;
+      background: radial-gradient(ellipse at center, var(--gold-glow), transparent 65%);
+      pointer-events: none;
+      opacity: 0.6;
+    }
     .hero-card .label {
       font-family: var(--font-display);
-      font-size: 13px;
+      font-size: 12px;
       color: var(--paper-mute);
       font-weight: 600;
       letter-spacing: 5px;
       text-transform: uppercase;
+      position: relative;
     }
     .hero-card .nomor {
       font-family: var(--font-display);
-      font-size: 130px;
-      font-weight: 800;
+      font-size: clamp(80px, 14vw, 170px);
+      font-weight: 900;
       color: var(--gold);
-      line-height: 1;
-      letter-spacing: -0.03em;
-      margin: 12px 0 16px;
-      text-shadow: 0 0 50px var(--gold-line);
-      animation: nomor-glow 3s ease-in-out infinite;
+      line-height: 0.95;
+      letter-spacing: -0.04em;
+      margin: 10px 0 14px;
+      font-variant-numeric: tabular-nums;
+      text-shadow: 0 0 60px var(--gold-line);
+      position: relative;
     }
+    .hero-card .nomor.changed { animation: nomor-pop 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
     .hero-card .counter {
       display: inline-flex;
       align-items: center;
       gap: 8px;
       background: var(--gold-soft);
-      color: var(--gold);
-      padding: 8px 22px;
+      color: var(--gold-bright);
+      padding: 8px 20px;
       border-radius: 999px;
       font-weight: 700;
-      font-size: 16px;
+      font-size: 15px;
       border: 1px solid var(--gold-line);
+      position: relative;
     }
     .hero-card .nama {
-      margin-top: 14px;
+      margin-top: 28px;
       font-family: var(--font-display);
-      font-size: 19px;
-      font-weight: 600;
+      font-size: 26px;
+      font-weight: 700;
       color: var(--paper);
+      max-width: 100%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      position: relative;
+      letter-spacing: -0.01em;
+      padding-top: 16px;
     }
+    /* Garis halus pemisah antara pill loket & nama */
+    .hero-card .nama::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 50%;
+      transform: translateX(-50%);
+      width: 64px; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--card-border-strong), transparent);
+    }
+    /* No. seri highlight di kartu Sedang Dipanggil — pill biru kontras dgn tema emas */
+    .hero-card .hero-seri {
+      margin-top: 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--blue-soft);
+      color: var(--blue);
+      border: 1px solid var(--blue);
+      border-radius: 999px;
+      padding: 9px 20px;
+      font-family: var(--font-mono);
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      position: relative;
+    }
+    .hero-card .hero-seri .lbl {
+      font-family: var(--font-display);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--paper-mute);
+    }
+    .hero-card .hero-seri .val { font-variant-numeric: tabular-nums; }
     .hero-empty {
       color: var(--paper-mute);
       font-family: var(--font-display);
@@ -264,93 +655,95 @@
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      min-height: 340px;
-      padding: 32px;
+      flex: 1;
+      gap: 14px;
+      padding: 24px;
+    }
+    .hero-empty .ring {
+      width: 64px; height: 64px;
+      border-radius: 50%;
+      border: 2px solid var(--card-border-strong);
+      border-top-color: var(--gold);
+      animation: spin 1.4s linear infinite;
     }
 
-    /* ===== Side sections ===== */
-    .next-section, .info-section {
+    /* Active counters strip (multi-counter fix) */
+    .counters-strip {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: stretch;
+    }
+    .counter-chip {
+      flex: 1 1 0;
+      min-width: 0;
       background: var(--card);
       border: 1px solid var(--card-border);
-      border-radius: 16px;
-      padding: 18px;
-      backdrop-filter: blur(8px);
+      border-radius: 12px;
+      padding: 10px 8px;
+      text-align: center;
       display: flex;
       flex-direction: column;
+      gap: 4px;
+      align-items: center;
+      transition: border-color 0.2s ease, background 0.2s ease;
+    }
+    .counter-chip .loket {
+      font-size: 10px;
+      color: var(--paper-mute);
+      font-weight: 700;
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .counter-chip .loket .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--emerald);
+      box-shadow: 0 0 6px var(--emerald-line);
+      animation: dot-pulse 2s ease-in-out infinite;
+    }
+    .counter-chip .nomor {
+      font-family: var(--font-display);
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--paper);
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+      letter-spacing: -0.02em;
+    }
+    .counter-chip.fresh {
+      border-color: var(--gold-line);
+      background: linear-gradient(160deg, var(--gold-soft), var(--card));
+    }
+    .counter-chip.fresh .nomor { color: var(--gold-bright); }
+    .counters-empty {
+      display: none;
+    }
+
+    /* ===== Right: Informasi ===== */
+    .info-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex: 1;
       min-height: 0;
     }
-    .next-title, .info-title {
-      font-family: var(--font-display);
-      font-size: 12px;
-      color: var(--paper-mute);
-      font-weight: 600;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      margin-bottom: 12px;
-      padding-bottom: 8px;
-      border-bottom: 1px solid var(--card-border);
-    }
-    .next-list {
-      display: flex;
-      flex-direction: column;
-      gap: 7px;
-      overflow-y: auto;
-      max-height: 260px;
-    }
-    .next-list::-webkit-scrollbar { width: 4px; }
-    .next-list::-webkit-scrollbar-track { background: transparent; }
-    .next-list::-webkit-scrollbar-thumb { background: var(--card-border); border-radius: 2px; }
-    .next-row {
+    .info-item {
       display: flex;
       align-items: center;
       gap: 12px;
       background: var(--card-hover);
       border: 1px solid var(--card-border);
-      border-radius: 10px;
-      padding: 9px 12px;
-    }
-    .next-row .nomor {
-      font-family: var(--font-display);
-      font-size: 19px;
-      font-weight: 700;
-      color: var(--gold);
-      min-width: 46px;
-    }
-    .next-row .info { flex: 1; min-width: 0; }
-    .next-row .nama {
-      font-weight: 600;
-      color: var(--paper);
-      font-size: 14px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .next-row .seri {
-      font-size: 11px;
-      color: var(--paper-mute);
-      margin-top: 2px;
-    }
-    .next-empty {
-      color: var(--paper-mute);
-      text-align: center;
-      padding: 20px;
-      font-size: 14px;
-    }
-
-    .info-list {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-    .info-item {
-      display: flex;
-      align-items: center;
-      gap: 11px;
+      border-radius: 12px;
+      padding: 11px 13px;
     }
     .info-item .icon {
-      width: 34px;
-      height: 34px;
-      border-radius: 9px;
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -359,183 +752,291 @@
     .info-item .icon.gold { background: var(--gold-soft); color: var(--gold); }
     .info-item .icon.emerald { background: var(--emerald-soft); color: var(--emerald); }
     .info-item .icon.blue { background: var(--blue-soft); color: var(--blue); }
-    .info-item .text { flex: 1; }
+    .info-item .icon.rose { background: var(--rose-soft); color: var(--rose); }
+    .info-item .text { flex: 1; min-width: 0; }
     .info-item .text .label {
       font-size: 10px;
       color: var(--paper-mute);
-      font-weight: 600;
+      font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 1px;
+      letter-spacing: 1.2px;
     }
     .info-item .text .value {
       font-family: var(--font-display);
-      font-size: 17px;
-      font-weight: 700;
+      font-size: 18px;
+      font-weight: 800;
       color: var(--paper);
-      margin-top: 2px;
+      margin-top: 3px;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.01em;
+      line-height: 1.1;
     }
     .info-item .text .value.small {
       font-size: 13px;
       font-family: var(--font-body);
-      font-weight: 600;
+      font-weight: 700;
       color: var(--paper-dim);
     }
 
-    /* ===== Footer — center rapi ===== */
+    /* Kompaksi panel Informasi (sekarang di kolom kiri bawah, bagi ruang dgn daftar antrian) */
+    .panel-info { padding: 14px 16px; }
+    .panel-info .panel-title { margin-bottom: 10px; padding-bottom: 10px; }
+    .panel-info .info-list { flex: 0 0 auto; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .panel-info .info-item { padding: 8px 10px; }
+    .panel-info .info-item .icon { width: 30px; height: 30px; border-radius: 8px; }
+    .panel-info .info-item .icon svg { width: 15px; height: 15px; }
+    .panel-info .info-item .text .label { font-size: 9px; letter-spacing: 1px; }
+    .panel-info .info-item .text .value { font-size: 15px; margin-top: 2px; }
+    .panel-info .info-item .text .value.small { font-size: 11px; }
+
+    /* Footer */
     .footer {
-      text-align: center;
-      padding: 10px 0;
-      color: var(--paper-mute);
-      font-size: 12px;
       display: flex;
       align-items: center;
-      justify-content: center;
-      gap: 8px;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 2px 4px;
+      color: var(--paper-mute);
+      font-size: 12px;
+      flex-wrap: wrap;
     }
+    .footer .left { display: flex; align-items: center; gap: 8px; }
     .footer .dot {
       display: inline-block;
-      width: 6px; height: 6px;
+      width: 7px; height: 7px;
       background: var(--emerald);
       border-radius: 50%;
       animation: dot-pulse 2s ease-in-out infinite;
+      box-shadow: 0 0 8px var(--emerald-line);
+    }
+    .footer .right { display: flex; align-items: center; gap: 16px; }
+    .footer .legend {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+    }
+    .footer .legend i {
+      width: 9px; height: 9px;
+      border-radius: 2px;
+      display: inline-block;
     }
 
     /* ===== Animations ===== */
-    @keyframes nomor-glow {
-      0%, 100% { text-shadow: 0 0 50px var(--gold-line); opacity: 1; }
-      50% { text-shadow: 0 0 80px var(--gold-line); opacity: 0.92; }
+    @keyframes nomor-pop {
+      0%   { transform: scale(1.12); opacity: 0; filter: blur(6px); }
+      60%  { transform: scale(0.98); opacity: 1; filter: blur(0); }
+      100% { transform: scale(1); }
+    }
+    @keyframes row-in {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
     @keyframes dot-pulse {
       0%, 100% { opacity: 1; }
       50% { opacity: 0.3; }
     }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
 
-    @media (max-width: 768px) {
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+      }
+      .hero-card .nomor.changed { animation: none; }
+      .hero-empty .ring { animation: none; border-top-color: var(--gold); }
+    }
+
+    /* ===== Responsive ===== */
+    @media (max-width: 1024px) {
+      .stats-wrap { grid-template-columns: 1fr; }
+      .main-layout { grid-template-columns: 1fr; grid-template-rows: auto; overflow-y: auto; }
+      .main-layout .panel-next,
+      .main-layout .center-col,
+      .main-layout .panel-info { grid-column: 1; grid-row: auto; }
+      html, body { overflow: auto; }
+      .container { height: auto; min-height: 100%; }
+      .hero-card .nomor { font-size: clamp(64px, 18vw, 120px); }
+      .next-list { max-height: 280px; }
+      .panel-info .info-list { flex: 0 0 auto; }
+    }
+    @media (max-width: 640px) {
+      .container { padding: 12px 14px; }
+      .topbar { flex-wrap: wrap; }
+      .clock { order: 3; width: 100%; align-items: flex-start; }
       .stats-bar { grid-template-columns: repeat(2, 1fr); }
-      .main-layout { grid-template-columns: 1fr; }
-      .hero-card .nomor { font-size: 80px; }
-      .hero-card { padding: 24px 20px; min-height: 260px; }
-      .next-list { max-height: 160px; }
-      .theme-toggle { top: 8px; right: 8px; padding: 6px 12px; font-size: 12px; }
+      .brand h1 { font-size: 18px; }
+      .brand .brand-sub { display: none; }
+      .brand .brand-logo { width: 38px; height: 38px; }
+      .brand .brand-logo.ppg { width: 58px; height: 27px; }
+      .brand .brand-logos { gap: 4px; }
+      .audio-badge .ab-text { display: none; }
+      .audio-badge { padding: 8px; }
+      .hero-card .nama { font-size: 20px; }
+      .hero-card .hero-seri { font-size: 15px; padding: 7px 14px; }
+      .next-row .seri-chip .val { font-size: 12px; }
     }
   </style>
 </head>
 <body>
-  <!-- Theme Toggle -->
-  <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" aria-label="Ganti tema">
-    <span class="icon" id="theme-icon">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
-    </span>
-    <span id="theme-text">Mode Terang</span>
-  </button>
-
   <div class="container">
 
-    <!-- Header -->
-    <div class="header">
-      <div class="eyebrow">Informasi Antrian</div>
-      <h1>Pengambilan Sertifikat</h1>
-    </div>
-
-    <!-- Stats Bar -->
-    <div class="stats-bar" id="stats-bar" style="display:none;">
-      <div class="stat-card">
-        <div class="num paper" id="stat-total">0</div>
-        <div class="lbl">Total</div>
-      </div>
-      <div class="stat-card">
-        <div class="num gold" id="stat-dipanggil">0</div>
-        <div class="lbl">Dipanggil</div>
-      </div>
-      <div class="stat-card">
-        <div class="num blue" id="stat-menunggu">0</div>
-        <div class="lbl">Menunggu</div>
-      </div>
-      <div class="stat-card">
-        <div class="num emerald" id="stat-selesai">0</div>
-        <div class="lbl">Selesai</div>
-      </div>
-    </div>
-
-    <!-- Main Layout: 3 kolom -->
-    <div class="main-layout">
-
-      <!-- Kolom Kiri: Antrian Berikutnya -->
-      <div class="side-col">
-        <div class="next-section">
-          <div class="next-title">Antrian Berikutnya</div>
-          <div class="next-list" id="next-list">
-            <div class="next-empty">Memuat data...</div>
+    <!-- Top bar -->
+    <div class="topbar">
+      <div class="brand">
+        <div class="brand-logos">
+          <div class="brand-logo">
+            <img src="logo-radenfatah.png" alt="Logo UIN Raden Fatah Palembang" width="42" height="42">
           </div>
+          <div class="brand-logo ppg">
+            <img src="ppg.png" alt="Logo PPG">
+          </div>
+        </div>
+        <div class="text">
+          <div class="eyebrow">Informasi Antrian</div>
+          <h1>Pengambilan Sertifikat</h1>
+          <div class="brand-sub">PPG UIN Raden Fatah Palembang</div>
         </div>
       </div>
 
-      <!-- Kolom Tengah: Sedang Dipanggil -->
-      <div class="side-col">
-        <div class="hero-card" id="hero-card" style="display:none;">
+      <div class="clock" aria-label="Jam dan tanggal sekarang">
+        <div class="time" id="clock-time">--:--:--</div>
+        <div class="date" id="clock-date">—</div>
+      </div>
+
+      <div class="top-actions">
+        <span class="audio-badge" id="audio-badge" title="Ketuk layar sekali untuk mengaktifkan suara panggilan" aria-live="polite">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+          <span class="ab-text">Ketuk untuk Suara</span>
+        </span>
+        <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" aria-label="Ganti tema terang atau gelap">
+          <span class="icon" id="theme-icon"></span>
+          <span id="theme-text">Mode Terang</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Stats + progress -->
+    <div class="stats-wrap" id="stats-wrap" style="display:none;">
+      <div class="stats-bar">
+        <div class="stat-card paper">
+          <div class="num" id="stat-total">0</div>
+          <div class="lbl">Total Peserta</div>
+        </div>
+        <div class="stat-card blue">
+          <div class="num" id="stat-menunggu">0</div>
+          <div class="lbl">Menunggu</div>
+        </div>
+        <div class="stat-card gold">
+          <div class="num" id="stat-dipanggil">0</div>
+          <div class="lbl">Dipanggil</div>
+        </div>
+        <div class="stat-card emerald">
+          <div class="num" id="stat-selesai">0</div>
+          <div class="lbl">Selesai</div>
+        </div>
+      </div>
+      <div class="progress-card">
+        <div class="progress-head">
+          <div class="lbl">Progres Antrian</div>
+          <div class="pct" id="progress-pct">0%</div>
+        </div>
+        <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+        <div class="progress-meta"><b id="progress-selesai">0</b> dari <b id="progress-total">0</b> peserta telah menyelesaikan pengambilan</div>
+      </div>
+    </div>
+
+    <!-- Main layout: 2 kolom -->
+    <div class="main-layout">
+
+      <!-- Kiri atas: Antrian Berikutnya (scroll, flex-grows) -->
+      <section class="panel panel-next" aria-label="Antrian berikutnya">
+        <div class="panel-title"><span class="pip"></span>Antrian Berikutnya</div>
+        <div class="next-list" id="next-list">
+          <div class="next-empty">Memuat data…</div>
+        </div>
+      </section>
+
+      <!-- Kanan: Sedang Dipanggil + Loket Aktif (full tinggi) -->
+      <div class="center-col">
+        <section class="hero-card" id="hero-card" style="display:none;" aria-live="polite" aria-atomic="true">
           <div class="label">Sedang Dipanggil</div>
           <div class="nomor" id="hero-nomor">-</div>
           <div class="counter" id="hero-counter">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg>
-            <span id="hero-counter-text">Counter -</span>
+            <span id="hero-counter-text">Ruangan -</span>
           </div>
           <div class="nama" id="hero-nama"></div>
-        </div>
+          <div class="hero-seri" id="hero-seri" style="display:none;">
+            <span class="lbl">No. Seri</span>
+            <span class="val" id="hero-seri-val"></span>
+          </div>
+        </section>
         <div class="hero-empty" id="hero-empty">
-          Belum ada peserta yang dipanggil.<br>Mohon menunggu dengan sabar.
+          <div class="ring" aria-hidden="true"></div>
+          <div>Belum ada peserta dipanggil.<br>Mohon menunggu dengan sabar.</div>
         </div>
+
+        <div class="counters-strip" id="counters-strip" style="display:none;"></div>
       </div>
 
-      <!-- Kolom Kanan: Informasi -->
-      <div class="side-col">
-        <div class="info-section">
-          <div class="info-title">Informasi</div>
-          <div class="info-list" id="info-list">
-            <div class="info-item">
-              <div class="icon gold">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-              </div>
-              <div class="text">
-                <div class="label">Estimasi Tunggu</div>
-                <div class="value small" id="info-estimasi">-</div>
-              </div>
+      <!-- Kiri bawah: Informasi (auto height) -->
+      <section class="panel panel-info" aria-label="Informasi antrian">
+        <div class="panel-title emerald"><span class="pip"></span>Informasi</div>
+        <div class="info-list" id="info-list">
+          <div class="info-item">
+            <div class="icon gold" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
             </div>
-            <div class="info-item">
-              <div class="icon blue">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-              </div>
-              <div class="text">
-                <div class="label">Sisa Antrian</div>
-                <div class="value" id="info-sisa">-</div>
-              </div>
+            <div class="text">
+              <div class="label">Estimasi Tunggu</div>
+              <div class="value small" id="info-estimasi">-</div>
             </div>
-            <div class="info-item">
-              <div class="icon emerald">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-              </div>
-              <div class="text">
-                <div class="label">Selesai Hari Ini</div>
-                <div class="value" id="info-selesai">-</div>
-              </div>
+          </div>
+          <div class="info-item">
+            <div class="icon blue" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
             </div>
-            <div class="info-item">
-              <div class="icon gold">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg>
-              </div>
-              <div class="text">
-                <div class="label">Counter Aktif</div>
-                <div class="value" id="info-counter">-</div>
-              </div>
+            <div class="text">
+              <div class="label">Sisa Antrian</div>
+              <div class="value" id="info-sisa">-</div>
+            </div>
+          </div>
+          <div class="info-item">
+            <div class="icon emerald" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            </div>
+            <div class="text">
+              <div class="label">Selesai Hari Ini</div>
+              <div class="value" id="info-selesai">-</div>
+            </div>
+          </div>
+          <div class="info-item">
+            <div class="icon rose" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg>
+            </div>
+            <div class="text">
+              <div class="label">Ruangan Sedang Melayani</div>
+              <div class="value" id="info-counter">-</div>
             </div>
           </div>
         </div>
-      </div>
+      </section>
     </div>
 
-    <!-- Footer — center rapi -->
+    <!-- Footer -->
     <div class="footer">
-      <span class="dot"></span>
-      <span>Update otomatis — informasi antrian real-time</span>
+      <div class="left">
+        <span class="dot"></span>
+        <span>Update otomatis — informasi antrian real-time</span>
+      </div>
+      <div class="right">
+        <span class="legend"><i style="background:var(--gold)"></i>Dipanggil</span>
+        <span class="legend"><i style="background:var(--emerald)"></i>Selesai</span>
+      </div>
     </div>
   </div>
 
@@ -543,40 +1044,45 @@
   <script>
     const socket = io();
 
-    // Theme toggle
-    function toggleTheme() {
-      const html = document.documentElement;
-      const current = html.getAttribute('data-theme');
-      const next = current === 'dark' ? 'light' : 'dark';
-      html.setAttribute('data-theme', next);
-      localStorage.setItem('info-theme', next);
-      updateThemeButton(next);
-    }
+    /* ===== Theme ===== */
+    const SUN = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>';
+    const MOON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
 
     function updateThemeButton(theme) {
       const icon = document.getElementById('theme-icon');
       const text = document.getElementById('theme-text');
-      if (theme === 'dark') {
-        text.textContent = 'Mode Terang';
-        icon.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>';
-      } else {
-        text.textContent = 'Mode Gelap';
-        icon.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
-      }
+      if (theme === 'dark') { text.textContent = 'Mode Terang'; icon.innerHTML = SUN; }
+      else { text.textContent = 'Mode Gelap'; icon.innerHTML = MOON; }
     }
-
-    // Load saved theme
+    function toggleTheme() {
+      const html = document.documentElement;
+      const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', next);
+      localStorage.setItem('info-theme', next);
+      updateThemeButton(next);
+    }
     (function initTheme() {
       const saved = localStorage.getItem('info-theme') || 'dark';
       document.documentElement.setAttribute('data-theme', saved);
       updateThemeButton(saved);
     })();
 
+    /* ===== Live clock ===== */
+    const timeFmt = new Intl.DateTimeFormat('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+    const dateFmt = new Intl.DateTimeFormat('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    function updateClock() {
+      const now = new Date();
+      document.getElementById('clock-time').textContent = timeFmt.format(now);
+      document.getElementById('clock-date').textContent = dateFmt.format(now);
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    /* ===== Helpers ===== */
     function esc(s) {
       if (s == null) return '';
       return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
     }
-
     function estimasiTunggu(menunggu) {
       if (!menunggu || menunggu === 0) return 'Tidak ada';
       const menit = menunggu * 2;
@@ -586,12 +1092,117 @@
       return sisa > 0 ? `± ${jam}j ${sisa}m` : `± ${jam} jam`;
     }
 
+    /* ===== TTS — panggilan suara saat ada nomor dipanggil ===== */
+    // Layar info bersifat pasif (tidak ada gesture user terus-menerus), jadi
+    // browser memblok autoplay audio. Kita "unlock" audio saat interaksi pertama
+    // (klik/sentuh layar), setelah itu audio bisa diputar otomatis via socket event.
+    // Gaya panggilan bandara: chime "ding-dong" di awal, lalu audio diputar 2x
+    // dengan jeda singkat di antaranya.
+    let audioPanggilan = null;
+    let audioUnlocked = false;
+    let lastPanggilNomor = null;  // hindari putar ulang nomor yang sama berulang
+    let panggilanTimeout = null;  // timer jeda antar repetisi (dibatalkan bila ada panggilan baru)
+
+    // Chime "ding-dong" khas bandara via Web Audio API (tanpa file eksternal).
+    // Dua nada turun (E5 → C5) dengan decay halus — terdengar seperti bel paging.
+    let chimeCtx = null;
+    function putarChime() {
+      try {
+        chimeCtx = chimeCtx || new (window.AudioContext || window.webkitAudioContext)();
+        const ctx = chimeCtx;
+        if (ctx.state === 'suspended') ctx.resume();
+        const now = ctx.currentTime;
+        const nada = [
+          { f: 659.25, t: 0.00, d: 0.45 }, // E5 "ding"
+          { f: 523.25, t: 0.38, d: 0.55 }, // C5 "dong"
+        ];
+        nada.forEach(n => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.value = n.f;
+          // Envelope: cepat naik, lambat turun (bell-like)
+          gain.gain.setValueAtTime(0.0001, now + n.t);
+          gain.gain.exponentialRampToValueAtTime(0.35, now + n.t + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + n.t + n.d);
+          osc.connect(gain).connect(ctx.destination);
+          osc.start(now + n.t);
+          osc.stop(now + n.t + n.d + 0.05);
+        });
+      } catch (e) { /* abaikan — chime opsional, TTS tetap jalan */ }
+    }
+
+    async function ucapkanPanggilan(nomor, ruangan) {
+      if (nomor === null || nomor === undefined || ruangan === null || ruangan === undefined) return;
+      if (!audioUnlocked) return; // belum ada gesture → browser akan tolak, skip
+      // Hentikan panggilan yang sedang berjalan (termasuk timer repetisi)
+      if (panggilanTimeout) { clearTimeout(panggilanTimeout); panggilanTimeout = null; }
+      if (audioPanggilan) { audioPanggilan.pause(); audioPanggilan = null; }
+      try {
+        // Bunyikan chime di awal (sekali, sebelum TTS) — gaya panggilan bandara.
+        putarChime();
+        const url = `/api/tts?nomor=${encodeURIComponent(nomor)}&loket=${encodeURIComponent(ruangan)}`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('TTS gagal');
+        const blob = await res.blob();
+        const objectUrl = URL.createObjectURL(blob);
+
+        // Putar audio dua kali dengan jeda 1.5 detik (gaya panggilan bandara).
+        let putaran = 0;
+        const JEDA_MS = 1500;
+        const MAX_PUTARAN = 2;
+        const putarSekali = () => {
+          const a = new Audio(objectUrl);
+          audioPanggilan = a;
+          a.onended = () => {
+            putaran++;
+            if (putaran < MAX_PUTARAN) {
+              panggilanTimeout = setTimeout(() => {
+                panggilanTimeout = null;
+                if (audioPanggilan === a) putarSekali();
+              }, JEDA_MS);
+            } else {
+              URL.revokeObjectURL(objectUrl);
+            }
+          };
+          return a.play();
+        };
+        await putarSekali();
+      } catch (err) {
+        console.error('Gagal memutar panggilan:', err.message);
+      }
+    }
+
+    // Unlock audio pada interaksi pertama (klik/sentuh/keydown) — sekali saja.
+    function unlockAudio() {
+      if (audioUnlocked) return;
+      audioUnlocked = true;
+      // Putar audio hampa untuk "mengaktifkan" output audio di browser
+      try {
+        const silent = new Audio('data:audio/mp3;base64,');
+        silent.play().catch(() => {});
+      } catch {}
+      document.removeEventListener('click', unlockAudio);
+      document.removeEventListener('touchstart', unlockAudio);
+      document.removeEventListener('keydown', unlockAudio);
+      // Tampilkan indikator suara aktif
+      const badge = document.getElementById('audio-badge');
+      if (badge) badge.classList.add('active');
+    }
+    document.addEventListener('click', unlockAudio, { once: false });
+    document.addEventListener('touchstart', unlockAudio, { once: false });
+    document.addEventListener('keydown', unlockAudio, { once: false });
+
+    let lastHeroNomor = null;
+    let lastNextSig = null;
+
     async function loadInfo() {
       try {
         const res = await fetch('/api/info-antrian');
         const data = await res.json();
-        renderHero(data.dipanggil);
-        renderNext(data.menunggu);
+        renderHero(data.dipanggil || []);
+        renderCounters(data.dipanggil || []);
+        renderNext(data.menunggu || []);
         renderStats(data.statistik);
         renderInfo(data.statistik);
       } catch (err) {
@@ -602,44 +1213,92 @@
     function renderHero(dipanggil) {
       const heroCard = document.getElementById('hero-card');
       const heroEmpty = document.getElementById('hero-empty');
-      if (dipanggil && dipanggil.length > 0) {
-        const current = dipanggil[dipanggil.length - 1];
-        document.getElementById('hero-nomor').textContent = current.nomor_antrian;
-        document.getElementById('hero-counter-text').textContent = current.counter ? `Counter ${current.counter}` : 'Counter';
+      if (dipanggil.length > 0) {
+        // urut descending: nomor terbesar = paling baru dipanggil
+        const sorted = [...dipanggil].sort((a, b) => b.nomor_antrian - a.nomor_antrian);
+        const current = sorted[0];
+        const nomorEl = document.getElementById('hero-nomor');
+        const newNomor = String(current.nomor_antrian);
+        nomorEl.textContent = newNomor;
+        // animasi perubahan hanya saat nomor benar-benar berubah
+        if (lastHeroNomor !== null && lastHeroNomor !== newNomor) {
+          nomorEl.classList.remove('changed');
+          void nomorEl.offsetWidth; // reflow untuk re-trigger
+          nomorEl.classList.add('changed');
+        }
+        lastHeroNomor = newNomor;
+        document.getElementById('hero-counter-text').textContent = current.counter ? `Ruangan ${current.counter}` : 'Ruangan';
         document.getElementById('hero-nama').textContent = current.nama_lengkap;
-        heroCard.style.display = 'block';
+        // Tampilkan no. seri highlight di kartu Sedang Dipanggil (textContent = XSS-safe)
+        const seriEl = document.getElementById('hero-seri');
+        const seriVal = document.getElementById('hero-seri-val');
+        if (current.no_seri) {
+          seriVal.textContent = current.no_seri;
+          seriEl.style.display = 'inline-flex';
+        } else {
+          seriEl.style.display = 'none';
+        }
+        heroCard.style.display = 'flex';
         heroEmpty.style.display = 'none';
       } else {
         heroCard.style.display = 'none';
-        heroEmpty.style.display = 'block';
+        heroEmpty.style.display = 'flex';
+        lastHeroNomor = null;
+        document.getElementById('hero-seri').style.display = 'none';
       }
+    }
+
+    function renderCounters(dipanggil) {
+      const strip = document.getElementById('counters-strip');
+      if (dipanggil.length === 0) { strip.style.display = 'none'; return; }
+      const sorted = [...dipanggil].sort((a, b) => b.nomor_antrian - a.nomor_antrian);
+      const freshNomor = sorted[0].nomor_antrian;
+      strip.innerHTML = sorted.map(p => `
+        <div class="counter-chip ${p.nomor_antrian === freshNomor ? 'fresh' : ''}">
+          <div class="loket"><span class="dot"></span>Ruangan ${esc(p.counter || '-')}</div>
+          <div class="nomor">#${esc(p.nomor_antrian)}</div>
+        </div>
+      `).join('');
+      strip.style.display = 'flex';
     }
 
     function renderNext(menunggu) {
       const list = document.getElementById('next-list');
-      if (!menunggu || menunggu.length === 0) {
-        list.innerHTML = '<div class="next-empty">Tidak ada antrian</div>';
+      // signature untuk hindari re-render berkedip saat data tidak berubah (termasuk no_seri)
+      const sig = menunggu.map(p => p.nomor_antrian + ':' + (p.no_seri || '')).join('|');
+      if (sig === lastNextSig) return;
+      lastNextSig = sig;
+
+      if (menunggu.length === 0) {
+        list.innerHTML = '<div class="next-empty">Tidak ada antrian<br>menunggu saat ini</div>';
         return;
       }
-      list.innerHTML = menunggu.map(p => `
-        <div class="next-row">
-          <div class="nomor">#${esc(p.nomor_antrian)}</div>
+      list.innerHTML = menunggu.map((p, i) => `
+        <div class="next-row ${i === 0 ? 'lead' : ''}">
+          <div class="badge">#${esc(p.nomor_antrian)}</div>
           <div class="info">
             <div class="nama">${esc(p.nama_lengkap)}</div>
-            <div class="seri">${esc(p.no_seri)}</div>
           </div>
+          <div class="seri-chip"><span class="lbl">No. Seri</span><span class="val">${esc(p.no_seri)}</span></div>
         </div>
       `).join('');
     }
 
     function renderStats(statistik) {
       if (!statistik) return;
-      const total = (statistik.menunggu ?? 0) + (statistik.dipanggil ?? 0) + (statistik.selesai ?? 0);
+      const total = statistik.total ?? ((statistik.menunggu ?? 0) + (statistik.dipanggil ?? 0) + (statistik.selesai ?? 0));
+      const selesai = statistik.selesai ?? 0;
       document.getElementById('stat-total').textContent = total;
-      document.getElementById('stat-dipanggil').textContent = statistik.dipanggil ?? 0;
       document.getElementById('stat-menunggu').textContent = statistik.menunggu ?? 0;
-      document.getElementById('stat-selesai').textContent = statistik.selesai ?? 0;
-      document.getElementById('stats-bar').style.display = 'grid';
+      document.getElementById('stat-dipanggil').textContent = statistik.dipanggil ?? 0;
+      document.getElementById('stat-selesai').textContent = selesai;
+
+      const pct = total > 0 ? Math.round((selesai / total) * 100) : 0;
+      document.getElementById('progress-pct').textContent = pct + '%';
+      document.getElementById('progress-fill').style.width = pct + '%';
+      document.getElementById('progress-selesai').textContent = selesai;
+      document.getElementById('progress-total').textContent = total;
+      document.getElementById('stats-wrap').style.display = 'grid';
     }
 
     function renderInfo(statistik) {
@@ -647,15 +1306,32 @@
       document.getElementById('info-estimasi').textContent = estimasiTunggu(statistik.menunggu ?? 0);
       document.getElementById('info-sisa').textContent = statistik.menunggu ?? 0;
       document.getElementById('info-selesai').textContent = statistik.selesai ?? 0;
-      const counterAktif = statistik.dipanggil ?? 0;
-      document.getElementById('info-counter').textContent = counterAktif > 0 ? `${counterAktif}` : '0';
+      const aktif = statistik.dipanggil ?? 0;
+      document.getElementById('info-counter').textContent = aktif > 0 ? `${aktif} ruangan` : 'Tidak ada';
     }
 
-    socket.on('antrian:panggil', () => { loadInfo(); });
-    socket.on('antrian:baru', () => { loadInfo(); });
-    socket.on('antrian:selesai', () => { loadInfo(); });
-    socket.on('antrian:panggil-ulang', () => { loadInfo(); });
-    socket.on('statistik:update', () => { loadInfo(); });
+    /* ===== Real-time events ===== */
+    socket.on('antrian:panggil', (data) => {
+      loadInfo();
+      // Putar panggilan suara untuk nomor yang baru dipanggil (sekali per nomor).
+      // data = { nomor, counter } dari broadcast global (src/routes.js).
+      if (data && data.nomor !== undefined && data.nomor !== null &&
+          data.nomor !== lastPanggilNomor) {
+        lastPanggilNomor = data.nomor;
+        ucapkanPanggilan(data.nomor, data.counter);
+      }
+    });
+    socket.on('antrian:baru', () => loadInfo());
+    socket.on('antrian:selesai', () => loadInfo());
+    socket.on('antrian:panggil-ulang', (data) => {
+      loadInfo();
+      // Panggil ulang: paksa putar ulang meski nomor sama (panitia minta ulang).
+      if (data && data.nomor !== undefined && data.nomor !== null) {
+        lastPanggilNomor = data.nomor;
+        ucapkanPanggilan(data.nomor, data.counter);
+      }
+    });
+    socket.on('statistik:update', () => loadInfo());
 
     loadInfo();
     setInterval(loadInfo, 15000);
