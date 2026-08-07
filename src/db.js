@@ -1,3 +1,4 @@
+import bcrypt from 'bcryptjs';
 import Database from 'better-sqlite3';
 import path from 'path';
 
@@ -67,6 +68,13 @@ export function initDb() {
     );
 
     INSERT OR IGNORE INTO settings (key, value) VALUES ('jumlah_loket', '3');
+
+    CREATE TABLE IF NOT EXISTS panitia_auth (
+      id            INTEGER PRIMARY KEY CHECK (id = 1),
+      password_hash TEXT NOT NULL,
+      token_version INTEGER NOT NULL DEFAULT 1,
+      updated_at    TEXT NOT NULL DEFAULT (datetime('now'))
+    );
 
     CREATE INDEX IF NOT EXISTS idx_peserta_status ON peserta(status);
     CREATE INDEX IF NOT EXISTS idx_peserta_nomor ON peserta(nomor_antrian);
@@ -227,4 +235,27 @@ export function getStatistik() {
   const dipanggil = db.prepare("SELECT COUNT(*) as count FROM peserta WHERE status = 'dipanggil'").get().count;
   const selesai = db.prepare("SELECT COUNT(*) as count FROM peserta WHERE status = 'selesai'").get().count;
   return { total, belum, menunggu, dipanggil, selesai };
+}
+
+// ===== Panitia auth (akun tunggal, id=1) =====
+export function getPanitiaAuth() {
+  return db.prepare('SELECT password_hash, token_version FROM panitia_auth WHERE id = 1').get() || null;
+}
+
+export function setPanitiaPassword(newHash) {
+  db.prepare(`
+    UPDATE panitia_auth
+    SET password_hash = ?, token_version = token_version + 1, updated_at = datetime('now')
+    WHERE id = 1
+  `).run(newHash);
+}
+
+export function initAuth() {
+  if (getPanitiaAuth()) return; // sudah ada, jangan timpa
+  const plain = process.env.PANITIA_DEFAULT_PASSWORD || 'panitiaP@G2026';
+  const hash = bcrypt.hashSync(plain, 10);
+  db.prepare(`
+    INSERT INTO panitia_auth (id, password_hash, token_version)
+    VALUES (1, ?, 1)
+  `).run(hash);
 }
