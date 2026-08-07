@@ -471,6 +471,14 @@
     #dash[hidden] { display: none; }
     #auth-overlay input::placeholder { color: var(--paper-faint); }
     #auth-overlay input:focus { border-color: var(--gold-line); }
+    /* Background card login: var(--card) nyaris-transparan di kedua tema.
+       Di atas scrim bg-black/60 mode terang → abu-gelap dgn teks gelap = tak terbaca.
+       Override solid putih (mode terang) supaya teks kontras. Mode gelap tetap var(--card). */
+    .auth-card { background: var(--card); }
+    [data-theme="light"] .auth-card { background: #ffffff; }
+    /* Logo PPG (banner ~3.7:1) jadi lebar di samping logo UIN; wrap supaya
+       tidak overflow di layar sempit. */
+    #auth-overlay .auth-card > div:first-child { flex-wrap: wrap; }
   </style>
 </head>
 <body>
