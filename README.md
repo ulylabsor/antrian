@@ -43,6 +43,14 @@ npm run dev
 - Peserta: http://localhost:3000
 - Panitia: http://localhost:3000/panitia.html
 
+## Autentikasi Panitia
+
+Dashboard `/panitia` diproteksi password. Set `.env`:
+- `AUTH_SECRET` — secret untuk token (wajib). Generate: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
+- `PANITIA_DEFAULT_PASSWORD` — password default saat first boot (default: `panitiaP@G2026`). Setelah itu ganti via UI.
+
+Ganti password kapan saja via tombol "Ganti Password" di panel settings dashboard.
+
 ## Deploy
 
 Deploy ke Railway/Render:
