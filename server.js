@@ -5,17 +5,24 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { initDb } from './src/db.js';
+import { initDb, initAuth } from './src/db.js';
 import { createRouter } from './src/routes.js';
 import { setupSocket } from './src/socket.js';
 
 dotenv.config();
+
+// Wajib ada AUTH_SECRET untuk menandatangani token panitia.
+if (!process.env.AUTH_SECRET) {
+  console.error("FATAL: AUTH_SECRET belum di-set di .env. Generate: node -e \"console.log(require('crypto').randomBytes(32).toString('hex'))\"");
+  process.exit(1);
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Init database
 initDb();
+initAuth();
 
 const app = express();
 const server = http.createServer(app);
