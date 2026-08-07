@@ -52,6 +52,20 @@ function timelapse(dateObj) {
   return `${diffDay} hari lalu`;
 }
 
+function formatTanggalSelesai(str) {
+  if (!str) return '';
+  // SQLite datetime('now','localtime') → "YYYY-MM-DD HH:MM:SS"
+  const d = new Date(String(str).replace(' ', 'T'));
+  if (isNaN(d)) return '';
+  const bulan = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+  const tgl = d.getDate();
+  const bln = bulan[d.getMonth()];
+  const thn = d.getFullYear();
+  const jam = String(d.getHours()).padStart(2, '0');
+  const mnt = String(d.getMinutes()).padStart(2, '0');
+  return `${tgl} ${bln} ${thn}, ${jam}.${mnt}`;
+}
+
 function updateTimelapse() {
   const el = document.getElementById('timelapse-container');
   if (!el || !waktuDaftar) return;
@@ -192,7 +206,35 @@ function tampilkanHasilPencarian(data) {
     return;
   }
 
-  hasilPencarian.innerHTML = data.map(p => `
+  const selesai = data.filter(p => p.status === 'selesai');
+  const aktif   = data.filter(p => p.status !== 'selesai');
+
+  // Semua match sudah selesai → modal informasi, bukan dropdown kosong.
+  // Peserta selesai tidak boleh ambil antrian lagi; cukup beri tahu.
+  if (aktif.length === 0 && selesai.length > 0) {
+    const p = selesai[0];
+    inputNama.value = '';
+    btnClear.style.display = 'none';
+    hasilPencarian.innerHTML = '';
+    const tgl = formatTanggalSelesai(p.waktu_selesai);
+    showInfo({
+      title: 'Sudah Mengambil Sertifikat',
+      message: tgl
+        ? `${p.nama_lengkap} sudah mengambil sertifikat pada ${tgl}.`
+        : `${p.nama_lengkap} sudah mengambil sertifikat.`,
+      type: 'success',
+      confirmText: 'Tutup',
+    });
+    return;
+  }
+
+  if (aktif.length === 0) {
+    hasilPencarian.innerHTML = '<div class="result-empty">Nama tidak ditemukan.<br>Coba kata kunci lain.</div>';
+    return;
+  }
+
+  // Render hanya peserta yang belum selesai (yang masih bisa ambil antrian).
+  hasilPencarian.innerHTML = aktif.map(p => `
     <button type="button" onclick="pilihPeserta(${p.id})" class="result-row">
       <span class="avatar" aria-hidden="true">${esc(initials(p.nama_lengkap))}</span>
       <span class="r-info">
