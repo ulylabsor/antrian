@@ -8,3 +8,12 @@ qr-code.png
 .playwright-mcp/
 server.log
 .superpowers/
+
+# data antrian — JANGAN di-push (data nyata)
+*.csv
+*.csv.bak
+data.csv
+data.csv.bak
+
+# backup history git lokal
+backup-pre-*.bundle
