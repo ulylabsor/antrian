@@ -1,5 +1,13 @@
-const socket = io();
-socket.emit('panitia:join');
+// socket dibuat di initPanitiaDashboard() setelah login panitia.
+// Jangan join sebelum auth — mencegah koneksi socket bocor ke server
+// saat halaman dibuka oleh user belum login.
+let socket;
+
+// Guard double-init: initPanitiaDashboard() bisa dipanggil ulang
+// (login → logout → login lagi). Tanpa guard, setInterval menumpuk
+// dan socket.io connect berkali-kali. Setelah init pertama, abaikan
+// panggilan berikutnya.
+let dashboardInitialized = false;
 
 let currentFilter = 'menunggu';
 let searchQuery = '';
@@ -372,7 +380,7 @@ async function salinNoSeri(noseri, ev) {
 // Panggil ulang dari dashboard panitia — trigger animasi + audio di halaman peserta
 async function putarPanggilan(nomor, _loket) {
   try {
-    const res = await fetch(`/api/antrian/panggil-ulang/${nomor}`, { method: 'POST' });
+    const res = await apiFetch(`/api/antrian/panggil-ulang/${nomor}`, { method: 'POST' });
     const data = await res.json();
     if (data.error) {
       showToast('Gagal memanggil ulang: ' + data.error, 'error');
@@ -381,6 +389,9 @@ async function putarPanggilan(nomor, _loket) {
     // Peserta akan animasi + putar audio via socket event (tidak perlu audio di sini)
     showToast(`Panggilan ulang nomor #${nomor} dikirim ke peserta`, 'success');
   } catch (err) {
+    // 401: apiFetch sudah menampilkan modal login + toast 'Sesi habis'.
+    // Jangan tampilkan toast kedua yang redundan di sini.
+    if (err.message === 'Unauthorized') return;
     showToast('Gagal memanggil ulang: ' + err.message, 'error');
   }
 }
@@ -395,13 +406,19 @@ async function panggil(nomor) {
     });
     return;
   }
-  await fetch(`/api/antrian/panggil/${nomor}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ counter: myLoket }),
-  });
-  loadDaftar(currentFilter);
-  loadStatistik();
+  try {
+    await apiFetch(`/api/antrian/panggil/${nomor}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ counter: myLoket }),
+    });
+    loadDaftar(currentFilter);
+    loadStatistik();
+  } catch (err) {
+    // 401: apiFetch sudah tampilkan modal login + toast 'Sesi habis'.
+    if (err.message === 'Unauthorized') return;
+    showToast('Gagal memanggil: ' + err.message, 'error');
+  }
 }
 
 async function selesai(nomor) {
@@ -412,46 +429,65 @@ async function selesai(nomor) {
     confirmText: 'Ya, Selesai',
     cancelText: 'Batal',
     onConfirm: async () => {
-      await fetch(`/api/antrian/selesai/${nomor}`, { method: 'POST' });
-      loadDaftar(currentFilter);
-      loadStatistik();
-      showToast(`Antrian #${nomor} ditandai selesai`, 'success');
+      try {
+        await apiFetch(`/api/antrian/selesai/${nomor}`, { method: 'POST' });
+        loadDaftar(currentFilter);
+        loadStatistik();
+        showToast(`Antrian #${nomor} ditandai selesai`, 'success');
+      } catch (err) {
+        // 401: apiFetch sudah tampilkan modal login + toast 'Sesi habis'.
+        if (err.message === 'Unauthorized') return;
+        showToast('Gagal menandai selesai: ' + err.message, 'error');
+      }
     },
   });
 }
 
-// === Real-time updates ===
-socket.on('antrian:baru', () => {
-  if (currentFilter === 'menunggu') loadDaftar(currentFilter);
-  loadStatistik();
-});
+// === Real-time updates & init ===
+// Dipanggil auth-panitia.js setelah login sukses (atau saat sudah authed
+// saat reload). Sebelum auth, jangan connect socket / join / pasang
+// listener — mencegah koneksi realtime bocor ke dashboard belum login.
+window.initPanitiaDashboard = function initPanitiaDashboard() {
+  // Guard double-init: cegah setInterval menumpuk + socket connect
+  // berkali-kali bila user login → logout → login lagi.
+  if (dashboardInitialized) return;
+  dashboardInitialized = true;
 
-socket.on('statistik:update', () => {
-  loadStatistik();
-});
+  // Inisialisasi socket setelah login (jangan join sebelum auth)
+  socket = io();
+  socket.emit('panitia:join');
 
-socket.on('antrian:selesai', () => {
-  loadDaftar(currentFilter);
-  loadStatistik();
-});
+  // Socket listeners (dipindah dari top-level)
+  socket.on('antrian:baru', () => {
+    if (currentFilter === 'menunggu') loadDaftar(currentFilter);
+    loadStatistik();
+  });
 
-socket.on('antrian:panggil', () => {
-  // Refresh daftar agar badge counter muncul di dashboard lain
-  if (currentFilter === 'dipanggil' || currentFilter === 'menunggu') {
+  socket.on('statistik:update', () => {
+    loadStatistik();
+  });
+
+  socket.on('antrian:selesai', () => {
     loadDaftar(currentFilter);
-  }
-  loadStatistik();
-});
+    loadStatistik();
+  });
 
-socket.on('settings:loket', (data) => {
-  // Panitia lain mengubah jumlah loket — re-render dropdown
-  jumlahLoket = data.jumlah_loket;
-  document.getElementById('input-jumlah-loket').value = jumlahLoket;
-  renderLoketDropdown();
-});
+  socket.on('antrian:panggil', () => {
+    // Refresh daftar agar badge counter muncul di dashboard lain
+    if (currentFilter === 'dipanggil' || currentFilter === 'menunggu') {
+      loadDaftar(currentFilter);
+    }
+    loadStatistik();
+  });
 
-// === Init & event wiring ===
-document.addEventListener('DOMContentLoaded', () => {
+  socket.on('settings:loket', (data) => {
+    // Panitia lain mengubah jumlah loket — re-render dropdown
+    jumlahLoket = data.jumlah_loket;
+    document.getElementById('input-jumlah-loket').value = jumlahLoket;
+    renderLoketDropdown();
+  });
+
+  // Data loads (dari DOMContentLoaded lama)
   loadMyLoket();
   loadLoketSettings();
   loadStatistik();
@@ -485,22 +521,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('btn-simpan-loket').addEventListener('click', async () => {
     const n = parseInt(document.getElementById('input-jumlah-loket').value, 10);
-    const res = await fetch('/api/settings/loket', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ jumlah_loket: n }),
-    });
-    const data = await res.json();
     const status = document.getElementById('settings-status');
-    if (data.error) {
-      status.textContent = data.error;
+    try {
+      const res = await apiFetch('/api/settings/loket', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jumlah_loket: n }),
+      });
+      const data = await res.json();
+      if (data.error) {
+        status.textContent = data.error;
+        status.className = 'settings-status is-error';
+      } else {
+        status.textContent = 'Tersimpan';
+        status.className = 'settings-status is-ok';
+        jumlahLoket = data.jumlah_loket;
+        renderLoketDropdown();
+        setTimeout(() => { status.textContent = ''; }, 2000);
+      }
+    } catch (err) {
+      // 401: apiFetch sudah tampilkan modal login + toast 'Sesi habis'.
+      if (err.message === 'Unauthorized') return;
+      status.textContent = 'Gagal menyimpan: ' + err.message;
       status.className = 'settings-status is-error';
-    } else {
-      status.textContent = 'Tersimpan';
-      status.className = 'settings-status is-ok';
-      jumlahLoket = data.jumlah_loket;
-      renderLoketDropdown();
-      setTimeout(() => { status.textContent = ''; }, 2000);
     }
   });
 
@@ -511,7 +554,7 @@ document.addEventListener('DOMContentLoaded', () => {
     btn.disabled = true;
     btn.innerHTML = '⏳ Downloading...';
     try {
-      const res = await fetch('/api/sync/download', { method: 'POST' });
+      const res = await apiFetch('/api/sync/download', { method: 'POST' });
       const data = await res.json();
       if (data.error) {
         showInfo({
@@ -532,13 +575,15 @@ document.addEventListener('DOMContentLoaded', () => {
         loadDaftar(currentFilter);
       }
     } catch (err) {
+      // 401: apiFetch sudah tampilkan modal login + toast 'Sesi habis'.
+      if (err.message === 'Unauthorized') return;
       showToast('Gagal sync: ' + err.message, 'error');
     } finally {
       btn.disabled = false;
       btn.innerHTML = originalText;
     }
   });
-});
+};
 
 // Expose
 window.loadDaftar = loadDaftar;
