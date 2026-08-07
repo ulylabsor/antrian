@@ -15,9 +15,12 @@ import {
   getPesertaNeedSync,
   insertPeserta,
   incrementJumlahDipanggil,
+  getPanitiaAuth,
+  setPanitiaPassword,
 } from './db.js';
 import { updateStatusInSheets, syncAllToSheets } from './sheets.js';
 import { generatePanggilanAudio } from './tts.js';
+import { requirePanitia, comparePassword, hashPassword, signToken, loginRateLimit } from './auth.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -131,6 +134,33 @@ function sukukan(kata) {
 export function createRouter(io) {
   const router = Router();
 
+  // ===== Panitia auth =====
+  router.post('/panitia/auth', loginRateLimit, (req, res) => {
+    const { password } = req.body || {};
+    if (!password) return res.status(400).json({ error: 'Password wajib diisi' });
+    const auth = getPanitiaAuth();
+    if (!auth) return res.status(500).json({ error: 'Konfigurasi panitia belum siap' });
+    if (!comparePassword(password, auth.password_hash)) {
+      return res.status(401).json({ error: 'Password salah' });
+    }
+    const token = signToken({ ver: auth.token_version });
+    const expiresAt = Date.now() + parseInt(process.env.PANITIA_TOKEN_TTL_HOURS || '8', 10) * 3600 * 1000;
+    res.json({ token, expiresAt });
+  });
+
+  router.post('/panitia/change-password', requirePanitia, (req, res) => {
+    const { currentPassword, newPassword } = req.body || {};
+    if (!newPassword || String(newPassword).length < 6) {
+      return res.status(400).json({ error: 'Password baru minimal 6 karakter' });
+    }
+    const auth = getPanitiaAuth();
+    if (!comparePassword(currentPassword, auth.password_hash)) {
+      return res.status(401).json({ error: 'Password saat ini salah' });
+    }
+    setPanitiaPassword(hashPassword(newPassword));
+    res.json({ success: true });
+  });
+
   // Cari peserta (autocomplete) — by nama OR no_seri via satu kotak pintar
   router.get('/peserta/cari', (req, res) => {
     const q = req.query.q;
@@ -147,7 +177,7 @@ export function createRouter(io) {
   });
 
   // Sync semua data ke Google Sheets (manual trigger dari dashboard)
-  router.post('/sync/sheets', async (req, res) => {
+  router.post('/sync/sheets', requirePanitia, async (req, res) => {
     // Cek credentials Google Sheets dulu
     if (!process.env.GOOGLE_SHEETS_ID || !process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || !process.env.GOOGLE_PRIVATE_KEY) {
       return res.status(400).json({
@@ -170,7 +200,7 @@ export function createRouter(io) {
 
   // Download data terbaru dari Google Sheets publik → simpan ke data.csv → import ke SQLite
   // Abaikan duplikat (INSERT OR IGNORE). Dipakai untuk refresh data dari dashboard.
-  router.post('/sync/download', async (req, res) => {
+  router.post('/sync/download', requirePanitia, async (req, res) => {
     const SHEETS_ID = process.env.GOOGLE_SHEETS_ID || '1vefx3SssNHYpjOVb3g37BgnNUfHklS7IMtFQKQpujm4';
     const url = `https://docs.google.com/spreadsheets/d/${SHEETS_ID}/export?format=csv`;
     try {
@@ -256,7 +286,7 @@ export function createRouter(io) {
   });
 
   // Panggil peserta
-  router.post('/antrian/panggil/:nomor', (req, res) => {
+  router.post('/antrian/panggil/:nomor', requirePanitia, (req, res) => {
     const nomor = parseInt(req.params.nomor);
     const antrian = getAntrianByNomor(nomor);
     if (!antrian) return res.status(404).json({ error: 'Tidak ditemukan' });
@@ -284,7 +314,7 @@ export function createRouter(io) {
   });
 
   // Panggil ulang — emit event ke peserta agar animasi + putar audio lagi
-  router.post('/antrian/panggil-ulang/:nomor', (req, res) => {
+  router.post('/antrian/panggil-ulang/:nomor', requirePanitia, (req, res) => {
     const nomor = parseInt(req.params.nomor);
     const antrian = getAntrianByNomor(nomor);
     if (!antrian) return res.status(404).json({ error: 'Tidak ditemukan' });
@@ -301,7 +331,7 @@ export function createRouter(io) {
   });
 
   // Selesai (sync ke Sheets)
-  router.post('/antrian/selesai/:nomor', async (req, res) => {
+  router.post('/antrian/selesai/:nomor', requirePanitia, async (req, res) => {
     const nomor = parseInt(req.params.nomor);
     const antrian = getAntrianByNomor(nomor);
     if (!antrian) return res.status(404).json({ error: 'Tidak ditemukan' });
@@ -326,7 +356,7 @@ export function createRouter(io) {
     res.json({ jumlah_loket: getJumlahLoket() });
   });
 
-  router.post('/settings/loket', (req, res) => {
+  router.post('/settings/loket', requirePanitia, (req, res) => {
     const n = parseInt(req.body?.jumlah_loket);
     if (!Number.isInteger(n) || n < 1 || n > 20) {
       return res.status(400).json({ error: 'jumlah_loket harus integer 1-20' });
