@@ -118,7 +118,7 @@ export function getPesertaByNama(nama) {
 
 export function cariPeserta(q) {
   const stmt = db.prepare(`
-    SELECT id, nama_lengkap, tempat_tanggal_lahir, no_seri
+    SELECT id, nama_lengkap, tempat_tanggal_lahir, no_seri, status, waktu_selesai
     FROM peserta
     WHERE nama_lengkap LIKE ? COLLATE NOCASE
        OR TRIM(no_seri) LIKE ? COLLATE NOCASE

@@ -4,7 +4,7 @@ import express from 'express';
 import { unlinkSync, existsSync } from 'node:fs';
 
 import { createRouter } from '../src/routes.js';
-import { initDb, insertPeserta, closeDb, initAuth, getPanitiaAuth } from '../src/db.js';
+import { initDb, insertPeserta, closeDb, initAuth, getPanitiaAuth, ambilNomorAntrian, updateStatus, setWaktuSelesai } from '../src/db.js';
 import { signToken } from '../src/auth.js';
 
 const TEST_DB = './test-routes.sqlite';
@@ -70,6 +70,27 @@ test('GET /api/peserta/cari?q=andi returns 200 + JSON array with matches', async
   const names = data.map((p) => p.nama_lengkap);
   assert.ok(names.includes('Andi Wijaya'));
   assert.ok(names.includes('Andi Saputra'));
+  // Field baru: status & waktu_selesai harus ada di setiap match
+  for (const p of data) {
+    assert.ok(p.status !== undefined, 'field status harus ada di response cari');
+  }
+});
+
+test('GET /api/peserta/cari tetap return peserta selesai (filter ada di frontend, bukan backend)', async () => {
+  // Jadikan 'Andi Wijaya' selesai: ambil nomor → status selesai → set waktu_selesai
+  const cari = await fetch(`${baseUrl}/api/peserta/cari?q=Andi Wijaya`);
+  const peserta = (await cari.json())[0];
+  const nomor = ambilNomorAntrian(peserta.id);
+  updateStatus(nomor, 'selesai');
+  setWaktuSelesai(nomor);
+
+  // Cari lagi — Andi Wijaya HARUS tetap muncul (backend tidak filter selesai)
+  const res = await fetch(`${baseUrl}/api/peserta/cari?q=Andi Wijaya`);
+  const data = await res.json();
+  const match = data.find((p) => p.nama_lengkap === 'Andi Wijaya');
+  assert.ok(match, 'peserta selesai harus tetap direturn oleh cari (filter di frontend)');
+  assert.equal(match.status, 'selesai');
+  assert.ok(match.waktu_selesai, 'waktu_selesai harus terisi untuk peserta selesai');
 });
 
 test('GET /api/peserta/cari with q < 2 chars returns []', async () => {
