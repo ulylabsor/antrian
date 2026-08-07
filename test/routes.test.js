@@ -4,13 +4,15 @@ import express from 'express';
 import { unlinkSync, existsSync } from 'node:fs';
 
 import { createRouter } from '../src/routes.js';
-import { initDb, insertPeserta, closeDb } from '../src/db.js';
+import { initDb, insertPeserta, closeDb, initAuth, getPanitiaAuth } from '../src/db.js';
+import { signToken } from '../src/auth.js';
 
 const TEST_DB = './test-routes.sqlite';
 
 let app;
 let server;
 let baseUrl;
+let panitiaToken;
 
 function startServer() {
   return new Promise((resolve) => {
@@ -35,6 +37,12 @@ function stopServer() {
 beforeEach(async () => {
   process.env.DB_PATH = TEST_DB;
   initDb();
+  // Setup auth untuk endpoint aksi yang diproteksi requirePanitia
+  process.env.AUTH_SECRET = process.env.AUTH_SECRET || 'test-secret-key';
+  process.env.PANITIA_TOKEN_TTL_HOURS = '8';
+  process.env.PANITIA_DEFAULT_PASSWORD = 'panitiaP@G2026';
+  initAuth();
+  panitiaToken = signToken({ ver: getPanitiaAuth().token_version });
   insertPeserta('Andi Wijaya', 'Surabaya, 5 Mei 1990', '0013001', 2);
   insertPeserta('Andi Saputra', 'Malang, 6 Juni 1991', '0013002', 3);
   insertPeserta('Budi Santoso', 'Jakarta, 1 Januari 1992', '0013003', 4);
@@ -154,6 +162,7 @@ test('POST /api/antrian/selesai/:nomor returns success even when Sheets sync fai
   // Mark selesai — Sheets sync will fail (no credentials) but route must still succeed
   const res = await fetch(`${baseUrl}/api/antrian/selesai/${nomor_antrian}`, {
     method: 'POST',
+    headers: { Authorization: `Bearer ${panitiaToken}` },
   });
   assert.equal(res.status, 200);
   const data = await res.json();
@@ -172,7 +181,7 @@ test('GET /api/settings/loket returns 200 dengan jumlah_loket default 3', async 
 test('POST /api/settings/loket dengan valid value persists', async () => {
   const res = await fetch(`${baseUrl}/api/settings/loket`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${panitiaToken}` },
     body: JSON.stringify({ jumlah_loket: 5 }),
   });
   assert.equal(res.status, 200);
@@ -189,7 +198,7 @@ test('POST /api/settings/loket dengan valid value persists', async () => {
 test('POST /api/settings/loket dengan invalid value returns 400', async () => {
   const res = await fetch(`${baseUrl}/api/settings/loket`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${panitiaToken}` },
     body: JSON.stringify({ jumlah_loket: 0 }),
   });
   assert.equal(res.status, 400);
@@ -209,7 +218,7 @@ test('POST /api/antrian/panggil/:nomor dengan counter valid returns 200 dan set 
   // Panggil dengan counter 2
   const res = await fetch(`${baseUrl}/api/antrian/panggil/${nomor_antrian}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${panitiaToken}` },
     body: JSON.stringify({ counter: 2 }),
   });
   assert.equal(res.status, 200);
@@ -238,7 +247,7 @@ test('POST /api/antrian/panggil/:nomor dengan counter di atas jumlah_loket retur
   // counter 99 jauh di atas default jumlah_loket=3
   const res = await fetch(`${baseUrl}/api/antrian/panggil/${nomor_antrian}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${panitiaToken}` },
     body: JSON.stringify({ counter: 99 }),
   });
   assert.equal(res.status, 400);
@@ -257,6 +266,7 @@ test('POST /api/antrian/panggil/:nomor tanpa body returns 200 dengan counter nul
   // Panggil tanpa body (legacy)
   const res = await fetch(`${baseUrl}/api/antrian/panggil/${nomor_antrian}`, {
     method: 'POST',
+    headers: { Authorization: `Bearer ${panitiaToken}` },
   });
   assert.equal(res.status, 200);
   const data = await res.json();
