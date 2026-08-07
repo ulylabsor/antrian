@@ -53,8 +53,8 @@ test('createRouter adalah function', () => {
   assert.equal(typeof createRouter, 'function');
 });
 
-test('GET /api/peserta/cari?nama=andi returns 200 + JSON array with matches', async () => {
-  const res = await fetch(`${baseUrl}/api/peserta/cari?nama=andi`);
+test('GET /api/peserta/cari?q=andi returns 200 + JSON array with matches', async () => {
+  const res = await fetch(`${baseUrl}/api/peserta/cari?q=andi`);
   assert.equal(res.status, 200);
   const data = await res.json();
   assert.ok(Array.isArray(data));
@@ -64,14 +64,14 @@ test('GET /api/peserta/cari?nama=andi returns 200 + JSON array with matches', as
   assert.ok(names.includes('Andi Saputra'));
 });
 
-test('GET /api/peserta/cari with nama < 2 chars returns []', async () => {
-  const res = await fetch(`${baseUrl}/api/peserta/cari?nama=a`);
+test('GET /api/peserta/cari with q < 2 chars returns []', async () => {
+  const res = await fetch(`${baseUrl}/api/peserta/cari?q=a`);
   assert.equal(res.status, 200);
   const data = await res.json();
   assert.deepEqual(data, []);
 });
 
-test('GET /api/peserta/cari without nama returns []', async () => {
+test('GET /api/peserta/cari without q returns []', async () => {
   const res = await fetch(`${baseUrl}/api/peserta/cari`);
   assert.equal(res.status, 200);
   const data = await res.json();
@@ -80,7 +80,7 @@ test('GET /api/peserta/cari without nama returns []', async () => {
 
 test('POST /api/antrian/ambil with valid pesertaId returns nomor_antrian', async () => {
   // First find a peserta
-  const cari = await fetch(`${baseUrl}/api/peserta/cari?nama=Andi Wijaya`);
+  const cari = await fetch(`${baseUrl}/api/peserta/cari?q=Andi Wijaya`);
   const pesertaList = await cari.json();
   const peserta = pesertaList[0];
 
@@ -96,7 +96,7 @@ test('POST /api/antrian/ambil with valid pesertaId returns nomor_antrian', async
 });
 
 test('POST /api/antrian/ambil for same peserta twice returns 400', async () => {
-  const cari = await fetch(`${baseUrl}/api/peserta/cari?nama=Budi`);
+  const cari = await fetch(`${baseUrl}/api/peserta/cari?q=Budi`);
   const pesertaList = await cari.json();
   const peserta = pesertaList[0];
 
@@ -142,7 +142,7 @@ test('GET /api/statistik returns the 5 counters', async () => {
 
 test('POST /api/antrian/selesai/:nomor returns success even when Sheets sync fails', async () => {
   // Take a number first
-  const cari = await fetch(`${baseUrl}/api/peserta/cari?nama=Andi Wijaya`);
+  const cari = await fetch(`${baseUrl}/api/peserta/cari?q=Andi Wijaya`);
   const peserta = (await cari.json())[0];
   const ambil = await fetch(`${baseUrl}/api/antrian/ambil`, {
     method: 'POST',
@@ -197,7 +197,7 @@ test('POST /api/settings/loket dengan invalid value returns 400', async () => {
 
 test('POST /api/antrian/panggil/:nomor dengan counter valid returns 200 dan set counter', async () => {
   // Ambil nomor dulu
-  const cari = await fetch(`${baseUrl}/api/peserta/cari?nama=Andi Wijaya`);
+  const cari = await fetch(`${baseUrl}/api/peserta/cari?q=Andi Wijaya`);
   const peserta = (await cari.json())[0];
   const ambil = await fetch(`${baseUrl}/api/antrian/ambil`, {
     method: 'POST',
@@ -226,7 +226,7 @@ test('POST /api/antrian/panggil/:nomor dengan counter valid returns 200 dan set 
 });
 
 test('POST /api/antrian/panggil/:nomor dengan counter di atas jumlah_loket returns 400', async () => {
-  const cari = await fetch(`${baseUrl}/api/peserta/cari?nama=Andi Saputra`);
+  const cari = await fetch(`${baseUrl}/api/peserta/cari?q=Andi Saputra`);
   const peserta = (await cari.json())[0];
   const ambil = await fetch(`${baseUrl}/api/antrian/ambil`, {
     method: 'POST',
@@ -245,7 +245,7 @@ test('POST /api/antrian/panggil/:nomor dengan counter di atas jumlah_loket retur
 });
 
 test('POST /api/antrian/panggil/:nomor tanpa body returns 200 dengan counter null (legacy)', async () => {
-  const cari = await fetch(`${baseUrl}/api/peserta/cari?nama=Budi Santoso`);
+  const cari = await fetch(`${baseUrl}/api/peserta/cari?q=Budi Santoso`);
   const peserta = (await cari.json())[0];
   const ambil = await fetch(`${baseUrl}/api/antrian/ambil`, {
     method: 'POST',
@@ -262,4 +262,25 @@ test('POST /api/antrian/panggil/:nomor tanpa body returns 200 dengan counter nul
   const data = await res.json();
   assert.equal(data.success, true);
   assert.equal(data.counter, null);
+});
+
+test('GET /api/peserta/cari?q=<no_seri> return hasil berdasarkan no seri', async () => {
+  const res = await fetch(`${baseUrl}/api/peserta/cari?q=0013001`);
+  assert.equal(res.status, 200);
+  const data = await res.json();
+  assert.ok(Array.isArray(data));
+  assert.equal(data.length, 1);
+  assert.equal(data[0].nama_lengkap, 'Andi Wijaya');
+  assert.equal(data[0].no_seri, '0013001');
+});
+
+test('GET /api/peserta/cari?q=<prefix seri> return semua peserta dengan prefix itu', async () => {
+  const res = await fetch(`${baseUrl}/api/peserta/cari?q=0013`);
+  assert.equal(res.status, 200);
+  const data = await res.json();
+  assert.ok(Array.isArray(data));
+  assert.ok(data.length >= 2);
+  const names = data.map(p => p.nama_lengkap);
+  assert.ok(names.includes('Andi Wijaya'));
+  assert.ok(names.includes('Andi Saputra'));
 });
