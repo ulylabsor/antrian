@@ -1,7 +1,7 @@
 import { test, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert';
 import fs from 'node:fs';
-import { initDb, closeDb, getPesertaByNama, getPesertaById, ambilNomorAntrian, getAntrianByNomor, getDaftarAntrian, updateStatus, setWaktuSelesai, getStatistik, insertPeserta, setCounter, getJumlahLoket, setJumlahLoket } from '../src/db.js';
+import { initDb, closeDb, getPesertaByNama, getPesertaById, ambilNomorAntrian, getAntrianByNomor, getDaftarAntrian, updateStatus, setWaktuSelesai, getStatistik, insertPeserta, setCounter, getJumlahLoket, setJumlahLoket, cariPeserta } from '../src/db.js';
 
 const TEST_DB = './test-database.sqlite';
 
@@ -34,6 +34,25 @@ test('getPesertaByNama mencari nama parsial', () => {
 test('getPesertaByNama case insensitive', () => {
   const hasil = getPesertaByNama('budi');
   assert.ok(hasil.length > 0);
+});
+
+test('cariPeserta by no_seri prefix mengembalikan peserta yang cocok', () => {
+  insertPeserta('Andi Wijaya', 'Surabaya, 5 Mei 1990', '0013001', 2);
+  insertPeserta('Andi Saputra', 'Malang, 6 Juni 1991', '0013002', 3);
+  insertPeserta('Budi Santoso', 'Jakarta, 1 Januari 1992', '0013003', 4);
+
+  // Prefix seri unik → 1 hasil exact
+  const satu = cariPeserta('0013001');
+  assert.equal(satu.length, 1);
+  assert.equal(satu[0].nama_lengkap, 'Andi Wijaya');
+  assert.equal(satu[0].no_seri, '0013001');
+
+  // Prefix seri parsial → beberapa hasil
+  const parsial = cariPeserta('0013');
+  assert.ok(parsial.length >= 2);
+  const nama = parsial.map(p => p.nama_lengkap);
+  assert.ok(nama.includes('Andi Wijaya'));
+  assert.ok(nama.includes('Andi Saputra'));
 });
 
 test('getPesertaById return data lengkap', () => {

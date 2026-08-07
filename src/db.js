@@ -108,6 +108,18 @@ export function getPesertaByNama(nama) {
   return stmt.all(`%${nama}%`);
 }
 
+export function cariPeserta(q) {
+  const stmt = db.prepare(`
+    SELECT id, nama_lengkap, tempat_tanggal_lahir, no_seri
+    FROM peserta
+    WHERE nama_lengkap LIKE ? COLLATE NOCASE
+       OR TRIM(no_seri) LIKE ? COLLATE NOCASE
+    ORDER BY nama_lengkap
+    LIMIT 20
+  `);
+  return stmt.all(`%${q}%`, `${q}%`);
+}
+
 export function getPesertaById(id) {
   const stmt = db.prepare('SELECT * FROM peserta WHERE id = ?');
   return stmt.get(id);
