@@ -169,7 +169,7 @@ inputNama.addEventListener('input', (e) => {
 
   timeoutId = setTimeout(async () => {
     try {
-      const res = await fetch(`/api/peserta/cari?nama=${encodeURIComponent(nama)}`);
+      const res = await fetch(`/api/peserta/cari?q=${encodeURIComponent(nama)}`);
       const data = await res.json();
       tampilkanHasilPencarian(data);
     } catch (err) {
