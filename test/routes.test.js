@@ -64,14 +64,14 @@ test('GET /api/peserta/cari?q=andi returns 200 + JSON array with matches', async
   assert.ok(names.includes('Andi Saputra'));
 });
 
-test('GET /api/peserta/cari with nama < 2 chars returns []', async () => {
+test('GET /api/peserta/cari with q < 2 chars returns []', async () => {
   const res = await fetch(`${baseUrl}/api/peserta/cari?q=a`);
   assert.equal(res.status, 200);
   const data = await res.json();
   assert.deepEqual(data, []);
 });
 
-test('GET /api/peserta/cari without nama returns []', async () => {
+test('GET /api/peserta/cari without q returns []', async () => {
   const res = await fetch(`${baseUrl}/api/peserta/cari`);
   assert.equal(res.status, 200);
   const data = await res.json();
