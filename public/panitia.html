@@ -456,10 +456,22 @@
         transition-duration: 0.001ms !important;
       }
     }
+
+    /* ===== Auth modal (login + ganti password) ===== */
+    @keyframes auth-shake {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-8px); }
+      40% { transform: translateX(8px); }
+      60% { transform: translateX(-6px); }
+      80% { transform: translateX(6px); }
+    }
+    #auth-overlay input::placeholder { color: var(--paper-faint); }
+    #auth-overlay input:focus { border-color: var(--gold-line); }
   </style>
 </head>
 <body>
-  <div class="page">
+  <div id="auth-overlay" class="fixed inset-0 z-[2000] hidden items-center justify-center p-4 bg-black/60 backdrop-blur-md" role="dialog" aria-modal="true" aria-labelledby="auth-title"></div>
+  <div class="page" id="dash" hidden>
 
     <!-- ===== Top bar ===== -->
     <header class="topbar">
@@ -520,6 +532,9 @@
             <input id="input-jumlah-loket" type="number" min="1" max="20" class="input-loket" aria-label="Jumlah ruangan">
             <button id="btn-simpan-loket" class="btn-save">Simpan</button>
             <span id="settings-status" class="settings-status"></span>
+          </div>
+          <div class="settings-row" style="margin-top:12px;">
+            <button id="btn-change-password" class="btn-save" type="button">Ganti Password</button>
           </div>
         </div>
       </section>
@@ -619,6 +634,7 @@
     setInterval(updateClock, 1000);
   </script>
   <script src="/js/modal.js"></script>
+  <script src="/js/auth-panitia.js"></script>
   <script src="/js/panitia.js"></script>
 </body>
 </html>
