@@ -51,6 +51,11 @@ Dashboard `/panitia` diproteksi password. Set `.env`:
 
 Ganti password kapan saja via tombol "Ganti Password" di panel settings dashboard.
 
+> **Catatan deploy balik reverse proxy:** Server memakai `app.set('trust proxy', 1)` agar `req.ip` membaca IP klien asli dari `X-Forwarded-For` (Nginx). Tanpa konfigurasi Nginx yang set header ini, rate-limit login panitia (5 percobaan/60 detik per IP) tidak berfungsi — semua panitia tampak sebagai 1 IP. Pastikan blok Nginx berisi:
+> ```nginx
+> proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+> ```
+
 ## Deploy
 
 Deploy ke Railway/Render:

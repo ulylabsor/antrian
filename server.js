@@ -12,7 +12,8 @@ import { setupSocket } from './src/socket.js';
 dotenv.config();
 
 // Wajib ada AUTH_SECRET untuk menandatangani token panitia.
-if (!process.env.AUTH_SECRET) {
+// Cek .trim() sekalian supaya "   " (whitespace) tidak lolos sebagai secret lemah.
+if (!process.env.AUTH_SECRET || !process.env.AUTH_SECRET.trim()) {
   console.error("FATAL: AUTH_SECRET belum di-set di .env. Generate: node -e \"console.log(require('crypto').randomBytes(32).toString('hex'))\"");
   process.exit(1);
 }
@@ -27,6 +28,12 @@ initAuth();
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
+
+// trust proxy: di balik Nginx/Cloudflare, req.ip = IP Nginx (loopback) tanpa ini,
+// sehingga loginRateLimit panitia (per-IP) tidak berfungsi — semua panitia
+// tampak sebagai 1 IP. '1' = percaya 1 hop terdekat (Nginx). WAJIB: Nginx harus
+// set header X-Forwarded-For (proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for).
+app.set('trust proxy', 1);
 
 app.use(cors());
 app.use(express.json());
