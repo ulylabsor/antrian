@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import {
   getPesertaByNama,
+  cariPeserta,
   getPesertaById,
   ambilNomorAntrian,
   getAntrianByNomor,
@@ -131,13 +132,13 @@ function sukukan(kata) {
 export function createRouter(io) {
   const router = Router();
 
-  // Cari peserta (autocomplete)
+  // Cari peserta (autocomplete) — by nama OR no_seri via satu kotak pintar
   router.get('/peserta/cari', (req, res) => {
-    const nama = req.query.nama;
-    if (!nama || nama.length < 2) {
+    const q = req.query.q;
+    if (!q || q.length < 2) {
       return res.json([]);
     }
-    const hasil = getPesertaByNama(nama);
+    const hasil = cariPeserta(q);
     res.json(hasil);
   });
 
