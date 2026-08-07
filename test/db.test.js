@@ -55,6 +55,22 @@ test('cariPeserta by no_seri prefix mengembalikan peserta yang cocok', () => {
   assert.ok(nama.includes('Andi Saputra'));
 });
 
+test('cariPeserta by no_seri substring (tengah) mengembalikan peserta yang cocok', () => {
+  insertPeserta('Cici Lestari', 'Semarang, 3 Maret 1992', '0013099', 5);
+  insertPeserta('Dodi Wibowo', 'Tegal, 4 April 1993', '0013001', 6);
+  insertPeserta('Eka Putri', 'Pekalongan, 5 Mei 1994', '0013002', 7);
+
+  // Substring di tengah seri — '13' harus cocok '0013099','0013001','0013002'
+  const tengah = cariPeserta('13');
+  assert.ok(tengah.length >= 3);
+
+  // Substring di akhir seri — '99' harus cocok '0013099'
+  const akhir = cariPeserta('99');
+  assert.ok(akhir.length >= 1);
+  const namaAkhir = akhir.map(p => p.nama_lengkap);
+  assert.ok(namaAkhir.includes('Cici Lestari'));
+});
+
 test('getPesertaById return data lengkap', () => {
   const peserta = getPesertaById(1);
   assert.equal(peserta.nama_lengkap, 'Budi Santoso');

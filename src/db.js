@@ -117,7 +117,7 @@ export function cariPeserta(q) {
     ORDER BY nama_lengkap
     LIMIT 20
   `);
-  return stmt.all(`%${q}%`, `${q}%`);
+  return stmt.all(`%${q}%`, `%${q}%`);
 }
 
 export function getPesertaById(id) {

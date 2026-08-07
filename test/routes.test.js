@@ -284,3 +284,16 @@ test('GET /api/peserta/cari?q=<prefix seri> return semua peserta dengan prefix i
   assert.ok(names.includes('Andi Wijaya'));
   assert.ok(names.includes('Andi Saputra'));
 });
+
+test('GET /api/peserta/cari?q=<substring seri tengah> return peserta yang no_seri-nya memuat substring itu', async () => {
+  // '13' muncul di tengah '0013001','0013002','0013003' — bukan prefix, bukan akhir
+  const res = await fetch(`${baseUrl}/api/peserta/cari?q=13`);
+  assert.equal(res.status, 200);
+  const data = await res.json();
+  assert.ok(Array.isArray(data));
+  assert.ok(data.length >= 3);
+  const names = data.map(p => p.nama_lengkap);
+  assert.ok(names.includes('Andi Wijaya'));
+  assert.ok(names.includes('Andi Saputra'));
+  assert.ok(names.includes('Budi Santoso'));
+});
