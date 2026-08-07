@@ -465,6 +465,10 @@
       60% { transform: translateX(-6px); }
       80% { transform: translateX(6px); }
     }
+    /* Override .page { display:flex } (spesifisitas 0,1,0) yang mengalahkan
+       UA [hidden] default — supaya #dash benar-benar tersembunyi sebelum login.
+       Selektor #dash[hidden] (1,1,0) > .page (0,1,0). */
+    #dash[hidden] { display: none; }
     #auth-overlay input::placeholder { color: var(--paper-faint); }
     #auth-overlay input:focus { border-color: var(--gold-line); }
   </style>

@@ -86,7 +86,14 @@ function showLoginModal() {
   pwInput.focus();
 
   ov.querySelector('#auth-toggle-eye').addEventListener('click', () => {
-    pwInput.type = pwInput.type === 'password' ? 'text' : 'password';
+    const eyeBtn = ov.querySelector('#auth-toggle-eye');
+    if (pwInput.type === 'password') {
+      pwInput.type = 'text';
+      eyeBtn.setAttribute('aria-label', 'Sembunyikan password');
+    } else {
+      pwInput.type = 'password';
+      eyeBtn.setAttribute('aria-label', 'Lihat password');
+    }
   });
 
   function shake() {
