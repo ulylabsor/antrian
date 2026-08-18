@@ -18,10 +18,11 @@ import {
   getPanitiaAuth,
   setPanitiaPassword,
   setBerkasSiap,
+  resetAntrianData,
 } from './db.js';
 import { updateStatusInSheets, syncAllToSheets } from './sheets.js';
 import { generatePanggilanAudio } from './tts.js';
-import { requirePanitia, comparePassword, hashPassword, signToken, loginRateLimit } from './auth.js';
+import { requirePanitia, comparePassword, hashPassword, signToken, verifyToken, loginRateLimit } from './auth.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -160,6 +161,40 @@ export function createRouter(io) {
     }
     setPanitiaPassword(hashPassword(newPassword));
     res.json({ success: true });
+  });
+
+  // Reset data antrian: hapus semua nomor_antrian & status kembali ke belum.
+  // WAJIB kirim { password } yang dicocokkan ke panitia_auth.password_hash.
+  // Auth ganda: bila ada Bearer valid (panitia sudah login di /panitia),
+  // boleh reset tanpa password lagi — convenient untuk panitia yang
+  // membuka /data dari tab yang masih authed. Pengunjung publik tetap
+  // wajib kirim password untuk lolos.
+  router.post('/admin/reset', (req, res) => {
+    const { password } = req.body || {};
+    const header = req.headers.authorization || '';
+    const m = header.match(/^Bearer\s+(.+)$/);
+    let bearerOk = false;
+    if (m) {
+      try { bearerOk = verifyToken(m[1]).ok; } catch {}
+    }
+    if (!bearerOk) {
+      if (!password) return res.status(401).json({ error: 'Password panitia wajib diisi untuk reset data' });
+      const auth = getPanitiaAuth();
+      if (!auth) return res.status(500).json({ error: 'Konfigurasi panitia belum siap' });
+      if (!comparePassword(String(password), auth.password_hash)) {
+        return res.status(401).json({ error: 'Password salah — reset dibatalkan' });
+      }
+    }
+    try {
+      resetAntrianData();
+      if (io) {
+        io.emit('statistik:update', getStatistik());
+        io.emit('antrian:reset');
+      }
+      res.json({ success: true });
+    } catch (err) {
+      res.status(500).json({ error: 'Gagal reset: ' + err.message });
+    }
   });
 
   // Cari peserta (autocomplete) — by nama OR no_seri via satu kotak pintar

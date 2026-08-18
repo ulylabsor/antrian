@@ -175,6 +175,42 @@
     .btn-print svg { width: 16px; height: 16px; }
     .head-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 
+    /* Tombol Reset Data — destructive */
+    .btn-reset { display: inline-flex; align-items: center; gap: 6px; background: var(--rose-soft); color: var(--rose); border: 1px solid var(--rose); border-radius: 10px; padding: 8px 14px; font-size: 13px; font-weight: 700; cursor: pointer; transition: background 0.2s ease, color 0.2s ease, transform 0.15s ease, border-color 0.2s ease; font-family: var(--font-body); }
+    .btn-reset:hover { background: var(--rose); color: #fff; border-color: var(--rose); }
+    .btn-reset:active { transform: scale(0.96); }
+    .btn-reset:focus-visible { outline: 2px solid var(--rose); outline-offset: 2px; }
+    .btn-reset svg { width: 16px; height: 16px; }
+
+    /* Modal reset — overlay + card */
+    .reset-overlay { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(0,0,0,0.55); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+    .reset-overlay.hidden { display: none !important; }
+    .reset-card { background: linear-gradient(165deg, var(--card-strong), var(--card)); border: 1px solid var(--card-border-strong); border-radius: 20px; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); box-shadow: var(--shadow-card); max-width: 420px; width: 100%; padding: 28px 24px; animation: reset-in 0.3s cubic-bezier(.22,1,.36,1) both; }
+    @keyframes reset-in { from { opacity: 0; transform: translateY(10px) scale(0.97); } to { opacity: 1; transform: none; } }
+    .reset-card h3 { font-family: var(--font-display); font-size: 17px; font-weight: 800; color: var(--paper); text-align: center; }
+    .reset-card .reset-desc { font-size: 13px; color: var(--paper-mute); text-align: center; line-height: 1.6; margin-top: 8px; }
+    .reset-card .reset-desc strong { color: var(--rose); }
+    .reset-input-wrap { position: relative; margin-top: 16px; }
+    .reset-input-wrap input { width: 100%; padding: 11px 42px 11px 14px; background: var(--card-hover); border: 1px solid var(--card-border-strong); border-radius: 12px; color: var(--paper); font-size: 14px; font-family: var(--font-body); outline: none; transition: border-color 0.2s ease, box-shadow 0.2s ease; }
+    .reset-input-wrap input::placeholder { color: var(--paper-mute); }
+    .reset-input-wrap input:focus { border-color: var(--rose); box-shadow: 0 0 0 3px var(--rose-soft); }
+    .reset-input-wrap .eye-btn { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--paper-mute); cursor: pointer; padding: 6px; border-radius: 8px; display: flex; }
+    .reset-input-wrap .eye-btn:hover { color: var(--paper); background: var(--card); }
+    .reset-error { font-size: 12px; color: var(--rose); text-align: center; min-height: 1em; margin-top: 8px; }
+    .reset-actions { display: flex; gap: 10px; margin-top: 16px; }
+    .reset-actions button { flex: 1; padding: 11px 16px; border-radius: 12px; font-size: 13px; font-weight: 700; cursor: pointer; font-family: var(--font-body); transition: transform 0.15s ease, opacity 0.2s ease; }
+    .reset-actions button:active { transform: scale(0.97); }
+    .reset-actions .btn-cancel { background: var(--card); border: 1px solid var(--card-border); color: var(--paper-dim); }
+    .reset-actions .btn-cancel:hover { background: var(--card-hover); color: var(--paper); }
+    .reset-actions .btn-confirm { background: var(--rose); border: 1px solid var(--rose); color: #fff; }
+    .reset-actions .btn-confirm:hover { filter: brightness(1.08); }
+    .reset-actions .btn-confirm:disabled { opacity: 0.6; cursor: not-allowed; }
+    /* Toast untuk halaman data */
+    .data-toast { position: fixed; top: 16px; right: 16px; z-index: 70; display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-radius: 12px; font-size: 13px; font-weight: 600; box-shadow: 0 12px 32px rgba(0,0,0,0.25); max-width: 360px; animation: toast-in 0.3s ease both; }
+    @keyframes toast-in { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: none; } }
+    .data-toast.success { background: var(--emerald); color: #fff; }
+    .data-toast.error { background: var(--rose); color: #fff; }
+
     /* ===== Print layout ===== */
     @media print {
       body { background: #fff !important; color: #000 !important; }
@@ -313,6 +349,10 @@
             <div class="head-sub">Keseluruhan dari Excel — sudah & belum ambil sertifikat</div>
           </div>
           <div class="head-actions">
+            <button class="btn-reset" id="btn-reset" onclick="openResetModal()" aria-label="Reset data antrian">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>
+              <span>Reset Data</span>
+            </button>
             <button class="btn-print" id="btn-cetak" onclick="cetakData()" aria-label="Cetak data peserta">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
               <span>Cetak Data</span>
@@ -467,6 +507,26 @@
 
     </main>
 
+  </div>
+
+  <!-- Modal Reset Data: konfirmasi dengan input password panitia -->
+  <div id="reset-overlay" class="reset-overlay hidden" aria-hidden="true">
+    <div class="reset-card" role="dialog" aria-modal="true" aria-labelledby="reset-title">
+      <h3 id="reset-title">Reset Data Antrian</h3>
+      <p class="reset-desc">Tindakan ini akan <strong>menghapus semua nomor antrian</strong> dan mengembalikan seluruh peserta ke status awal <strong>Belum Ambil</strong>. Tidak dapat dibatalkan.</p>
+      <p class="reset-desc" style="margin-top:4px;">Masukkan <strong>password panitia</strong> untuk melanjutkan.</p>
+      <div class="reset-input-wrap">
+        <input id="reset-password" type="password" placeholder="Password panitia" autocomplete="current-password" aria-label="Password panitia">
+        <button type="button" class="eye-btn" id="reset-eye" aria-label="Lihat password" tabindex="-1">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+      </div>
+      <p id="reset-error" class="reset-error" role="alert"></p>
+      <div class="reset-actions">
+        <button type="button" class="btn-cancel" id="reset-cancel">Batal</button>
+        <button type="button" class="btn-confirm" id="reset-confirm">Reset Sekarang</button>
+      </div>
+    </div>
   </div>
 
   <script src="/socket.io/socket.io.js"></script>
@@ -1050,16 +1110,112 @@
       }, 250);
     });
 
+    /* ===== Reset Data: modal + password verify ===== */
+    let _resetBusy = false;
+    function openResetModal() {
+      const ov = document.getElementById('reset-overlay');
+      const pw = document.getElementById('reset-password');
+      const err = document.getElementById('reset-error');
+      if (!ov) return;
+      err.textContent = '';
+      pw.value = ''; pw.type = 'password';
+      ov.classList.remove('hidden');
+      ov.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+      setTimeout(() => pw.focus(), 60);
+    }
+    function closeResetModal() {
+      const ov = document.getElementById('reset-overlay');
+      if (!ov) return;
+      ov.classList.add('hidden');
+      ov.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+      document.getElementById('reset-error').textContent = '';
+      document.getElementById('reset-password').value = '';
+      _resetBusy = false;
+      document.getElementById('reset-confirm').disabled = false;
+      document.getElementById('reset-confirm').textContent = 'Reset Sekarang';
+    }
+    function showDataToast(msg, kind) {
+      let t = document.getElementById('data-toast-el');
+      if (t) t.remove();
+      t = document.createElement('div');
+      t.id = 'data-toast-el';
+      t.className = 'data-toast ' + (kind === 'error' ? 'error' : 'success');
+      t.textContent = msg;
+      document.body.appendChild(t);
+      setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(16px)'; setTimeout(() => t.remove(), 300); }, 3200);
+    }
+    async function doReset() {
+      if (_resetBusy) return;
+      const pwEl = document.getElementById('reset-password');
+      const errEl = document.getElementById('reset-error');
+      const btn = document.getElementById('reset-confirm');
+      const pw = (pwEl.value || '').trim();
+      // Jika ada token panitia di localStorage, kirim sebagai Bearer juga — backend
+      // membolehkan salah satu (password ATAU bearer valid).
+      const panitiaToken = (() => { try { return localStorage.getItem('panitia_token') || ''; } catch { return ''; } })();
+      const headers = { 'Content-Type': 'application/json' };
+      if (panitiaToken) headers['Authorization'] = 'Bearer ' + panitiaToken;
+      const body = {};
+      if (pw) body.password = pw;
+      // Bila tidak ada password dan tidak ada token: beri pesan lalu minta isi.
+      if (!pw && !panitiaToken) { errEl.textContent = 'Password wajib diisi.'; pwEl.focus(); return; }
+      _resetBusy = true;
+      btn.disabled = true; btn.textContent = 'Memproses…';
+      errEl.textContent = '';
+      try {
+        const res = await fetch('/api/admin/reset', { method: 'POST', headers, body: JSON.stringify(body) });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          errEl.textContent = data.error || 'Gagal reset.';
+          if (res.status === 401) pwEl.select();
+          return;
+        }
+        closeResetModal();
+        showDataToast('Data antrian berhasil di-reset — mulai dari awal.', 'success');
+        // Segera refresh data lokal tanpa tunggu socket
+        await loadData();
+      } catch (e) {
+        errEl.textContent = 'Koneksi bermasalah, coba lagi.';
+      } finally {
+        _resetBusy = false;
+        btn.disabled = false; btn.textContent = 'Reset Sekarang';
+      }
+    }
+    (function wireReset() {
+      const ov = document.getElementById('reset-overlay');
+      if (!ov) return;
+      document.getElementById('reset-cancel').addEventListener('click', closeResetModal);
+      document.getElementById('reset-confirm').addEventListener('click', doReset);
+      document.getElementById('reset-eye').addEventListener('click', () => {
+        const pw = document.getElementById('reset-password');
+        const show = pw.type === 'password';
+        pw.type = show ? 'text' : 'password';
+        document.getElementById('reset-eye').setAttribute('aria-label', show ? 'Sembunyikan password' : 'Lihat password');
+      });
+      document.getElementById('reset-password').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') doReset();
+        if (e.key === 'Escape') closeResetModal();
+      });
+      ov.addEventListener('click', (e) => { if (e.target === ov) closeResetModal(); });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !ov.classList.contains('hidden')) closeResetModal();
+      });
+    })();
+
     socket.on('statistik:update', () => { loadData(); });
     socket.on('antrian:baru', () => { loadData(); });
     socket.on('antrian:selesai', () => { loadData(); });
     socket.on('antrian:panggil', () => { loadData(); });
+    socket.on('antrian:reset', () => { loadData(); });
 
     loadData();
     window.setFilter = setFilter;
     window.sortBy = sortBy;
     window.goPage = goPage;
     window.cetakData = cetakData;
+    window.openResetModal = openResetModal;
     window.toggleTheme = toggleTheme;
   </script>
 </body>

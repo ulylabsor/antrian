@@ -246,6 +246,23 @@ export function getStatistik() {
 }
 
 // ===== Panitia auth (akun tunggal, id=1) =====
+export function resetAntrianData() {
+  const tx = db.transaction(() => {
+    db.prepare(`
+      UPDATE peserta
+      SET nomor_antrian = NULL,
+          status = 'belum',
+          waktu_daftar = NULL,
+          waktu_selesai = NULL,
+          counter = NULL,
+          jumlah_dipanggil = 0,
+          berkas_siap = 0
+    `).run();
+    db.prepare('UPDATE antrian_counter SET last_number = 0 WHERE id = 1').run();
+  });
+  tx();
+}
+
 export function getPanitiaAuth() {
   return db.prepare('SELECT password_hash, token_version FROM panitia_auth WHERE id = 1').get() || null;
 }
