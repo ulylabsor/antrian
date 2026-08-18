@@ -286,11 +286,17 @@ export function createRouter(io) {
     res.json(daftar);
   });
 
-  // Panggil peserta
+  // Panggil peserta — hanya jika status menunggu & berkas sudah Siap.
   router.post('/antrian/panggil/:nomor', requirePanitia, (req, res) => {
     const nomor = parseInt(req.params.nomor);
     const antrian = getAntrianByNomor(nomor);
     if (!antrian) return res.status(404).json({ error: 'Tidak ditemukan' });
+    if (antrian.status !== 'menunggu') {
+      return res.status(400).json({ error: 'Hanya peserta menunggu yang bisa dipanggil' });
+    }
+    if (!antrian.berkas_siap) {
+      return res.status(400).json({ error: 'Berkas belum siap — tandai Siap dulu sebelum memanggil peserta' });
+    }
 
     // Validasi counter jika diberikan
     let counter = null;

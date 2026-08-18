@@ -236,6 +236,14 @@ test('POST /api/antrian/panggil/:nomor dengan counter valid returns 200 dan set 
   });
   const { nomor_antrian } = await ambil.json();
 
+  // Berkas harus Siap sebelum bisa panggil
+  const siap = await fetch(`${baseUrl}/api/antrian/berkas/${nomor_antrian}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${panitiaToken}` },
+    body: JSON.stringify({ berkas_siap: 1 }),
+  });
+  assert.equal(siap.status, 200);
+
   // Panggil dengan counter 2
   const res = await fetch(`${baseUrl}/api/antrian/panggil/${nomor_antrian}`, {
     method: 'POST',
@@ -255,6 +263,25 @@ test('POST /api/antrian/panggil/:nomor dengan counter valid returns 200 dan set 
   assert.equal(row.counter, 2);
 });
 
+test('POST /api/antrian/panggil/:nomor tanpa berkas siap returns 400', async () => {
+  const cari = await fetch(`${baseUrl}/api/peserta/cari?q=Andi Wijaya`);
+  const peserta = (await cari.json())[0];
+  const ambil = await fetch(`${baseUrl}/api/antrian/ambil`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ pesertaId: peserta.id }),
+  });
+  const { nomor_antrian } = await ambil.json();
+  const res = await fetch(`${baseUrl}/api/antrian/panggil/${nomor_antrian}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${panitiaToken}` },
+    body: JSON.stringify({ counter: 2 }),
+  });
+  assert.equal(res.status, 400);
+  const j = await res.json();
+  assert.match(j.error, /berkas/i);
+});
+
 test('POST /api/antrian/panggil/:nomor dengan counter di atas jumlah_loket returns 400', async () => {
   const cari = await fetch(`${baseUrl}/api/peserta/cari?q=Andi Saputra`);
   const peserta = (await cari.json())[0];
@@ -264,6 +291,14 @@ test('POST /api/antrian/panggil/:nomor dengan counter di atas jumlah_loket retur
     body: JSON.stringify({ pesertaId: peserta.id }),
   });
   const { nomor_antrian } = await ambil.json();
+
+  // Siapkan berkas Siap dulu agar error yang diuji adalah counter, bukan berkas
+  const siap = await fetch(`${baseUrl}/api/antrian/berkas/${nomor_antrian}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${panitiaToken}` },
+    body: JSON.stringify({ berkas_siap: 1 }),
+  });
+  assert.equal(siap.status, 200);
 
   // counter 99 jauh di atas default jumlah_loket=3
   const res = await fetch(`${baseUrl}/api/antrian/panggil/${nomor_antrian}`, {
@@ -283,6 +318,13 @@ test('POST /api/antrian/panggil/:nomor tanpa body returns 200 dengan counter nul
     body: JSON.stringify({ pesertaId: peserta.id }),
   });
   const { nomor_antrian } = await ambil.json();
+
+  const siap = await fetch(`${baseUrl}/api/antrian/berkas/${nomor_antrian}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${panitiaToken}` },
+    body: JSON.stringify({ berkas_siap: 1 }),
+  });
+  assert.equal(siap.status, 200);
 
   // Panggil tanpa body (legacy)
   const res = await fetch(`${baseUrl}/api/antrian/panggil/${nomor_antrian}`, {

@@ -214,11 +214,18 @@ async function loadDaftar(status) {
              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
              <span>Belum</span>
            </button>`;
+      // Panggil hanya aktif bila berkas sudah Siap — cegah peserta dipanggil sebelum berkas ditemukan.
+      const panggilBtn = isSiap
+        ? `<button onclick="panggil(${p.nomor_antrian})" class="btn-action primary" title="Berkas siap — klik untuk panggil peserta" aria-label="Panggil nomor ${p.nomor_antrian}">
+             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l18-8-8 18-2-7-8-3z"/></svg>
+             <span>Panggil</span>
+           </button>`
+        : `<button class="btn-action primary is-disabled" disabled title="Berkas belum siap — tandai Siap dulu sebelum panggil" aria-label="Panggil nomor ${p.nomor_antrian} dinonaktifkan karena berkas belum siap" aria-disabled="true">
+             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l18-8-8 18-2-7-8-3z"/></svg>
+             <span>Panggil</span>
+           </button>`;
       actions = `
-        <button onclick="panggil(${p.nomor_antrian})" class="btn-action primary">
-          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l18-8-8 18-2-7-8-3z"/></svg>
-          <span>Panggil</span>
-        </button>
+        ${panggilBtn}
         ${berkasBtn}
       `;
     } else if (status === 'dipanggil') {
@@ -416,11 +423,22 @@ async function panggil(nomor) {
     return;
   }
   try {
-    await apiFetch(`/api/antrian/panggil/${nomor}`, {
+    const res = await apiFetch(`/api/antrian/panggil/${nomor}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ counter: myLoket }),
     });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      // Backend enforce berkas siap — beri pesan yang jelas
+      const msg = data.error || `Gagal memanggil (HTTP ${res.status})`;
+      if (data.error && String(data.error).toLowerCase().includes('berkas')) {
+        showInfo({ title: 'Berkas Belum Siap', message: msg, type: 'warning', confirmText: 'Mengerti' });
+      } else {
+        showToast(msg, 'error');
+      }
+      return;
+    }
     loadDaftar(currentFilter);
     loadStatistik();
   } catch (err) {

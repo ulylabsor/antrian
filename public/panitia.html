@@ -402,6 +402,11 @@
       color: #fff; border-color: var(--gold-deep);
     }
     .btn-action.primary:hover { box-shadow: 0 6px 18px -8px var(--gold-glow); transform: translateY(-1px); }
+    .btn-action.primary.is-disabled,
+    .btn-action.primary:disabled {
+      opacity: 0.45; cursor: not-allowed; pointer-events: none;
+      filter: grayscale(0.3);
+    }
     .btn-action.emerald {
       background: var(--emerald); color: #fff; border-color: var(--emerald);
     }

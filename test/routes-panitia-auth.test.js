@@ -90,11 +90,32 @@ test('POST /antrian/panggil/:nomor dengan token valid → 200', async () => {
     body: JSON.stringify({ pesertaId: 1 }),
   });
   const nomor = (await ambil.json()).nomor_antrian;
+  // Panggil mensyaratkan berkas siap — tandai Siap dulu
+  const siap = await fetch(`${baseUrl}/api/antrian/berkas/${nomor}`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ berkas_siap: 1 }),
+  });
+  assert.equal(siap.status, 200);
   const res = await fetch(`${baseUrl}/api/antrian/panggil/${nomor}`, {
     method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: JSON.stringify({ counter: 1 }),
   });
   assert.equal(res.status, 200);
+});
+
+test('POST /antrian/panggil/:nomor tanpa berkas siap → 400', async () => {
+  const ambil = await fetch(`${baseUrl}/api/antrian/ambil`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ pesertaId: 1 }),
+  });
+  const nomor = (await ambil.json()).nomor_antrian;
+  const res = await fetch(`${baseUrl}/api/antrian/panggil/${nomor}`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ counter: 1 }),
+  });
+  assert.equal(res.status, 400);
+  const j = await res.json();
+  assert.match(j.error, /berkas/i);
 });
 
 test('POST /settings/loket tanpa token → 401', async () => {
