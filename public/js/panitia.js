@@ -12,6 +12,11 @@ let dashboardInitialized = false;
 let currentFilter = 'menunggu';
 let searchQuery = '';
 
+// ——— Animasi: diff per-tab untuk entrance & flash elegan ———
+const prevNomorsByStatus = { menunggu: new Set(), dipanggil: new Set(), selesai: new Set() };
+const firstLoadByStatus = { menunggu: true, dipanggil: true, selesai: true };
+let pendingHighlight = null; // { nomor, flash: 'gold'|'emerald'|'blue'|'amber' } — dipakai lintas loadDaftar (mis. panggil → flash di tab tujuan)
+
 // ============================================================
 // TTS — Text-to-Speech bahasa Indonesia (via Google TTS server-side)
 // Sama seperti di sisi peserta, supaya panitia juga mendengar
@@ -185,12 +190,33 @@ async function loadDaftar(status) {
 
   const container = document.getElementById('daftar-antrian');
 
+  // Hitung set baru untuk diff — data yang baru muncul dikasih entrance + highlight
+  const nextSet = new Set(data.map(p => p.nomor_antrian));
+  const prevSet = prevNomorsByStatus[status] ?? new Set();
+  const isFirstLoad = firstLoadByStatus[status] === true;
+
   if (data.length === 0) {
     container.innerHTML = '<p class="empty-state">Tidak ada antrian</p>';
+    prevNomorsByStatus[status] = nextSet;
+    firstLoadByStatus[status] = false;
     return;
   }
 
-  container.innerHTML = data.map(p => {
+  container.innerHTML = data.map((p, idx) => {
+    const nomor = p.nomor_antrian;
+    const isNew = !prevSet.has(nomor);
+    const shouldEnter = isFirstLoad || isNew;
+    let flashCls = '';
+    if (pendingHighlight && pendingHighlight.nomor === nomor && (pendingHighlight.forStatus === status || !pendingHighlight.forStatus)) {
+      const m = { gold: 'row-flash-gold', emerald: 'row-flash-emerald', blue: 'row-flash-blue', amber: 'row-flash-amber' };
+      flashCls = m[pendingHighlight.flash] || '';
+    } else if (!isFirstLoad && isNew) {
+      const m2 = { menunggu: 'row-flash-gold', dipanggil: 'row-flash-emerald', selesai: 'row-flash-blue' };
+      flashCls = m2[status] || '';
+    }
+    const enterCls = shouldEnter ? ' row-enter' : '';
+    const flashWithSpace = flashCls ? ` ${flashCls}` : '';
+    const stagger = shouldEnter ? ` style="animation-delay:${Math.min(idx * 48, 380)}ms"` : '';
     let actions = '';
     // Tombol panggil ulang (speaker) — muncul untuk peserta yang sudah dipanggil
     // Ikon speaker + label, tooltip, hover lift
@@ -286,8 +312,9 @@ async function loadDaftar(status) {
       : '';
 
     const rowAttr = `data-nomor="${p.nomor_antrian}"`;
+    const rowExtra = `${enterCls}${flashWithSpace}`;
     return `
-      <div class="list-row${!isSelesai ? ' has-seri-center' : ''}" ${rowAttr}>
+      <div class="list-row${!isSelesai ? ' has-seri-center' : ''}${rowExtra}" ${rowAttr}${stagger}>
         <div class="list-main">
           <div class="list-num">#${p.nomor_antrian}</div>
           <div class="list-info">
@@ -301,6 +328,15 @@ async function loadDaftar(status) {
       </div>
     `;
   }).join('');
+  // Simpan snapshot untuk diff & stagger di load berikutnya
+  prevNomorsByStatus[status] = nextSet;
+  firstLoadByStatus[status] = false;
+  // Bersihkan highlight setelah dipakai sekali (biar tidak flash lagi di refresh berikutnya)
+  if (pendingHighlight) {
+    const stillPending = data.some(p => p.nomor_antrian === pendingHighlight.nomor);
+    if (stillPending || pendingHighlight.consumed) pendingHighlight = null;
+    else pendingHighlight.consumed = true;
+  }
 }
 
 // Timelapse — "baru saja", "5 menit lalu", "2 jam 15 menit lalu"
@@ -403,7 +439,8 @@ async function putarPanggilan(nomor, _loket) {
       showToast('Gagal memanggil ulang: ' + data.error, 'error');
       return;
     }
-    // Peserta akan animasi + putar audio via socket event (tidak perlu audio di sini)
+    // Flash amber elegan pada baris yang di-panggil-ulang (tetap di tab Dipanggil)
+    flashRow(nomor, 'amber');
     showToast(`Panggilan ulang nomor #${nomor} dikirim ke peserta`, 'success');
   } catch (err) {
     // 401: apiFetch sudah menampilkan modal login + toast 'Sesi habis'.
@@ -440,7 +477,9 @@ async function panggil(nomor) {
       }
       return;
     }
-    loadDaftar(currentFilter);
+    // Panggil berhasil → baris ini akan hilang dari Menunggu, highlight hijau di tab Dipanggil
+    pendingHighlight = { nomor, flash: 'emerald', forStatus: 'dipanggil' };
+    await loadDaftar(currentFilter);
     loadStatistik();
   } catch (err) {
     // 401: apiFetch sudah tampilkan modal login + toast 'Sesi habis'.
@@ -459,7 +498,9 @@ async function selesai(nomor) {
     onConfirm: async () => {
       try {
         await apiFetch(`/api/antrian/selesai/${nomor}`, { method: 'POST' });
-        loadDaftar(currentFilter);
+        // Selesai → baris pindah ke tab Selesai; kasih highlight biru elegan saat tab itu dibuka
+        pendingHighlight = { nomor, flash: 'blue', forStatus: 'selesai' };
+        await loadDaftar(currentFilter);
         loadStatistik();
         showToast(`Antrian #${nomor} ditandai selesai`, 'success');
       } catch (err) {
@@ -471,18 +512,39 @@ async function selesai(nomor) {
   });
 }
 
+function queueToggleAnim(berkasBtn, panggilBtn, toSiap) {
+  if (!berkasBtn) return;
+  berkasBtn.classList.remove('just-toggled');
+  void berkasBtn.offsetWidth; // reflow agar animasi bisa dipicu ulang
+  berkasBtn.classList.add('just-toggled');
+  berkasBtn.addEventListener('animationend', () => berkasBtn.classList.remove('just-toggled'), { once: true });
+  if (panggilBtn && toSiap) {
+    panggilBtn.classList.remove('panggil-ready');
+    void panggilBtn.offsetWidth;
+    panggilBtn.classList.add('panggil-ready');
+    panggilBtn.addEventListener('animationend', () => panggilBtn.classList.remove('panggil-ready'), { once: true });
+  }
+}
+
 async function toggleBerkas(nomor, nextVal) {
-  // Optimistic update: ubah tombol langsung tanpa tunggu network, agar terasa instant.
-  // Kalau request gagal, rollback via loadDaftar.
   const rowEl = document.querySelector(`[data-nomor="${nomor}"]`);
   let prevBerkasOn = null;
   let prevPanggilDisabled = null;
+  let berkasBtnRef = null;
   if (rowEl) {
-    const berkasBtn0 = rowEl.querySelector('.berkas-siap');
+    berkasBtnRef = rowEl.querySelector('.berkas-siap');
     const panggilBtn0 = rowEl.querySelector('.btn-action.primary');
-    prevBerkasOn = berkasBtn0 ? berkasBtn0.classList.contains('is-on') : null;
+    prevBerkasOn = berkasBtnRef ? berkasBtnRef.classList.contains('is-on') : null;
     prevPanggilDisabled = panggilBtn0 ? panggilBtn0.hasAttribute('disabled') : null;
     applyBerkasOptimistic(rowEl, nomor, nextVal);
+    // Animasi toggle instant + spinner syncing — tanpa nunggu network
+    const berkasBtn = rowEl.querySelector('.berkas-siap');
+    const panggilBtn = rowEl.querySelector('.btn-action.primary');
+    queueToggleAnim(berkasBtn, panggilBtn, nextVal === 1);
+    if (berkasBtn) {
+      berkasBtn.classList.add('is-syncing');
+      berkasBtn.setAttribute('aria-busy', 'true');
+    }
   }
   try {
     const res = await apiFetch(`/api/antrian/berkas/${nomor}`, {
@@ -495,8 +557,10 @@ async function toggleBerkas(nomor, nextVal) {
       throw new Error(data.error || `HTTP ${res.status}`);
     }
     // Sinkron dengan server (aman dari race bila panitia lain ubah bersamaan)
-    loadDaftar(currentFilter);
+    clearBerkasSyncing();
+    await loadDaftar(currentFilter);
   } catch (err) {
+    clearBerkasSyncing();
     if (err.message === 'Unauthorized') return;
     // Rollback: kembalikan tombol ke state sebelum klik (tanpa innerHTML agar aman XSS).
     if (rowEl && prevBerkasOn !== null && prevPanggilDisabled !== null) {
@@ -509,8 +573,27 @@ async function toggleBerkas(nomor, nextVal) {
       showToast(err.message, 'error');
     }
     // Tetap sinkron ulang agar tidak stuck di state optimistic yang salah
-    loadDaftar(currentFilter);
+    await loadDaftar(currentFilter);
+  } finally {
+    clearBerkasSyncing();
   }
+}
+
+function clearBerkasSyncing() {
+  document.querySelectorAll('.berkas-siap.is-syncing').forEach(b => {
+    b.classList.remove('is-syncing');
+    b.removeAttribute('aria-busy');
+  });
+}
+
+function flashRow(nomor, kind) {
+  const row = document.querySelector(`[data-nomor="${nomor}"]`);
+  if (!row) return;
+  const cls = kind === 'amber' ? 'row-flash-amber' : kind === 'blue' ? 'row-flash-blue' : kind === 'emerald' ? 'row-flash-emerald' : 'row-flash-gold';
+  row.classList.remove('row-flash-gold', 'row-flash-emerald', 'row-flash-blue', 'row-flash-amber');
+  void row.offsetWidth;
+  row.classList.add(cls);
+  row.addEventListener('animationend', () => row.classList.remove(cls), { once: true });
 }
 
 function applyBerkasOptimistic(rowEl, nomor, nextVal) {
