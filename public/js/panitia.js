@@ -214,7 +214,9 @@ async function loadDaftar(status) {
       const m2 = { menunggu: 'row-flash-gold', dipanggil: 'row-flash-emerald', selesai: 'row-flash-blue' };
       flashCls = m2[status] || '';
     }
-    const enterCls = shouldEnter ? ' row-enter' : '';
+    const pulseCls = shouldEnter ? ' row-pulse' : '';
+    const bounceCls = shouldEnter && (status === 'menunggu' || status === 'selesai') ? ' row-bounce' : '';
+    const enterCls = shouldEnter ? ` row-enter${pulseCls}${bounceCls}` : '';
     const flashWithSpace = flashCls ? ` ${flashCls}` : '';
     const stagger = shouldEnter ? ` style="animation-delay:${Math.min(idx * 48, 380)}ms"` : '';
     let actions = '';
