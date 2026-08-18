@@ -178,9 +178,39 @@ export function getDaftarAntrian(status) {
     SELECT nomor_antrian, nama_lengkap, no_seri, status, waktu_daftar, waktu_selesai, counter, jumlah_dipanggil, berkas_siap
     FROM peserta
     WHERE status = ? AND nomor_antrian IS NOT NULL
-    ORDER BY nomor_antrian
+    ORDER BY ${status === 'selesai' ? `datetime(waktu_selesai) DESC, nomor_antrian DESC` : `nomor_antrian ASC`}
   `);
   return stmt.all(status);
+}
+
+export function getDaftarAntrianCount(status, q) {
+  let sql = `SELECT COUNT(*) as cnt FROM peserta WHERE status = ? AND nomor_antrian IS NOT NULL`;
+  const params = [status];
+  if (q && String(q).trim() !== '') {
+    const like = `%${String(q).trim()}%`;
+    sql += ` AND (nama_lengkap LIKE ? COLLATE NOCASE OR TRIM(no_seri) LIKE ? COLLATE NOCASE OR CAST(nomor_antrian AS TEXT) LIKE ?)`;
+    params.push(like, like, like);
+  }
+  return db.prepare(sql).get(...params).cnt;
+}
+
+export function getDaftarAntrianPaged(status, page, perPage, q) {
+  const offset = (page - 1) * perPage;
+  let sql = `SELECT nomor_antrian, nama_lengkap, no_seri, status, waktu_daftar, waktu_selesai, counter, jumlah_dipanggil, berkas_siap
+    FROM peserta WHERE status = ? AND nomor_antrian IS NOT NULL`;
+  const params = [status];
+  if (q && String(q).trim() !== '') {
+    const like = `%${String(q).trim()}%`;
+    sql += ` AND (nama_lengkap LIKE ? COLLATE NOCASE OR TRIM(no_seri) LIKE ? COLLATE NOCASE OR CAST(nomor_antrian AS TEXT) LIKE ?)`;
+    params.push(like, like, like);
+  }
+  if (status === 'selesai') {
+    sql += ` ORDER BY datetime(waktu_selesai) DESC, nomor_antrian DESC LIMIT ? OFFSET ?`;
+  } else {
+    sql += ` ORDER BY nomor_antrian ASC LIMIT ? OFFSET ?`;
+  }
+  params.push(perPage, offset);
+  return db.prepare(sql).all(...params);
 }
 
 // Increment jumlah_dipanggil — dipanggil setiap kali peserta dipanggil/panggil ulang

@@ -5,6 +5,8 @@ import {
   ambilNomorAntrian,
   getAntrianByNomor,
   getDaftarAntrian,
+  getDaftarAntrianCount,
+  getDaftarAntrianPaged,
   updateStatus,
   setWaktuSelesai,
   getStatistik,
@@ -315,8 +317,25 @@ export function createRouter(io) {
   });
 
   // Daftar antrian (panitia)
+  // - Tanpa pagination param: legacy array (kompatibel Menunggu/Dipanggil + info-antrian).
+  // - Dengan ?page=&perPage=  atau  tab=selesai → response { data, page, perPage, total, totalPages }
   router.get('/antrian/daftar', (req, res) => {
     const status = req.query.status || 'menunggu';
+    const qParam = req.query.q != null ? String(req.query.q).trim() : '';
+    const hasPage = req.query.page !== undefined || req.query.perPage !== undefined;
+    const needsPaged = hasPage || (status === 'selesai' && (req.query.page !== undefined || qParam !== ''));
+    if (needsPaged) {
+      const perPageRaw = parseInt(req.query.perPage, 10);
+      const pageRaw = parseInt(req.query.page, 10);
+      const perPage = Number.isFinite(perPageRaw) ? Math.min(Math.max(perPageRaw, 1), 100) : 20;
+      const page = Number.isFinite(pageRaw) ? Math.max(pageRaw, 1) : 1;
+      const q = qParam || undefined;
+      const total = getDaftarAntrianCount(status, q);
+      const totalPages = Math.max(1, Math.ceil(total / perPage));
+      const safePage = Math.min(page, totalPages);
+      const data = getDaftarAntrianPaged(status, safePage, perPage, q);
+      return res.json({ data, page: safePage, perPage, total, totalPages });
+    }
     const daftar = getDaftarAntrian(status);
     res.json(daftar);
   });

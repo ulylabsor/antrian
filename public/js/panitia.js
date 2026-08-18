@@ -12,6 +12,13 @@ let dashboardInitialized = false;
 let currentFilter = 'menunggu';
 let searchQuery = '';
 
+// Pagination khusus tab Selesai (Menunggu/Dipanggil tetap load semua; Selesai bisa panjang).
+let selesaiPage = 1;
+let selesaiPerPage = 20;
+let selesaiTotal = 0;
+let selesaiTotalPages = 1;
+const SELESAI_PAGE_KEY = 'panitia_selesai_perPage';
+
 // ——— Animasi: diff per-tab untuk entrance & flash elegan ———
 const prevNomorsByStatus = { menunggu: new Set(), dipanggil: new Set(), selesai: new Set() };
 const firstLoadByStatus = { menunggu: true, dipanggil: true, selesai: true };
@@ -172,20 +179,105 @@ function updateTabCounts(stat) {
   }
 }
 
-async function loadDaftar(status) {
+function setSelesaiPaginationVisible(visible) {
+  const el = document.getElementById('pagination-selesai');
+  if (!el) return;
+  el.classList.toggle('hidden', !visible);
+}
+
+function loadSelesaiPerPagePref() {
+  try {
+    const raw = parseInt(localStorage.getItem(SELESAI_PAGE_KEY), 10);
+    if ([10, 20, 50].includes(raw)) selesaiPerPage = raw;
+  } catch {}
+  const sel = document.getElementById('perpage-selesai');
+  if (sel) sel.value = String(selesaiPerPage);
+}
+
+function saveSelesaiPerPagePref(v) {
+  try { localStorage.setItem(SELESAI_PAGE_KEY, String(v)); } catch {}
+}
+
+function buildPaginationButtons(cur, total) {
+  const out = [];
+  const pushBtn = (label, page, disabled, active) => {
+    out.push(`<button type="button" class="page-btn${active ? ' is-active' : ''}" data-page="${page}" ${disabled ? 'disabled' : ''} aria-label="Halaman ${page}" ${active ? 'aria-current="page"' : ''}>${label}</button>`);
+  };
+  const pushEllipsis = () => out.push('<span class="page-ellipsis" aria-hidden="true">…</span>');
+  pushBtn('‹', Math.max(1, cur - 1), cur <= 1, false);
+  if (total <= 7) {
+    for (let p = 1; p <= total; p++) pushBtn(String(p), p, false, p === cur);
+  } else {
+    pushBtn('1', 1, false, cur === 1);
+    if (cur > 3) pushEllipsis();
+    const lo = Math.max(2, cur - 1), hi = Math.min(total - 1, cur + 1);
+    for (let p = lo; p <= hi; p++) pushBtn(String(p), p, false, p === cur);
+    if (cur < total - 2) pushEllipsis();
+    pushBtn(String(total), total, false, cur === total);
+  }
+  pushBtn('›', Math.min(total, cur + 1), cur >= total, false);
+  return out.join('');
+}
+
+function renderSelesaiPagination() {
+  const info = document.getElementById('pagination-info');
+  const btns = document.getElementById('pagination-buttons');
+  if (!info || !btns) return;
+  const start = selesaiTotal === 0 ? 0 : (selesaiPage - 1) * selesaiPerPage + 1;
+  const end = Math.min(selesaiPage * selesaiPerPage, selesaiTotal);
+  const qNote = searchQuery ? ` · cari: “${searchQuery}”` : '';
+  info.textContent = selesaiTotal === 0
+    ? 'Tidak ada data'
+    : `Menampilkan ${start}–${end} dari ${selesaiTotal} selesai${qNote} · hal ${selesaiPage}/${selesaiTotalPages}`;
+  btns.innerHTML = buildPaginationButtons(selesaiPage, selesaiTotalPages);
+  btns.querySelectorAll('.page-btn[data-page]').forEach(b => {
+    b.addEventListener('click', () => {
+      const p = parseInt(b.getAttribute('data-page'), 10);
+      if (Number.isFinite(p) && p !== selesaiPage) { selesaiPage = p; loadDaftar('selesai'); }
+    });
+  });
+}
+
+async function loadDaftar(status, opts) {
   currentFilter = status;
   updateTabButtons(status);
-  const res = await fetch(`/api/antrian/daftar?status=${status}`);
-  let data = await res.json();
 
-  // Apply filter pencarian di sisi client (cari nama / no seri / nomor antrian)
-  if (searchQuery) {
-    const q = searchQuery.toLowerCase();
-    data = data.filter(p =>
-      String(p.nama_lengkap || '').toLowerCase().includes(q) ||
-      String(p.no_seri || '').toLowerCase().includes(q) ||
-      String(p.nomor_antrian || '').includes(q)
-    );
+  const usePaged = status === 'selesai';
+  let data;
+
+  if (usePaged) {
+    if (opts?.forcePageReset) selesaiPage = 1;
+    // Bila ganti q atau ganti tab → reset ke hal 1
+    // (dipanggil dari handler search; deteksi via caller yang set selesaiPage=1)
+    const params = new URLSearchParams({ status: 'selesai', page: String(selesaiPage), perPage: String(selesaiPerPage) });
+    if (searchQuery) params.set('q', searchQuery);
+    const res = await fetch(`/api/antrian/daftar?${params.toString()}`);
+    const json = await res.json();
+    if (Array.isArray(json)) { // fallback legacy bila server belum update
+      data = json;
+      setSelesaiPaginationVisible(false);
+    } else {
+      data = json.data || [];
+      selesaiPage = json.page ?? selesaiPage;
+      selesaiPerPage = json.perPage ?? selesaiPerPage;
+      selesaiTotal = json.total ?? data.length;
+      selesaiTotalPages = json.totalPages ?? 1;
+      pagedMeta = json;
+    }
+  } else {
+    const res = await fetch(`/api/antrian/daftar?status=${encodeURIComponent(status)}`);
+    let raw = await res.json();
+    // Server bisa balas {data:[]} untuk selesai paged; normalkan ke array untuk tab non-selesai
+    if (raw && !Array.isArray(raw) && Array.isArray(raw.data)) raw = raw.data;
+    data = raw;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      data = data.filter(p =>
+        String(p.nama_lengkap || '').toLowerCase().includes(q) ||
+        String(p.no_seri || '').toLowerCase().includes(q) ||
+        String(p.nomor_antrian || '').includes(q)
+      );
+    }
   }
 
   const container = document.getElementById('daftar-antrian');
@@ -341,6 +433,20 @@ async function loadDaftar(status) {
   // Simpan snapshot untuk diff & stagger di load berikutnya
   prevNomorsByStatus[status] = nextSet;
   firstLoadByStatus[status] = false;
+  if (status === 'selesai' && !Array.isArray(data) /* never */) void 0;
+  if (status === 'selesai') {
+    // Pagination Selesai: render bar setelah selesai render list
+    if (data.length === 0) {
+      // Tetap tampilkan pagination info bila ada total > 0 tapi halaman ini kosong (edge)
+      if (selesaiTotal > 0) renderSelesaiPagination();
+      else setSelesaiPaginationVisible(false);
+    } else {
+      setSelesaiPaginationVisible(true);
+      renderSelesaiPagination();
+    }
+  } else {
+    setSelesaiPaginationVisible(false);
+  }
   // Bersihkan highlight setelah dipakai sekali (biar tidak flash lagi di refresh berikutnya)
   if (pendingHighlight) {
     const stillPending = data.some(p => p.nomor_antrian === pendingHighlight.nomor);
@@ -728,6 +834,7 @@ window.initPanitiaDashboard = function initPanitiaDashboard() {
   });
 
   // Data loads (dari DOMContentLoaded lama)
+  loadSelesaiPerPagePref();
   loadMyLoket();
   loadLoketSettings();
   loadStatistik();
@@ -739,14 +846,32 @@ window.initPanitiaDashboard = function initPanitiaDashboard() {
     loadDaftar(currentFilter);
   }, 30000);
 
+  // Per page selector untuk Selesai
+  const perpageSel = document.getElementById('perpage-selesai');
+  if (perpageSel) {
+    perpageSel.addEventListener('change', () => {
+      const v = parseInt(perpageSel.value, 10);
+      selesaiPerPage = [10, 20, 50].includes(v) ? v : 20;
+      saveSelesaiPerPagePref(selesaiPerPage);
+      selesaiPage = 1;
+      if (currentFilter === 'selesai') loadDaftar('selesai', { forcePageReset: true });
+    });
+  }
+
   // Pencarian daftar antrian (debounce 250ms)
+  // Untuk Selesai: search server-side paginated; untuk tab lain: filter client-side.
   let cariTimeout;
   document.getElementById('input-cari-antrian').addEventListener('input', (e) => {
     clearTimeout(cariTimeout);
     const v = e.target.value.trim();
     cariTimeout = setTimeout(() => {
       searchQuery = v;
-      loadDaftar(currentFilter);
+      if (currentFilter === 'selesai') {
+        selesaiPage = 1;
+        loadDaftar('selesai', { forcePageReset: true });
+      } else {
+        loadDaftar(currentFilter);
+      }
     }, 250);
   });
 

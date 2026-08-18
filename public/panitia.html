@@ -511,6 +511,35 @@
       padding: 2px 8px; margin-top: 4px;
     }
 
+    /* ===== Pagination (tab Selesai) ===== */
+    .pagination { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
+    .pagination.hidden { display: none !important; }
+    .pagination-info { font-size: 12px; color: var(--paper-mute); font-weight: 600; letter-spacing: 0.2px; }
+    .pagination-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .page-btn {
+      min-width: 36px; height: 36px; padding: 0 12px;
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      background: var(--card); border: 1px solid var(--card-border); border-radius: 10px;
+      color: var(--paper-dim); font-size: 13px; font-weight: 700; cursor: pointer;
+      transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease, transform 0.1s ease;
+      font-family: var(--font-body);
+    }
+    .page-btn:hover:not(:disabled) { border-color: var(--card-border-strong); background: var(--card-hover); color: var(--paper); }
+    .page-btn:active:not(:disabled) { transform: scale(0.97); }
+    .page-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+    .page-btn:disabled { opacity: 0.42; cursor: not-allowed; }
+    .page-btn.is-active { background: var(--blue-soft); border-color: rgba(96,165,250,0.4); color: var(--blue); box-shadow: 0 4px 14px -10px rgba(96,165,250,0.45); }
+    .page-ellipsis { color: var(--paper-faint); padding: 0 4px; font-weight: 700; }
+    .perpage-select {
+      background: var(--card-hover); color: var(--paper); border: 1px solid var(--card-border); border-radius: 10px;
+      padding: 7px 28px 7px 10px; font-size: 12px; font-weight: 700; cursor: pointer;
+      appearance: none; -webkit-appearance: none;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23e8b04b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>");
+      background-repeat: no-repeat; background-position: right 8px center;
+    }
+    .perpage-select:focus-visible { outline: none; border-color: var(--gold-line); box-shadow: 0 0 0 3px var(--gold-soft); }
+    .perpage-label { font-size: 11px; color: var(--paper-mute); font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase; display: inline-flex; align-items: center; gap: 6px; }
+
     .empty-state { text-align: center; padding: 20px; color: var(--paper-mute); font-size: 14px; }
 
     /* ===== Responsive ===== */
@@ -689,6 +718,19 @@
 
         <div id="daftar-antrian" class="list">
           <p class="empty-state">Memuat data...</p>
+        </div>
+        <div id="pagination-selesai" class="pagination hidden" aria-label="Navigasi halaman Selesai">
+          <span id="pagination-info" class="pagination-info"></span>
+          <div class="pagination-controls">
+            <label class="perpage-label" for="perpage-selesai">Baris
+              <select id="perpage-selesai" class="perpage-select" aria-label="Baris per halaman Selesai">
+                <option value="10">10</option>
+                <option value="20">20</option>
+                <option value="50">50</option>
+              </select>
+            </label>
+            <div id="pagination-buttons" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"></div>
+          </div>
         </div>
       </section>
 
