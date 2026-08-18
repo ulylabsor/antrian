@@ -285,8 +285,9 @@ async function loadDaftar(status) {
          </div>`
       : '';
 
+    const rowAttr = `data-nomor="${p.nomor_antrian}"`;
     return `
-      <div class="list-row${!isSelesai ? ' has-seri-center' : ''}">
+      <div class="list-row${!isSelesai ? ' has-seri-center' : ''}" ${rowAttr}>
         <div class="list-main">
           <div class="list-num">#${p.nomor_antrian}</div>
           <div class="list-info">
@@ -471,6 +472,18 @@ async function selesai(nomor) {
 }
 
 async function toggleBerkas(nomor, nextVal) {
+  // Optimistic update: ubah tombol langsung tanpa tunggu network, agar terasa instant.
+  // Kalau request gagal, rollback via loadDaftar.
+  const rowEl = document.querySelector(`[data-nomor="${nomor}"]`);
+  let prevBerkasOn = null;
+  let prevPanggilDisabled = null;
+  if (rowEl) {
+    const berkasBtn0 = rowEl.querySelector('.berkas-siap');
+    const panggilBtn0 = rowEl.querySelector('.btn-action.primary');
+    prevBerkasOn = berkasBtn0 ? berkasBtn0.classList.contains('is-on') : null;
+    prevPanggilDisabled = panggilBtn0 ? panggilBtn0.hasAttribute('disabled') : null;
+    applyBerkasOptimistic(rowEl, nomor, nextVal);
+  }
   try {
     const res = await apiFetch(`/api/antrian/berkas/${nomor}`, {
       method: 'POST',
@@ -478,14 +491,71 @@ async function toggleBerkas(nomor, nextVal) {
       body: JSON.stringify({ berkas_siap: nextVal }),
     });
     const data = await res.json();
-    if (data.error) {
-      showToast(data.error, 'error');
-      return;
+    if (!res.ok || data.error) {
+      throw new Error(data.error || `HTTP ${res.status}`);
     }
+    // Sinkron dengan server (aman dari race bila panitia lain ubah bersamaan)
     loadDaftar(currentFilter);
   } catch (err) {
     if (err.message === 'Unauthorized') return;
-    showToast('Gagal ubah status berkas: ' + err.message, 'error');
+    // Rollback: kembalikan tombol ke state sebelum klik (tanpa innerHTML agar aman XSS).
+    if (rowEl && prevBerkasOn !== null && prevPanggilDisabled !== null) {
+      const rollbackVal = prevBerkasOn ? 1 : 0;
+      applyBerkasOptimistic(rowEl, nomor, rollbackVal);
+    }
+    if (!String(err.message).toLowerCase().includes('berkas')) {
+      showToast('Gagal ubah status berkas: ' + err.message, 'error');
+    } else {
+      showToast(err.message, 'error');
+    }
+    // Tetap sinkron ulang agar tidak stuck di state optimistic yang salah
+    loadDaftar(currentFilter);
+  }
+}
+
+function applyBerkasOptimistic(rowEl, nomor, nextVal) {
+  const isSiap = nextVal === 1;
+  const berkasBtn = rowEl.querySelector('.berkas-siap');
+  const panggilBtn = rowEl.querySelector('.btn-action.primary');
+  if (berkasBtn) {
+    berkasBtn.classList.toggle('is-on', isSiap);
+    berkasBtn.setAttribute('onclick', `toggleBerkas(${nomor}, ${isSiap ? 0 : 1})`);
+    berkasBtn.setAttribute('title', isSiap ? 'Berkas siap — klik untuk ubah ke Belum' : 'Berkas belum — klik untuk tandai Siap');
+    berkasBtn.setAttribute('aria-label', isSiap ? `Berkas siap untuk nomor ${nomor}, klik untuk ubah ke belum` : `Berkas belum untuk nomor ${nomor}, klik untuk tandai siap`);
+    const label = berkasBtn.querySelector('span');
+    if (label) label.textContent = isSiap ? 'Siap' : 'Belum';
+    // Ganti ikon SVG dengan aman (tanpa innerHTML di parent) — isi path statis & terkontrol.
+    const svg = berkasBtn.querySelector('svg');
+    if (svg) {
+      while (svg.firstChild) svg.removeChild(svg.firstChild);
+      const ns = 'http://www.w3.org/2000/svg';
+      const mk = (tag, attrs) => {
+        const el = document.createElementNS(ns, tag);
+        for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+        return el;
+      };
+      svg.appendChild(mk('path', { d: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z' }));
+      svg.appendChild(mk('polyline', { points: '14 2 14 8 20 8' }));
+      if (isSiap) svg.appendChild(mk('path', { d: 'M9 15l2 2 4-4' }));
+      else svg.appendChild(mk('line', { x1: '9', y1: '15', x2: '15', y2: '15' }));
+    }
+  }
+  if (panggilBtn) {
+    if (isSiap) {
+      panggilBtn.removeAttribute('disabled');
+      panggilBtn.removeAttribute('aria-disabled');
+      panggilBtn.classList.remove('is-disabled');
+      panggilBtn.setAttribute('onclick', `panggil(${nomor})`);
+      panggilBtn.setAttribute('title', 'Berkas siap — klik untuk panggil peserta');
+      panggilBtn.setAttribute('aria-label', `Panggil nomor ${nomor}`);
+    } else {
+      panggilBtn.setAttribute('disabled', '');
+      panggilBtn.setAttribute('aria-disabled', 'true');
+      panggilBtn.classList.add('is-disabled');
+      panggilBtn.removeAttribute('onclick');
+      panggilBtn.setAttribute('title', 'Berkas belum siap — tandai Siap dulu sebelum panggil');
+      panggilBtn.setAttribute('aria-label', `Panggil nomor ${nomor} dinonaktifkan karena berkas belum siap`);
+    }
   }
 }
 
