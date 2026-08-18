@@ -479,7 +479,8 @@ async function panggil(nomor) {
       }
       return;
     }
-    // Panggil berhasil → baris ini akan hilang dari Menunggu, highlight hijau di tab Dipanggil
+    // Animasi tutup elegan dulu (fold), baru ganti data — biar tidak hilang tiba-tiba
+    await animateRowClose(nomor, 'emerald');
     pendingHighlight = { nomor, flash: 'emerald', forStatus: 'dipanggil' };
     await loadDaftar(currentFilter);
     loadStatistik();
@@ -499,7 +500,15 @@ async function selesai(nomor) {
     cancelText: 'Batal',
     onConfirm: async () => {
       try {
-        await apiFetch(`/api/antrian/selesai/${nomor}`, { method: 'POST' });
+        const rowForClose = document.querySelector(`[data-nomor="${nomor}"]`);
+        const doCloseFirst = !!rowForClose && currentFilter === 'dipanggil';
+        // Tutup elegan: di Dipanggil → fold dulu baru hit API (optimistic elegan);
+        // di tab lain → API dulu lalu fold (row belum ada di DOM tab aktif).
+        let closePromise = null;
+        if (doCloseFirst) closePromise = animateRowClose(nomor, 'blue');
+        const apiPromise = apiFetch(`/api/antrian/selesai/${nomor}`, { method: 'POST' });
+        if (closePromise) await Promise.all([closePromise, apiPromise]);
+        else { await apiPromise; await animateRowClose(nomor, 'blue'); }
         // Selesai → baris pindah ke tab Selesai; kasih highlight biru elegan saat tab itu dibuka
         pendingHighlight = { nomor, flash: 'blue', forStatus: 'selesai' };
         await loadDaftar(currentFilter);
@@ -585,6 +594,23 @@ function clearBerkasSyncing() {
   document.querySelectorAll('.berkas-siap.is-syncing').forEach(b => {
     b.classList.remove('is-syncing');
     b.removeAttribute('aria-busy');
+  });
+}
+
+function animateRowClose(nomor, tint) {
+  const row = document.querySelector(`[data-nomor="${nomor}"]`);
+  if (!row) return Promise.resolve();
+  // Kunci tinggi agar max-height transition presisi, lalu fold
+  row.style.maxHeight = `${row.offsetHeight}px`;
+  void row.offsetWidth;
+  const cls = tint === 'emerald' ? 'row-exit-emerald' : tint === 'blue' ? 'row-exit-blue' : tint === 'gold' ? 'row-exit-gold' : '';
+  row.classList.add('row-exit');
+  if (cls) row.classList.add(cls);
+  return new Promise(resolve => {
+    let done = false;
+    const finish = () => { if (done) return; done = true; resolve(); };
+    row.addEventListener('animationend', finish, { once: true });
+    setTimeout(finish, 560);
   });
 }
 
