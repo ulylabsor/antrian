@@ -408,6 +408,17 @@
 
     .timelapse { font-size: 12px; color: var(--paper-mute); margin-top: 14px; font-weight: 600; }
     .ticket-foot { font-size: 11px; color: var(--paper-faint); margin-top: 12px; font-weight: 500; }
+    .btn-back {
+      width: 100%; margin-top: 14px; padding: 11px 16px;
+      background: var(--card-hover); border: 1px solid var(--card-border);
+      color: var(--paper-dim); border-radius: 12px; font-weight: 700; font-size: 13px;
+      cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      font-family: var(--font-body);
+      transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease, transform 0.1s ease;
+    }
+    .btn-back:hover { border-color: var(--card-border-strong); background: var(--card-strong); color: var(--paper); }
+    .btn-back:active { transform: scale(0.98); }
+    .btn-back:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 
     /* ===== Animations ===== */
     @keyframes nomor-pop {
@@ -563,6 +574,11 @@
 
         <div id="timelapse-container" class="timelapse"></div>
 
+        <button type="button" class="btn-back" onclick="kembaliKeAwal()" aria-label="Kembali ke pencarian, pilih data lain">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+          Cari data lain
+        </button>
+
         <div class="ticket-foot">Status update otomatis — tutup halaman setelah selesai</div>
       </div>
     </main>
@@ -604,7 +620,7 @@
     updateClock();
     setInterval(updateClock, 1000);
   </script>
-  <script src="/js/modal.js?v=2"></script>
-  <script src="/js/peserta.js?v=2"></script>
+  <script src="/js/modal.js?v=3"></script>
+  <script src="/js/peserta.js?v=3"></script>
 </body>
 </html>

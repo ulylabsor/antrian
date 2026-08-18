@@ -483,8 +483,35 @@ socket.on('antrian:panggil-ulang', (data) => {
 socket.on('antrian:baru', () => { if (myNomorAntrian !== null && currentStatus === 'menunggu') muatPosisiAntrian(myNomorAntrian, 'menunggu'); });
 socket.on('statistik:update', () => { if (myNomorAntrian !== null && currentStatus === 'menunggu') muatPosisiAntrian(myNomorAntrian, 'menunggu'); });
 
+function kembaliKeAwal() {
+  // Hentikan audio & timer
+  if (panggilanTimeout) { clearTimeout(panggilanTimeout); panggilanTimeout = null; }
+  if (audioPanggilan) { try { audioPanggilan.pause(); } catch {} audioPanggilan = null; }
+  if (chimeCtx) { try { chimeCtx.close(); } catch {} chimeCtx = null; }
+  // Reset state antrian di client — nomor antrian peserta tetap tersimpan di server
+  pesertaTerpilih = null;
+  myNomorAntrian = null;
+  myLoket = null;
+  waktuDaftar = null;
+  currentStatus = null;
+  // Bersihkan UI pencarian
+  const inp = document.getElementById('input-nama');
+  if (inp) inp.value = '';
+  const clr = document.getElementById('btn-clear');
+  if (clr) clr.style.display = 'none';
+  const hp = document.getElementById('hasil-pencarian');
+  if (hp) hp.innerHTML = '';
+  const dp = document.getElementById('detail-peserta');
+  if (dp) dp.innerHTML = '';
+  const tc = document.getElementById('timelapse-container');
+  if (tc) tc.textContent = '';
+  showScreen('screen-cari');
+  if (inp) inp.focus();
+}
+
 // Expose ke window untuk onclick handlers
 window.pilihPeserta = pilihPeserta;
 window.ambilAntrian = ambilAntrian;
 window.panggilLagi = panggilLagi;
+window.kembaliKeAwal = kembaliKeAwal;
 window.toggleTheme = toggleTheme;
