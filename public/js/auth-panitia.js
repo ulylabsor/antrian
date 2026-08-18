@@ -194,18 +194,23 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ===== Init: gate dashboard =====
-(function initAuthGate() {
+// Dijalankan setelah DOM + semua script (termasuk panitia.js) siap.
+// Sebelumnya IIFE dipanggil saat auth-panitia.js dieksekusi — panitia.js
+// belum load sehingga window.initPanitiaDashboard === undefined dan
+// semua listener (termasuk btn-settings) tidak pernah terpasang pada
+// alur refresh-sudah-authed. Dengan DOMContentLoaded kedua script pasti
+// sudah dieksekusi.
+function runAuthGate() {
   if (isAuthed()) {
-    // Guard: window.initPanitiaDashboard() baru tersedia setelah Task 8
-    // merefaktor panitia.js. Hingga then, dashboard (#dash) tetap
-    // terlihat karena closeAuthModal/removeAttribute tidak dipanggil di cabang ini;
-    // jika auth valid, dash sudah visible via attribute removal di alur login,
-    // atau manual di-unhide oleh Task 8. Untuk menghindari dashboard blank
-    // saat refresh-sudah-authed, pastikan #dash tidak hidden saat isAuthed.
     document.getElementById('dash')?.removeAttribute('hidden');
     if (typeof window.initPanitiaDashboard === 'function') window.initPanitiaDashboard();
   } else {
     clearToken();
     showLoginModal();
   }
-})();
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', runAuthGate);
+} else {
+  runAuthGate();
+}
