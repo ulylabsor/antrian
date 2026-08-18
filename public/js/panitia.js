@@ -215,8 +215,16 @@ async function loadDaftar(status) {
       flashCls = m2[status] || '';
     }
     const pulseCls = shouldEnter ? ' row-pulse' : '';
-    const bounceCls = shouldEnter && (status === 'menunggu' || status === 'selesai') ? ' row-bounce' : '';
-    const enterCls = shouldEnter ? ` row-enter${pulseCls}${bounceCls}` : '';
+    let enterCls = '';
+    if (shouldEnter) {
+      if (status === 'menunggu') {
+        // Menunggu = kebalikan dari tutup selesai: membuka elegan (fold-open) + pulse halus
+        enterCls = ` row-open${pulseCls}`;
+      } else {
+        const bounceCls = status === 'selesai' ? ' row-bounce' : '';
+        enterCls = ` row-enter${pulseCls}${bounceCls}`;
+      }
+    }
     const flashWithSpace = flashCls ? ` ${flashCls}` : '';
     const stagger = shouldEnter ? ` style="animation-delay:${Math.min(idx * 48, 380)}ms"` : '';
     let actions = '';
