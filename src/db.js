@@ -89,6 +89,10 @@ export function initDb() {
   if (!cols.some(c => c.name === 'jumlah_dipanggil')) {
     db.exec(`ALTER TABLE peserta ADD COLUMN jumlah_dipanggil INTEGER DEFAULT 0`);
   }
+  // Guarded migration: kolom berkas_siap (toggle Siap/Belum di tab Menunggu, default Belum = 0)
+  if (!cols.some(c => c.name === 'berkas_siap')) {
+    db.exec(`ALTER TABLE peserta ADD COLUMN berkas_siap INTEGER DEFAULT 0`);
+  }
 }
 
 export function insertPeserta(namaLengkap, ttl, noSeri, sheetsRow) {
@@ -164,7 +168,7 @@ export function getAntrianByNomor(nomor) {
 
 export function getDaftarAntrian(status) {
   const stmt = db.prepare(`
-    SELECT nomor_antrian, nama_lengkap, no_seri, status, waktu_daftar, waktu_selesai, counter, jumlah_dipanggil
+    SELECT nomor_antrian, nama_lengkap, no_seri, status, waktu_daftar, waktu_selesai, counter, jumlah_dipanggil, berkas_siap
     FROM peserta
     WHERE status = ? AND nomor_antrian IS NOT NULL
     ORDER BY nomor_antrian
@@ -190,6 +194,10 @@ export function setWaktuSelesai(nomor) {
 
 export function setCounter(nomor, counter) {
   db.prepare('UPDATE peserta SET counter = ? WHERE nomor_antrian = ?').run(counter, nomor);
+}
+
+export function setBerkasSiap(nomor, siap) {
+  db.prepare('UPDATE peserta SET berkas_siap = ? WHERE nomor_antrian = ?').run(siap ? 1 : 0, nomor);
 }
 
 export function getJumlahLoket() {

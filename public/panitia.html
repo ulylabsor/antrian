@@ -410,6 +410,16 @@
       background: #f59e0b; color: #fff; border-color: #d97706;
     }
     .btn-action.amber:hover { background: #f59e0b; filter: brightness(1.08); transform: translateY(-1px); }
+    /* Toggle berkas Siap/Belum di tab Menunggu — checklist panitia */
+    .btn-action.berkas-siap {
+      background: var(--card); color: var(--paper-mute);
+      border-color: var(--card-border-strong);
+    }
+    .btn-action.berkas-siap:hover { background: var(--card-hover); color: var(--paper-dim); border-color: var(--card-border-strong); transform: translateY(-1px); }
+    .btn-action.berkas-siap.is-on {
+      background: var(--emerald); color: #fff; border-color: var(--emerald);
+    }
+    .btn-action.berkas-siap.is-on:hover { filter: brightness(1.08); transform: translateY(-1px); }
 
     .counter-badge {
       display: inline-flex; align-items: center;

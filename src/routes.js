@@ -17,6 +17,7 @@ import {
   incrementJumlahDipanggil,
   getPanitiaAuth,
   setPanitiaPassword,
+  setBerkasSiap,
 } from './db.js';
 import { updateStatusInSheets, syncAllToSheets } from './sheets.js';
 import { generatePanggilanAudio } from './tts.js';
@@ -328,6 +329,29 @@ export function createRouter(io) {
     // Broadcast global agar layar info.html juga putar ulang panggilan suara
     if (io) io.emit('antrian:panggil-ulang', { nomor, counter });
     res.json({ success: true, nomor, counter });
+  });
+
+  // Toggle berkas siap/belum — hanya untuk status menunggu, tidak pindah tab (checklist panitia).
+  // Body: { berkas_siap: 0|1 } atau tanpa body = toggle. Default Belum (0) = berkas belum ditemukan.
+  router.post('/antrian/berkas/:nomor', requirePanitia, (req, res) => {
+    const nomor = parseInt(req.params.nomor);
+    const antrian = getAntrianByNomor(nomor);
+    if (!antrian) return res.status(404).json({ error: 'Tidak ditemukan' });
+    if (antrian.status !== 'menunggu') {
+      return res.status(400).json({ error: 'Hanya peserta menunggu yang bisa di-toggle berkasnya' });
+    }
+    const raw = req.body?.berkas_siap;
+    let next;
+    if (raw === undefined || raw === null) {
+      next = antrian.berkas_siap ? 0 : 1; // toggle
+    } else {
+      const v = parseInt(raw, 10);
+      if (v !== 0 && v !== 1) return res.status(400).json({ error: 'berkas_siap harus 0 atau 1' });
+      next = v;
+    }
+    setBerkasSiap(nomor, next);
+    if (io) io.emit('antrian:berkas', { nomor, berkas_siap: next });
+    res.json({ success: true, nomor, berkas_siap: next });
   });
 
   // Selesai (sync ke Sheets)

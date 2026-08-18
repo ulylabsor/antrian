@@ -202,15 +202,24 @@ async function loadDaftar(status) {
       : '';
 
     if (status === 'menunggu') {
+      // Toggle berkas Siap/Belum — checklist panitia, tetap di tab Menunggu.
+      // Default Belum (0): berkas belum ditemukan; panitia toggle ke Siap saat berkas ketemu.
+      const isSiap = Number(p.berkas_siap) === 1;
+      const berkasBtn = isSiap
+        ? `<button onclick="toggleBerkas(${p.nomor_antrian}, 0)" title="Berkas siap — klik untuk ubah ke Belum" aria-label="Berkas siap untuk nomor ${p.nomor_antrian}, klik untuk ubah ke belum" class="btn-action berkas-siap is-on">
+             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 15l2 2 4-4"/></svg>
+             <span>Siap</span>
+           </button>`
+        : `<button onclick="toggleBerkas(${p.nomor_antrian}, 1)" title="Berkas belum — klik untuk tandai Siap" aria-label="Berkas belum untuk nomor ${p.nomor_antrian}, klik untuk tandai siap" class="btn-action berkas-siap">
+             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+             <span>Belum</span>
+           </button>`;
       actions = `
         <button onclick="panggil(${p.nomor_antrian})" class="btn-action primary">
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l18-8-8 18-2-7-8-3z"/></svg>
           <span>Panggil</span>
         </button>
-        <button onclick="selesai(${p.nomor_antrian})" class="btn-action emerald">
-          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
-          <span>Selesai</span>
-        </button>
+        ${berkasBtn}
       `;
     } else if (status === 'dipanggil') {
       actions = `
@@ -443,6 +452,25 @@ async function selesai(nomor) {
   });
 }
 
+async function toggleBerkas(nomor, nextVal) {
+  try {
+    const res = await apiFetch(`/api/antrian/berkas/${nomor}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ berkas_siap: nextVal }),
+    });
+    const data = await res.json();
+    if (data.error) {
+      showToast(data.error, 'error');
+      return;
+    }
+    loadDaftar(currentFilter);
+  } catch (err) {
+    if (err.message === 'Unauthorized') return;
+    showToast('Gagal ubah status berkas: ' + err.message, 'error');
+  }
+}
+
 // === Real-time updates & init ===
 // Dipanggil auth-panitia.js setelah login sukses (atau saat sudah authed
 // saat reload). Sebelum auth, jangan connect socket / join / pasang
@@ -485,6 +513,11 @@ window.initPanitiaDashboard = function initPanitiaDashboard() {
     jumlahLoket = data.jumlah_loket;
     document.getElementById('input-jumlah-loket').value = jumlahLoket;
     renderLoketDropdown();
+  });
+
+  socket.on('antrian:berkas', () => {
+    // Panitia lain toggle berkas — refresh jika sedang di tab Menunggu
+    if (currentFilter === 'menunggu') loadDaftar(currentFilter);
   });
 
   // Data loads (dari DOMContentLoaded lama)
@@ -589,6 +622,7 @@ window.initPanitiaDashboard = function initPanitiaDashboard() {
 window.loadDaftar = loadDaftar;
 window.panggil = panggil;
 window.selesai = selesai;
+window.toggleBerkas = toggleBerkas;
 window.putarPanggilan = putarPanggilan;
 window.ucapkanPanggilan = ucapkanPanggilan;
 window.salinNoSeri = salinNoSeri;
