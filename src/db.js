@@ -121,11 +121,18 @@ export function getPesertaByNama(nama) {
 }
 
 export function cariPeserta(q) {
+  // Di halaman awal, sembunyikan peserta yang sudah ambil antrian di hari
+  // sebelumnya (waktu_daftar < hari ini). Jadi data terambil hari ini tidak
+  // akan muncul lagi besok di daftar antrian peserta.
   const stmt = db.prepare(`
     SELECT id, nama_lengkap, tempat_tanggal_lahir, no_seri, status, waktu_selesai
     FROM peserta
-    WHERE nama_lengkap LIKE ? COLLATE NOCASE
-       OR TRIM(no_seri) LIKE ? COLLATE NOCASE
+    WHERE (nama_lengkap LIKE ? COLLATE NOCASE
+        OR TRIM(no_seri) LIKE ? COLLATE NOCASE)
+      AND (
+        waktu_daftar IS NULL
+        OR date(waktu_daftar) >= date('now', 'localtime')
+      )
     ORDER BY nama_lengkap
     LIMIT 20
   `);
