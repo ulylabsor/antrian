@@ -989,8 +989,25 @@
       .next-row { flex-wrap: wrap; gap: 10px; padding: 10px 12px; }
       .next-row .seri-chip { max-width: 100%; width: 100%; justify-content: space-between; }
       .next-row .seri-chip .val { font-size: 13px; }
-      .counters-strip { gap: 8px; }
-      .counter-chip { flex: 1 1 calc(50% - 4px); }
+      .counters-strip {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        overflow-y: hidden;
+        gap: 8px;
+        padding: 2px 2px 8px;
+        scroll-snap-type: x proximity;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+        mask-image: linear-gradient(90deg, transparent, #000 16px, #000 calc(100% - 16px), transparent);
+        -webkit-mask-image: linear-gradient(90deg, transparent, #000 16px, #000 calc(100% - 16px), transparent);
+      }
+      .counter-chip {
+        flex: 0 0 auto;
+        width: 104px;
+        scroll-snap-align: start;
+      }
+      .counters-strip::-webkit-scrollbar { height: 5px; }
+      .counters-strip::-webkit-scrollbar-thumb { background: var(--card-border-strong); border-radius: 4px; }
       .footer { font-size: 11px; gap: 10px; }
       .footer .right { gap: 10px; flex-wrap: wrap; }
     }
