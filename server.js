@@ -52,6 +52,10 @@ app.use((req, res, next) => {
 });
 
 app.use(express.static(path.join(__dirname, 'public'), {
+  // Matikan ETag/Last-Modified supaya browser tidak dapat 304 untuk HTML
+  // (HP yang sudah pegang versi lama bisa dapat 304 dan tetap pakai body lama).
+  etag: false,
+  lastModified: false,
   setHeaders(res, filePath) {
     // HTML jangan pernah di-cache — layar info harus selalu versi terbaru
     // (fix sebelumnya cuma untuk /api, jadi info.html masih public/max-age=0 dan
