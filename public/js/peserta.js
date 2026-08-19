@@ -118,8 +118,8 @@ async function ucapkanPanggilan(nomor, loket) {
   try {
     // Bunyikan chime di awal (sekali, sebelum TTS) — gaya panggilan bandara.
     putarChime();
-    const url = `/api/tts?nomor=${encodeURIComponent(nomor)}&loket=${encodeURIComponent(loket)}`;
-    const res = await fetch(url);
+    const url = `/api/tts?nomor=${encodeURIComponent(nomor)}&loket=${encodeURIComponent(loket)}&_=${Date.now()}`;
+    const res = await fetch(url, { cache: 'no-store' });
     if (!res.ok) throw new Error('TTS gagal');
     const blob = await res.blob();
     const objectUrl = URL.createObjectURL(blob);
@@ -183,7 +183,7 @@ inputNama.addEventListener('input', (e) => {
 
   timeoutId = setTimeout(async () => {
     try {
-      const res = await fetch(`/api/peserta/cari?q=${encodeURIComponent(nama)}`);
+      const res = await fetch(`/api/peserta/cari?q=${encodeURIComponent(nama)}&_=${Date.now()}`, { cache: 'no-store' });
       const data = await res.json();
       tampilkanHasilPencarian(data);
     } catch (err) {
@@ -248,7 +248,7 @@ function tampilkanHasilPencarian(data) {
 async function pilihPeserta(id) {
   let peserta;
   try {
-    const res = await fetch(`/api/peserta/${id}`);
+    const res = await fetch(`/api/peserta/${id}?_=${Date.now()}`, { cache: 'no-store' });
     peserta = await res.json();
   } catch (err) {
     showInfo({ title: 'Gagal Memuat', message: 'Tidak bisa terhubung ke server. Coba lagi.', type: 'error', confirmText: 'Tutup' });
@@ -383,7 +383,7 @@ async function muatPosisiAntrian(nomor, status) {
     return;
   }
   try {
-    const res = await fetch('/api/info-antrian');
+    const res = await fetch('/api/info-antrian?_=' + Date.now(), { cache: 'no-store' });
     const info = await res.json();
     const menunggu = info.menunggu || [];
     const idx = menunggu.findIndex(p => Number(p.nomor_antrian) === Number(nomor));

@@ -598,7 +598,7 @@
 
     async function loadData() {
       try {
-        const res = await fetch('/api/peserta/all');
+        const res = await fetch('/api/peserta/all?_=' + Date.now(), { cache: 'no-store' });
         allData = await res.json();
         renderSummary();
         renderCharts();
@@ -1217,6 +1217,8 @@
     socket.on('antrian:baru', () => { loadData(); });
     socket.on('antrian:selesai', () => { loadData(); });
     socket.on('antrian:panggil', () => { loadData(); });
+    socket.on('antrian:panggil-ulang', () => { loadData(); });
+    socket.on('antrian:berkas', () => { loadData(); });
     socket.on('antrian:reset', () => { loadData(); });
 
     loadData();

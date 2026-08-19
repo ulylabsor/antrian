@@ -1230,8 +1230,8 @@
       try {
         // Bunyikan chime di awal (sekali, sebelum TTS) — gaya panggilan bandara.
         putarChime();
-        const url = `/api/tts?nomor=${encodeURIComponent(nomor)}&loket=${encodeURIComponent(ruangan)}`;
-        const res = await fetch(url);
+        const url = `/api/tts?nomor=${encodeURIComponent(nomor)}&loket=${encodeURIComponent(ruangan)}&_=${Date.now()}`;
+        const res = await fetch(url, { cache: 'no-store' });
         if (!res.ok) throw new Error('TTS gagal');
         const blob = await res.blob();
         const objectUrl = URL.createObjectURL(blob);

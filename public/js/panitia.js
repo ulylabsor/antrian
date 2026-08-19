@@ -74,8 +74,8 @@ async function ucapkanPanggilan(nomor, loket) {
   try {
     // Bunyikan chime di awal (sekali, sebelum TTS) — gaya panggilan bandara.
     putarChime();
-    const url = `/api/tts?nomor=${encodeURIComponent(nomor)}&loket=${encodeURIComponent(loket)}`;
-    const res = await fetch(url);
+    const url = `/api/tts?nomor=${encodeURIComponent(nomor)}&loket=${encodeURIComponent(loket)}&_=${Date.now()}`;
+    const res = await fetch(url, { cache: 'no-store' });
     if (!res.ok) throw new Error('TTS gagal');
     const blob = await res.blob();
     const objectUrl = URL.createObjectURL(blob);
@@ -143,7 +143,7 @@ function renderLoketDropdown() {
 }
 
 async function loadLoketSettings() {
-  const res = await fetch('/api/settings/loket');
+  const res = await fetch('/api/settings/loket?_=' + Date.now(), { cache: 'no-store' });
   const data = await res.json();
   jumlahLoket = data.jumlah_loket;
   document.getElementById('input-jumlah-loket').value = jumlahLoket;
@@ -152,7 +152,7 @@ async function loadLoketSettings() {
 
 // === Statistik & daftar antrian ===
 async function loadStatistik() {
-  const res = await fetch('/api/statistik');
+  const res = await fetch('/api/statistik?_=' + Date.now(), { cache: 'no-store' });
   const data = await res.json();
   document.getElementById('stat-total').textContent = data.total;
   document.getElementById('stat-menunggu').textContent = data.menunggu;
@@ -251,7 +251,8 @@ async function loadDaftar(status, opts) {
     // (dipanggil dari handler search; deteksi via caller yang set selesaiPage=1)
     const params = new URLSearchParams({ status: 'selesai', page: String(selesaiPage), perPage: String(selesaiPerPage) });
     if (searchQuery) params.set('q', searchQuery);
-    const res = await fetch(`/api/antrian/daftar?${params.toString()}`);
+    if (!params.has('_')) params.set('_', String(Date.now()));
+    const res = await fetch(`/api/antrian/daftar?${params.toString()}`, { cache: 'no-store' });
     const json = await res.json();
     if (Array.isArray(json)) { // fallback legacy bila server belum update
       data = json;
@@ -265,7 +266,7 @@ async function loadDaftar(status, opts) {
       pagedMeta = json;
     }
   } else {
-    const res = await fetch(`/api/antrian/daftar?status=${encodeURIComponent(status)}`);
+    const res = await fetch(`/api/antrian/daftar?status=${encodeURIComponent(status)}&_=${Date.now()}`, { cache: 'no-store' });
     let raw = await res.json();
     // Server bisa balas {data:[]} untuk selesai paged; normalkan ke array untuk tab non-selesai
     if (raw && !Array.isArray(raw) && Array.isArray(raw.data)) raw = raw.data;
@@ -829,8 +830,17 @@ window.initPanitiaDashboard = function initPanitiaDashboard() {
   });
 
   socket.on('antrian:berkas', () => {
-    // Panitia lain toggle berkas — refresh jika sedang di tab Menunggu
     if (currentFilter === 'menunggu') loadDaftar(currentFilter);
+  });
+
+  socket.on('antrian:reset', () => {
+    loadStatistik();
+    loadDaftar(currentFilter);
+  });
+
+  socket.on('antrian:panggil-ulang', () => {
+    // Sinkronkan jumlah_dipanggil di tab Dipanggil lintas panitia
+    if (currentFilter === 'dipanggil') loadDaftar(currentFilter);
   });
 
   // Data loads (dari DOMContentLoaded lama)
