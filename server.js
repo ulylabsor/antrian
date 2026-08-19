@@ -53,8 +53,13 @@ app.use((req, res, next) => {
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-// API routes
-app.use('/api', createRouter(io));
+// Anti-cache khusus API — jangan biarkan Cloudflare/browser cache hasil info real-time
+app.use('/api', (req, res, next) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+  next();
+}, createRouter(io));
 
 // Socket.io
 setupSocket(io);

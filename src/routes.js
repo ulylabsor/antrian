@@ -456,7 +456,12 @@ export function createRouter(io) {
   });
 
   // Data untuk layar informasi publik (nomor yang dipanggil + antrian berikutnya)
+  // Anti-cache: layar info harus selalu fresh — jangan biarkan browser/Cloudflare
+  // menyajikan response lama sehingga Sedang Dipanggil tampak "stuck".
   router.get('/info-antrian', (req, res) => {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
     const dipanggil = getDaftarAntrian('dipanggil');
     const menunggu = getDaftarAntrian('menunggu');
     const statistik = getStatistik();

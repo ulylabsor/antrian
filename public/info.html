@@ -1119,8 +1119,8 @@
     <!-- Footer -->
     <div class="footer">
       <div class="left">
-        <span class="dot"></span>
-        <span>Update otomatis — informasi antrian real-time</span>
+        <span class="dot" id="conn-dot"></span>
+        <span id="conn-text">Update otomatis — informasi antrian real-time</span>
       </div>
       <div class="right">
         <span class="legend"><i style="background:var(--gold)"></i>Dipanggil</span>
@@ -1287,9 +1287,28 @@
     let recallNomor = null;   // nomor yang sedang dipanggil ulang (override renderHero)
     let recallTimer = null;   // timer untuk melepas kelas .recalling
 
+    // Indikator koneksi realtime di footer — biar jelas kalau socket putus.
+    function setConnState(state, msg) {
+      const dot = document.getElementById('conn-dot');
+      const txt = document.getElementById('conn-text');
+      if (!dot || !txt) return;
+      if (state === 'ok') {
+        dot.style.background = 'var(--emerald)'; dot.style.boxShadow = '0 0 8px var(--emerald-line)'; dot.style.animation = '';
+        txt.textContent = 'Terhubung — update real-time';
+      } else if (state === 'wait') {
+        dot.style.background = 'var(--gold)'; dot.style.boxShadow = '0 0 8px var(--gold-line)'; dot.style.animation = 'dot-pulse 1s ease-in-out infinite';
+        txt.textContent = msg || 'Menghubungkan…';
+      } else {
+        dot.style.background = 'var(--rose)'; dot.style.boxShadow = '0 0 8px rgba(251,113,133,0.35)'; dot.style.animation = 'dot-pulse 1s ease-in-out infinite';
+        txt.textContent = msg || 'Terputus — mencoba sambung ulang…';
+      }
+    }
+
     async function loadInfo() {
       try {
-        const res = await fetch('/api/info-antrian');
+        // cache: no-store + timestamp supaya Cloudflare/edge tidak sajikan data lama
+        const res = await fetch('/api/info-antrian?_=' + Date.now(), { cache: 'no-store' });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
         const data = await res.json();
         renderHero(data.dipanggil || [], recallNomor);
         renderCounters(data.dipanggil || []);
@@ -1298,6 +1317,7 @@
         renderInfo(data.statistik);
       } catch (err) {
         console.error('Gagal memuat info antrian:', err);
+        setConnState('err', 'Gagal memuat data — coba lagi…');
       }
     }
 
@@ -1435,7 +1455,15 @@
     }
 
     /* ===== Real-time events ===== */
+    socket.on('connect', () => setConnState('ok'));
+    socket.on('disconnect', () => setConnState('err'));
+    socket.on('connect_error', () => setConnState('err'));
+    socket.on('reconnect_attempt', () => setConnState('wait', 'Menyambung ulang…'));
+    socket.on('reconnect', () => { setConnState('ok'); loadInfo(); });
+
+    // Info: log mentah agar mudah cek di DevTools bila Sedang Dipanggil "stuck"
     socket.on('antrian:panggil', (data) => {
+      console.log('[info] antrian:panggil', data);
       // Panggilan baru: hapus override recall (nomor lama) supaya hero kembali ikut
       // nomor terbesar/terbaru, dan lepas sinyal recall yang masih menyala.
       recallNomor = null;
@@ -1451,9 +1479,10 @@
         ucapkanPanggilan(data.nomor, data.counter);
       }
     });
-    socket.on('antrian:baru', () => loadInfo());
-    socket.on('antrian:selesai', () => loadInfo());
+    socket.on('antrian:baru', (d) => { console.log('[info] antrian:baru', d); loadInfo(); });
+    socket.on('antrian:selesai', (d) => { console.log('[info] antrian:selesai', d); loadInfo(); });
     socket.on('antrian:panggil-ulang', (data) => {
+      console.log('[info] antrian:panggil-ulang', data);
       // Panggil ulang: paksa putar ulang meski nomor sama (panitia minta ulang).
       if (data && data.nomor !== undefined && data.nomor !== null) {
         lastPanggilNomor = data.nomor;
@@ -1468,10 +1497,15 @@
         loadInfo();
       }
     });
-    socket.on('statistik:update', () => loadInfo());
+    socket.on('statistik:update', (d) => { console.log('[info] statistik:update', d && d.menunggu); loadInfo(); });
+    socket.on('antrian:berkas', () => loadInfo());
+    socket.on('antrian:reset', () => { console.log('[info] antrian:reset'); loadInfo(); });
 
+    if (socket.connected) setConnState('ok'); else setConnState('wait');
     loadInfo();
-    setInterval(loadInfo, 15000);
+    // Polling fallback tetap ada — interval dipendekkan agar bila WebSocket
+    // tertahan proxy/Cloudflare, Sedang Dipanggil tetap berganti dalam detik.
+    setInterval(loadInfo, 5000);
   </script>
 </body>
 </html>
