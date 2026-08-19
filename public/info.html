@@ -1003,9 +1003,11 @@
         scroll-snap-type: x proximity;
         -webkit-overflow-scrolling: touch;
         scrollbar-width: thin;
+        cursor: grab;
         mask-image: linear-gradient(90deg, transparent, #000 16px, #000 calc(100% - 16px), transparent);
         -webkit-mask-image: linear-gradient(90deg, transparent, #000 16px, #000 calc(100% - 16px), transparent);
       }
+      .counters-strip:active { cursor: grabbing; }
       .counter-chip {
         flex: 0 0 auto;
         width: 104px;
@@ -1013,6 +1015,21 @@
       }
       .counters-strip::-webkit-scrollbar { height: 5px; }
       .counters-strip::-webkit-scrollbar-thumb { background: var(--card-border-strong); border-radius: 4px; }
+      /* hint geser — hanya di HP & hanya saat strip bisa di-scroll */
+      .counters-hint {
+        display: none;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 1.2px;
+        text-transform: uppercase;
+        color: var(--paper-mute);
+        padding: 2px 0 0;
+      }
+      .counters-hint svg { opacity: 0.7; }
+      @media (prefers-reduced-motion: reduce) { .counters-hint { display: none !important; } }
       .footer { font-size: 11px; gap: 10px; }
       .footer .right { gap: 10px; flex-wrap: wrap; }
     }
@@ -1130,6 +1147,11 @@
         </div>
 
         <div class="counters-strip" id="counters-strip" style="display:none;"></div>
+        <div class="counters-hint" id="counters-hint" aria-hidden="true">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 17l-5-5 5-5"/><path d="M18 17l-5-5 5-5"/></svg>
+          Geser untuk lihat semua
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 17l5-5-5-5"/><path d="M6 17l5-5-5-5"/></svg>
+        </div>
       </div>
 
       <!-- Kiri bawah: Informasi (auto height) -->
@@ -1426,9 +1448,69 @@
       }
     }
 
+    // Slider/marquee horizontal untuk daftar dipanggil (anti-numpuk di HP)
+    let marqueeRaf = null, marqueePausedUntil = 0;
+    function isMobile() { return window.matchMedia('(max-width: 640px)').matches; }
+    function canMarquee(el) { return el && el.scrollWidth > el.clientWidth + 8; }
+    function prefersReduced() { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; }
+    function stopMarquee() { if (marqueeRaf) cancelAnimationFrame(marqueeRaf); marqueeRaf = null; }
+    function pauseMarquee(ms = 2200) { marqueePausedUntil = Date.now() + ms; }
+    function startMarquee() {
+      const strip = document.getElementById('counters-strip');
+      if (!strip || !isMobile() || !canMarquee(strip) || prefersReduced()) return;
+      stopMarquee();
+      let dir = 1; // 1 = ke kanan, -1 = ke kiri (bolak-balik, tidak loncat)
+      const speed = 0.38; // px per frame (~23 px/detik — halus, tidak lebay)
+      const edgePauseMs = 900;
+      let lastAtEdge = 0;
+      function tick() {
+        const now = Date.now();
+        if (now < marqueePausedUntil) { marqueeRaf = requestAnimationFrame(tick); return; }
+        const max = strip.scrollWidth - strip.clientWidth;
+        if (max <= 0) return;
+        const atStart = strip.scrollLeft <= 1;
+        const atEnd = strip.scrollLeft >= max - 1;
+        if (atStart && dir < 0) { dir = 1; lastAtEdge = now; }
+        else if (atEnd && dir > 0) { dir = -1; lastAtEdge = now; }
+        if (now - lastAtEdge < edgePauseMs && (atStart || atEnd)) {
+          marqueeRaf = requestAnimationFrame(tick);
+          return;
+        }
+        strip.scrollLeft += dir * speed;
+        // clamp
+        if (strip.scrollLeft < 0) strip.scrollLeft = 0;
+        if (strip.scrollLeft > max) strip.scrollLeft = max;
+        marqueeRaf = requestAnimationFrame(tick);
+      }
+      marqueeRaf = requestAnimationFrame(tick);
+    }
+    function bindMarqueePauseOnce() {
+      const strip = document.getElementById('counters-strip');
+      if (!strip || strip._marqueeBound) return;
+      strip._marqueeBound = true;
+      ['pointerdown','touchstart','wheel','keydown'].forEach(ev => {
+        strip.addEventListener(ev, () => pauseMarquee(2400), { passive: true });
+      });
+      strip.addEventListener('scroll', () => {
+        // user menggeser manual → jeda marquee, biar tidak rebutan
+        if (Date.now() >= marqueePausedUntil) pauseMarquee(2200);
+      }, { passive: true });
+      strip.addEventListener('mouseenter', () => pauseMarquee(1400));
+      strip.addEventListener('mouseleave', () => { marqueePausedUntil = Date.now() + 600; });
+      // hormati prefers-reduced-motion dinamis
+      const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+      mq.addEventListener('change', () => { if (mq.matches) stopMarquee(); else startMarquee(); });
+    }
+
     function renderCounters(dipanggil) {
       const strip = document.getElementById('counters-strip');
-      if (dipanggil.length === 0) { strip.style.display = 'none'; return; }
+      const hint = document.getElementById('counters-hint');
+      if (dipanggil.length === 0) {
+        strip.style.display = 'none';
+        if (hint) hint.style.display = 'none';
+        stopMarquee();
+        return;
+      }
       const sorted = [...dipanggil].sort((a, b) => b.nomor_antrian - a.nomor_antrian);
       const freshNomor = sorted[0].nomor_antrian;
       strip.innerHTML = sorted.map(p => `
@@ -1438,6 +1520,17 @@
         </div>
       `).join('');
       strip.style.display = 'flex';
+      strip.scrollLeft = 0;
+      bindMarqueePauseOnce();
+      // Tampilkan hint + mulai marquee hanya di HP & hanya jika memang bisa di-scroll
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          const scrollable = canMarquee(strip) && isMobile();
+          if (hint) hint.style.display = scrollable ? 'flex' : 'none';
+          if (scrollable && !prefersReduced()) startMarquee();
+          else stopMarquee();
+        });
+      });
     }
 
     function renderNext(menunggu) {
