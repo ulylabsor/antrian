@@ -14,6 +14,8 @@ server.log
 *.csv.bak
 data.csv
 data.csv.bak
+*.xlsx
+ABSENSI*.xlsx
 
 # backup history git lokal
 backup-pre-*.bundle
