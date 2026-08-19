@@ -531,8 +531,8 @@
     .hero-card {
       background: linear-gradient(165deg, var(--card-strong), var(--card));
       border: 1px solid var(--card-border-strong);
-      border-radius: 20px;
-      padding: 24px 26px;
+      border-radius: 22px;
+      padding: 28px 28px 26px;
       text-align: center;
       backdrop-filter: blur(16px);
       box-shadow: var(--shadow-hero);
@@ -543,7 +543,7 @@
       justify-content: center;
       align-items: center;
       flex: 1;
-      min-height: 0;
+      min-height: 320px;
     }
     .hero-card::before {
       content: '';
@@ -563,23 +563,23 @@
     }
     .hero-card .label {
       font-family: var(--font-display);
-      font-size: 12px;
+      font-size: 13px;
       color: var(--paper-mute);
-      font-weight: 600;
+      font-weight: 700;
       letter-spacing: 5px;
       text-transform: uppercase;
       position: relative;
     }
     .hero-card .nomor {
       font-family: var(--font-display);
-      font-size: clamp(80px, 14vw, 170px);
+      font-size: clamp(98px, 15vw, 192px);
       font-weight: 900;
       color: var(--gold);
-      line-height: 0.95;
-      letter-spacing: -0.04em;
-      margin: 10px 0 14px;
+      line-height: 0.9;
+      letter-spacing: -0.05em;
+      margin: 12px 0 16px;
       font-variant-numeric: tabular-nums;
-      text-shadow: 0 0 60px var(--gold-line);
+      text-shadow: 0 0 64px var(--gold-line), 0 2px 18px rgba(0,0,0,0.35);
       position: relative;
     }
     .hero-card .nomor.changed { animation: nomor-pop 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
@@ -639,29 +639,38 @@
     .hero-card .counter {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
       background: var(--gold-soft);
       color: var(--gold-bright);
-      padding: 8px 20px;
+      padding: 11px 24px;
       border-radius: 999px;
-      font-weight: 700;
-      font-size: 15px;
+      font-weight: 800;
+      font-size: 18px;
+      letter-spacing: 0.02em;
       border: 1px solid var(--gold-line);
       position: relative;
+      box-shadow: 0 4px 18px -8px var(--gold-glow);
     }
+    .hero-card .counter svg { width: 19px; height: 19px; flex-shrink: 0; }
     .hero-card .nama {
-      margin-top: 28px;
+      margin-top: 22px;
       font-family: var(--font-display);
-      font-size: 26px;
-      font-weight: 700;
+      font-size: 30px;
+      font-weight: 800;
       color: var(--paper);
       max-width: 100%;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
       position: relative;
-      letter-spacing: -0.01em;
-      padding-top: 16px;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      padding-top: 18px;
+      /* Izinkan wrap elegan di layar kecil; 2 baris max lalu ellipsis */
+      white-space: normal;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      overflow-wrap: anywhere;
+      text-wrap: balance;
     }
     /* Garis halus pemisah antara pill loket & nama */
     .hero-card .nama::before {
@@ -669,35 +678,40 @@
       position: absolute;
       top: 0; left: 50%;
       transform: translateX(-50%);
-      width: 64px; height: 1px;
+      width: 72px; height: 1px;
       background: linear-gradient(90deg, transparent, var(--card-border-strong), transparent);
     }
-    /* No. seri highlight di kartu Sedang Dipanggil — pill biru kontras dgn tema emas */
+    /* No. seri — diperbesar sesuai request */
     .hero-card .hero-seri {
-      margin-top: 14px;
+      margin-top: 16px;
       display: inline-flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
       background: var(--blue-soft);
       color: var(--blue);
       border: 1px solid var(--blue);
       border-radius: 999px;
-      padding: 9px 20px;
+      padding: 12px 26px;
       font-family: var(--font-mono);
-      font-size: 18px;
-      font-weight: 700;
-      letter-spacing: 0.03em;
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
       position: relative;
+      box-shadow: 0 4px 18px -10px rgba(96,165,250,0.4);
+      max-width: 100%;
+      flex-wrap: wrap;
+      justify-content: center;
     }
     .hero-card .hero-seri .lbl {
       font-family: var(--font-display);
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 2px;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 2.4px;
       text-transform: uppercase;
       color: var(--paper-mute);
+      flex-shrink: 0;
     }
-    .hero-card .hero-seri .val { font-variant-numeric: tabular-nums; }
+    .hero-card .hero-seri .val { font-variant-numeric: tabular-nums; word-break: break-all; }
     .hero-empty {
       color: var(--paper-mute);
       font-family: var(--font-display);
@@ -946,13 +960,14 @@
       .main-layout .panel-info { grid-column: 1; grid-row: auto; }
       html, body { overflow: auto; }
       .container { height: auto; min-height: 100%; }
-      .hero-card .nomor { font-size: clamp(64px, 18vw, 120px); }
+      .hero-card { min-height: 280px; }
       .next-list { max-height: 280px; }
       .panel-info .info-list { flex: 0 0 auto; }
     }
     @media (max-width: 640px) {
-      .container { padding: 12px 14px; }
-      .topbar { flex-wrap: wrap; }
+      .container { padding: 12px 14px; gap: 12px; }
+      .topbar { flex-wrap: wrap; gap: 10px; }
+      .topbar .brand { gap: 10px; }
       .clock { order: 3; width: 100%; align-items: flex-start; }
       .stats-bar { grid-template-columns: repeat(2, 1fr); }
       .brand h1 { font-size: 18px; }
@@ -962,9 +977,32 @@
       .brand .brand-logos { gap: 4px; }
       .audio-badge .ab-text { display: none; }
       .audio-badge { padding: 8px; }
-      .hero-card .nama { font-size: 20px; }
-      .hero-card .hero-seri { font-size: 15px; padding: 7px 14px; }
-      .next-row .seri-chip .val { font-size: 12px; }
+      .main-layout { gap: 12px; }
+      .hero-card { padding: 22px 18px 20px; min-height: 260px; border-radius: 18px; }
+      .hero-card .label { font-size: 11px; letter-spacing: 4px; }
+      .hero-card .nomor { font-size: clamp(72px, 20vw, 128px); margin: 10px 0 14px; }
+      .hero-card .counter { font-size: 15px; padding: 8px 18px; gap: 8px; }
+      .hero-card .counter svg { width: 16px; height: 16px; }
+      .hero-card .nama { font-size: 22px; margin-top: 16px; padding-top: 14px; }
+      .hero-card .hero-seri { font-size: 16px; padding: 9px 16px; gap: 8px; border-radius: 14px; }
+      .hero-card .hero-seri .lbl { font-size: 10px; letter-spacing: 1.6px; }
+      .next-row { flex-wrap: wrap; gap: 10px; padding: 10px 12px; }
+      .next-row .seri-chip { max-width: 100%; width: 100%; justify-content: space-between; }
+      .next-row .seri-chip .val { font-size: 13px; }
+      .counters-strip { gap: 8px; }
+      .counter-chip { flex: 1 1 calc(50% - 4px); }
+      .footer { font-size: 11px; gap: 10px; }
+      .footer .right { gap: 10px; flex-wrap: wrap; }
+    }
+    @media (max-width: 380px) {
+      .container { padding: 10px 12px; }
+      .brand .eyebrow { display: none; }
+      .brand .brand-logos { gap: 4px; }
+      .hero-card { padding: 18px 14px 16px; }
+      .hero-card .nomor { font-size: clamp(62px, 19vw, 110px); }
+      .hero-card .hero-seri { font-size: 14px; padding: 8px 12px; }
+      .hero-card .nama { font-size: 19px; }
+      .counter-chip .nomor { font-size: 20px; }
     }
   </style>
 </head>
