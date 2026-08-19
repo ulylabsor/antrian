@@ -51,7 +51,18 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public'), {
+  setHeaders(res, filePath) {
+    // HTML jangan pernah di-cache — layar info harus selalu versi terbaru
+    // (fix sebelumnya cuma untuk /api, jadi info.html masih public/max-age=0 dan
+    // ke-cache di HP sampai hard-refresh). Pakai no-store biar selalu fresh.
+    if (filePath.endsWith('.html')) {
+      res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      res.set('Pragma', 'no-cache');
+      res.set('Expires', '0');
+    }
+  },
+}));
 
 // Anti-cache khusus API — jangan biarkan Cloudflare/browser cache hasil info real-time
 app.use('/api', (req, res, next) => {
