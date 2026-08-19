@@ -446,24 +446,121 @@
     }
 
     /* ===== Responsive ===== */
-    @media (max-width: 640px) {
-      .topbar { padding: 14px 16px; gap: 10px; }
-      .brand h1 { font-size: 17px; }
-      .clock .time { font-size: 17px; }
-      .theme-toggle { padding: 7px 10px; }
-      .theme-toggle .label-txt { display: none; }
-      .screen { padding: 8px 16px 28px; }
-      .cari-card, .ticket-card, .loading-card { padding: 24px 20px 20px; }
-      .cari-title { font-size: 23px; }
-      .steps { gap: 6px; }
+    @supports (padding: max(0px)) {
+      .topbar { padding-left: max(24px, env(safe-area-inset-left)); padding-right: max(24px, env(safe-area-inset-right)); }
+      .screen { padding-left: max(24px, env(safe-area-inset-left)); padding-right: max(24px, env(safe-area-inset-right)); padding-bottom: max(36px, env(safe-area-inset-bottom)); }
     }
-    @media (max-width: 380px) {
+    @media (max-width: 860px) {
+      .topbar { padding: 16px 18px; gap: 12px; }
+      .screen { padding: 8px 18px 28px; }
+      .card { border-radius: 20px; }
+      .cari-card { padding: 26px 22px 20px; }
+      .ticket-card { padding: 28px 22px 20px; }
+      .ticket-num { font-size: clamp(82px, 18vw, 130px); }
+    }
+    @media (max-width: 640px) {
+      body { min-height: 100dvh; }
+      .topbar { padding: 10px 12px max(10px, env(safe-area-inset-bottom)) 12px; gap: 8px 10px; flex-wrap: wrap; align-items: flex-start; }
+      .topbar .brand { gap: 10px; flex: 1 1 auto; min-width: 0; }
+      .brand h1 { font-size: clamp(15px, 4.2vw, 18px); line-height: 1.15; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+      .brand .eyebrow { font-size: 10px; letter-spacing: 3px; }
+      .brand .brand-logo { width: 36px; height: 36px; border-radius: 10px; }
+      .brand .brand-logo.ppg { width: 124px; height: 36px; }
+      .theme-toggle { padding: 7px 9px; min-width: 36px; min-height: 36px; justify-content: center; font-size: 11px; margin-left: auto; }
+      .theme-toggle .label-txt { display: none; }
+      .clock { order: 3; width: 100%; flex-direction: row; justify-content: space-between; align-items: center; background: var(--card); border: 1px solid var(--card-border); border-radius: 10px; padding: 8px 12px; }
+      .clock .time { font-size: 18px; }
+      .clock .date { font-size: 11px; margin-top: 0; text-align: right; max-width: 55%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .screen { padding: 12px 12px max(20px, env(safe-area-inset-bottom)) 12px; align-items: flex-start; }
+      .card { border-radius: 18px; }
+      .cari-card { max-width: 100%; padding: 20px 16px 16px; }
+      .cari-eyebrow { font-size: 10px; letter-spacing: 3px; }
+      .cari-title { font-size: clamp(20px, 5.5vw, 23px); line-height: 1.2; }
+      .cari-sub { font-size: 13px; line-height: 1.55; margin-top: 8px; margin-bottom: 16px; }
+      .field-label { font-size: 10px; letter-spacing: 1.2px; margin-bottom: 8px; }
+      .search-box input { padding: 13px 40px 13px 42px; font-size: 15px; min-height: 44px; border-radius: 12px; }
+      .search-box .clear { padding: 6px; }
+      .results { max-height: 42vh; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; gap: 6px; margin-top: 8px; }
+      .result-row { padding: 10px 11px; gap: 10px; border-radius: 10px; }
+      .result-row .avatar { width: 34px; height: 34px; border-radius: 9px; font-size: 12px; }
+      .result-row .r-nama { font-size: 13.5px; }
+      .result-row .r-seri { font-size: 10px; }
+      .result-empty, .result-searching { font-size: 12px; padding: 14px 10px; }
+      .detail { margin-top: 16px; }
+      .detail-head { font-size: 10px; letter-spacing: 1.6px; margin-bottom: 8px; }
+      .detail-block { padding: 4px 14px; border-radius: 12px; margin-bottom: 12px; }
+      .d-row { padding: 9px 0; }
+      .d-row .k { font-size: 10px; letter-spacing: 0.8px; }
+      .d-row .v { font-size: 14px; }
+      .btn-primary { padding: 13px; font-size: 14px; min-height: 44px; border-radius: 12px; }
+      .btn-ghost { font-size: 12px; padding: 9px; }
+      .steps { gap: 6px; margin-top: 16px; padding-top: 14px; }
+      .step-hint .n { font-size: 10px; }
+      .step-hint .t { font-size: 11px; }
+      .loading-card { max-width: 100%; padding: 32px 20px; border-radius: 18px; }
+      .load-ring { width: 56px; height: 56px; margin-bottom: 18px; }
+      .load-title { font-size: 16px; }
+      .load-sub { font-size: 12px; }
+      .ticket-card { max-width: 100%; padding: 22px 16px 16px; border-radius: 18px; }
+      .ticket-eyebrow { font-size: 10px; letter-spacing: 4px; }
+      .ticket-num { font-size: clamp(68px, 20vw, 110px); margin: 6px 0 12px; }
+      .status-pill { padding: 7px 14px; font-size: 13px; gap: 7px; }
+      .status-pill .dot { width: 7px; height: 7px; }
+      .timeline { margin: 16px 4px 2px; gap: 2px; }
+      .tl-step .dot { width: 13px; height: 13px; }
+      .tl-step .lbl { font-size: 10px; }
+      .counter-box { margin: 12px 0 8px; }
+      .counter-box .lbl { font-size: 10px; letter-spacing: 1.8px; }
+      .counter-box .num { font-size: 32px; }
+      .replay-btn { padding: 8px 14px; font-size: 12px; gap: 6px; margin: 2px 0 10px; min-height: 36px; }
+      .queue-meta { gap: 8px; margin-top: 12px; }
+      .qm-cell { padding: 9px 11px; border-radius: 10px; }
+      .qm-cell .k { font-size: 9px; letter-spacing: 1.1px; }
+      .qm-cell .v { font-size: 16px; }
+      .info-block { padding: 4px 12px; margin-top: 12px; border-radius: 12px; }
+      .info-block .d-row .v { font-size: 13px; }
+      .timelapse { font-size: 11px; margin-top: 10px; }
+      .ticket-foot { font-size: 10px; margin-top: 10px; }
+      .btn-back { padding: 10px 14px; font-size: 12px; min-height: 38px; border-radius: 10px; margin-top: 10px; }
+    }
+    @media (max-width: 400px) {
+      .topbar { padding: 8px 10px; gap: 6px 8px; }
       .brand .eyebrow { display: none; }
       .brand .brand-sub { display: none; }
-      .brand .brand-logo { width: 34px; height: 34px; }
-      .brand .brand-logo.ppg { width: 126px; height: 34px; }
-      .brand .brand-logos { gap: 4px; }
-      .queue-meta { grid-template-columns: 1fr; }
+      .brand .brand-logo { width: 32px; height: 32px; border-radius: 9px; }
+      .brand .brand-logo.ppg { width: 108px; height: 32px; }
+      .screen { padding: 10px 10px max(16px, env(safe-area-inset-bottom)) 10px; }
+      .cari-card, .ticket-card, .loading-card { padding: 18px 14px 14px; }
+      .cari-title { font-size: 19px; }
+      .cari-sub { font-size: 12px; }
+      .search-box input { font-size: 14px; padding: 12px 38px 12px 40px; min-height: 42px; }
+      .ticket-num { font-size: clamp(60px, 19vw, 92px); }
+      .ticket-eyebrow { font-size: 9px; letter-spacing: 3px; }
+      .status-pill { font-size: 12px; padding: 6px 12px; }
+      .counter-box .num { font-size: 28px; }
+      .queue-meta { grid-template-columns: 1fr; gap: 8px; }
+      .qm-cell { padding: 10px 12px; }
+      .steps { gap: 4px; }
+      .step-hint .t { font-size: 10px; }
+    }
+    @media (max-width: 360px) {
+      .topbar, .screen, .card, .cari-card, .ticket-card { min-width: 0; max-width: 100%; }
+      .screen { overflow-x: hidden; }
+      .search-box input { font-size: 14px; }
+      .ticket-num { font-size: clamp(54px, 17vw, 80px); }
+      .counter-box .num { font-size: 26px; }
+      .timeline { margin: 14px 2px 0; }
+      .tl-step .lbl { font-size: 9px; letter-spacing: 0.2px; }
+    }
+    @media (max-height: 520px) and (max-width: 900px) {
+      .topbar { padding: 8px 12px; }
+      .clock { padding: 6px 10px; }
+      .screen { padding-top: 8px; padding-bottom: 12px; }
+      .cari-card { padding: 16px 14px 12px; }
+      .ticket-card { padding: 16px 14px 12px; }
+      .ticket-num { font-size: clamp(52px, 14vh, 88px); margin: 4px 0 8px; }
+      .results { max-height: 36vh; }
+      .queue-meta { gap: 6px; margin-top: 8px; }
     }
   </style>
 </head>
