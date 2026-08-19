@@ -1593,17 +1593,15 @@
       heroCard.classList.remove('recalling');
       void heroCard.offsetWidth;
       heroCard.classList.add('recalling');
-      // Setelah animasi selesai: lepas kelas + hapus override nomor. Override hanya
-      // berlaku selama jendera recall — begitu selesai, polling berikutnya (loadInfo
-      // via socket/interval) kembali ke sorted[0] (nomor terbaru) supaya hero tidak
-      // "stuck" menampilkan nomor lama yang sudah selesai diperbarui recall-nya.
+      // Setelah animasi selesai: lepas kelas visual saja — override nomor TETAP
+      // dipertahankan supaya hero tetap menampilkan nomor yang dipanggil ulang
+      // (sesuai permintaan: saat panggil ulang, layar info menampilkan no tersebut).
+      // Override baru hilang ketika ada panggilan baru (antrian:panggil) atau
+      // panggil-ulang lain yang menimpa recallNomor.
       if (recallTimer) clearTimeout(recallTimer);
       recallTimer = setTimeout(() => {
         heroCard.classList.remove('recalling');
-        recallNomor = null;
         recallTimer = null;
-        // Refresh sekali tanpa override agar hero kembali ke nomor terbaru.
-        loadInfo();
       }, 1750);
     }
 
