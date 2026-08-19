@@ -28,10 +28,51 @@ import { requirePanitia, comparePassword, hashPassword, signToken, verifyToken, 
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { createRequire } from 'module';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const DATA_CSV_PATH = path.resolve(__dirname, '..', 'data.csv');
+const DATA_XLSX_PATH = path.resolve(__dirname, '..', 'ABSENSI PENGAMBILAN SERTIFIKAT.xlsx');
+
+function normalizeNoSeri(raw) {
+  let s = String(raw ?? '').trim().replace(/\s+/g, '');
+  if (!s) return '';
+  if (/^\d+$/.test(s) && s.length < 7) s = s.padStart(7, '0');
+  return s;
+}
+
+function readAllPesertaFromXlsxFile(xlsxPath) {
+  const require = createRequire(import.meta.url);
+  let XLSX;
+  try {
+    XLSX = require('xlsx');
+  } catch (e) {
+    throw new Error(`Dependency 'xlsx' belum ter-install. Jalankan: npm install xlsx — ${e.message}`);
+  }
+  const wb = XLSX.readFile(xlsxPath);
+  const sheetName = wb.SheetNames.includes('Sheet1') ? 'Sheet1' : wb.SheetNames[0];
+  const ws = wb.Sheets[sheetName];
+  const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', blankrows: true });
+  if (rows.length === 0) throw new Error('XLSX kosong');
+  let headerIdx = -1;
+  for (let i = 0; i < Math.min(10, rows.length); i++) {
+    const upper = rows[i].map(v => String(v).toUpperCase());
+    if (upper.some(h => h.includes('NAMA')) && upper.some(h => h.includes('NO. SERI') || h.includes('NO SERI'))) { headerIdx = i; break; }
+  }
+  if (headerIdx === -1) throw new Error('Header XLSX tidak ditemukan (harus ada kolom Nama & No. Seri)');
+  const headers = rows[headerIdx].map(h => String(h).replace(/\n/g, ' ').trim().toUpperCase());
+  const namaIdx = headers.findIndex(h => h.includes('NAMA'));
+  const seriIdx = headers.findIndex(h => h.includes('NO. SERI') || h.includes('NO SERI'));
+  const ttlIdx = headers.findIndex(h => h.includes('TEMPAT'));
+  if (namaIdx === -1 || seriIdx === -1) throw new Error(`Kolom Nama/No. Seri tidak ditemukan di header XLSX: ${headers.join(' | ')}`);
+  return rows.slice(headerIdx + 1).map((row, i) => ({
+    nama_lengkap: String(row[namaIdx] ?? '').trim(),
+    tempat_tanggal_lahir: ttlIdx >= 0 ? String(row[ttlIdx] ?? '').trim() : '',
+    no_seri: normalizeNoSeri(row[seriIdx]),
+    row_number: headerIdx + 2 + i,
+  })).filter(p => p.nama_lengkap && p.no_seri);
+}
 
 /**
  * Parse CSV content into rows of fields.
@@ -79,9 +120,9 @@ function readAllPesertaFromCsvContent(content) {
   return rows.slice(1).map((row, i) => ({
     nama_lengkap: (row[namaIdx] || '').trim(),
     tempat_tanggal_lahir: ttlIdx >= 0 ? (row[ttlIdx] || '').trim() : '',
-    no_seri: (row[seriIdx] || '').trim(),
+    no_seri: normalizeNoSeri((row[seriIdx] || '').trim()),
     row_number: i + 2,
-  })).filter(p => p.nama_lengkap); // Tampilkan semua — termasuk yang no_seri kosong/invalid
+  })).filter(p => p.nama_lengkap && p.no_seri);
 }
 
 /**
@@ -236,54 +277,61 @@ export function createRouter(io) {
     }
   });
 
-  // Download data terbaru dari Google Sheets publik → simpan ke data.csv → import ke SQLite
-  // Abaikan duplikat (INSERT OR IGNORE). Dipakai untuk refresh data dari dashboard.
+  // Download/sync data terbaru → import ke SQLite (skip duplikat no_seri).
+  // Prioritas sumber: (1) file lokal ABSENSI PENGAMBILAN SERTIFIKAT.xlsx (887 peserta, master baru),
+  // (2) Google Sheets publik sebagai fallback. Dipakai untuk refresh data dari dashboard.
   router.post('/sync/download', requirePanitia, async (req, res) => {
-    const SHEETS_ID = process.env.GOOGLE_SHEETS_ID || '1vefx3SssNHYpjOVb3g37BgnNUfHklS7IMtFQKQpujm4';
-    const url = `https://docs.google.com/spreadsheets/d/${SHEETS_ID}/export?format=csv`;
-    try {
-      // Download CSV dari link publik (follow redirect)
-      const csvRes = await fetch(url, { redirect: 'follow' });
-      if (!csvRes.ok) {
-        return res.status(502).json({ error: `Gagal download dari Google Sheets: HTTP ${csvRes.status}` });
-      }
-      const csvContent = await csvRes.text();
-
-      // Simpan ke data.csv (backup lama jika ada)
+    let pesertaList;
+    let sourceLabel;
+    // 1) Coba file XLSX lokal dulu (master baru)
+    if (fs.existsSync(DATA_XLSX_PATH)) {
       try {
-        if (fs.existsSync(DATA_CSV_PATH)) {
-          fs.copyFileSync(DATA_CSV_PATH, DATA_CSV_PATH + '.bak');
-        }
-      } catch { /* ignore */ }
-      fs.writeFileSync(DATA_CSV_PATH, csvContent, 'utf8');
-
-      // Parse & import (skip duplikat — cek no_seri sudah ada atau belum)
-      const pesertaList = readAllPesertaFromCsvContent(csvContent);
-      let inserted = 0, skipped = 0;
-      const existing = new Set();
-      // Ambil semua no_seri yang sudah ada di DB untuk cek duplikat
-      const dbAll = getAllPeserta();
-      for (const row of dbAll) existing.add(String(row.no_seri));
-      for (const p of pesertaList) {
-        if (existing.has(String(p.no_seri))) {
-          skipped++;
-          continue;
-        }
-        insertPeserta(p.nama_lengkap, p.tempat_tanggal_lahir, p.no_seri, p.row_number);
-        inserted++;
+        pesertaList = readAllPesertaFromXlsxFile(DATA_XLSX_PATH);
+        sourceLabel = 'ABSENSI PENGAMBILAN SERTIFIKAT.xlsx';
+      } catch (e) {
+        console.warn('Sync: gagal baca XLSX lokal, fallback ke Sheets:', e.message);
       }
-
-      res.json({
-        success: true,
-        total: pesertaList.length,
-        inserted,
-        skipped,
-        message: `Download selesai! ${inserted} peserta baru ditambahkan, ${skipped} duplikat diabaikan. Total ${pesertaList.length} peserta di CSV.`,
-      });
-    } catch (err) {
-      console.error('Sync download error:', err.message);
-      res.status(503).json({ error: 'Gagal sync: ' + err.message });
     }
+    // 2) Fallback: download CSV dari Google Sheets publik
+    if (!pesertaList) {
+      const SHEETS_ID = process.env.GOOGLE_SHEETS_ID || '1vefx3SssNHYpjOVb3g37BgnNUfHklS7IMtFQKQpujm4';
+      const url = `https://docs.google.com/spreadsheets/d/${SHEETS_ID}/export?format=csv`;
+      try {
+        const csvRes = await fetch(url, { redirect: 'follow' });
+        if (!csvRes.ok) {
+          return res.status(502).json({ error: `Gagal download dari Google Sheets: HTTP ${csvRes.status}` });
+        }
+        const csvContent = await csvRes.text();
+        try {
+          if (fs.existsSync(DATA_CSV_PATH)) fs.copyFileSync(DATA_CSV_PATH, DATA_CSV_PATH + '.bak');
+        } catch { /* ignore */ }
+        fs.writeFileSync(DATA_CSV_PATH, csvContent, 'utf8');
+        pesertaList = readAllPesertaFromCsvContent(csvContent);
+        sourceLabel = 'Google Sheets (CSV)';
+      } catch (err) {
+        console.error('Sync download error:', err.message);
+        return res.status(503).json({ error: 'Gagal sync: ' + err.message });
+      }
+    }
+
+    // Normalisasi no_seri untuk cek duplikat (pad 7 digit agar '9575' == '0009575')
+    let inserted = 0, skipped = 0;
+    const existing = new Set(getAllPeserta().map(r => normalizeNoSeri(String(r.no_seri))));
+    for (const p of pesertaList) {
+      const normSeri = normalizeNoSeri(String(p.no_seri));
+      if (existing.has(normSeri)) { skipped++; continue; }
+      insertPeserta(p.nama_lengkap, p.tempat_tanggal_lahir, normSeri, p.row_number);
+      existing.add(normSeri);
+      inserted++;
+    }
+
+    res.json({
+      success: true,
+      total: pesertaList.length,
+      inserted,
+      skipped,
+      message: `Sync dari ${sourceLabel}: ${inserted} peserta baru ditambahkan, ${skipped} duplikat diabaikan. Total ${pesertaList.length} peserta di sumber.`,
+    });
   });
 
   // Detail peserta
