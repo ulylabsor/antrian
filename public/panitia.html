@@ -543,26 +543,137 @@
     .empty-state { text-align: center; padding: 20px; color: var(--paper-mute); font-size: 14px; }
 
     /* ===== Responsive ===== */
-    @media (max-width: 640px) {
-      .topbar { padding: 14px 16px; gap: 10px; }
-      .brand h1 { font-size: 17px; }
-      .clock .time { font-size: 17px; }
-      .theme-toggle { padding: 7px 10px; }
-      .theme-toggle .label-txt { display: none; }
-      .content { padding: 4px 16px 28px; }
-      .daftar-head { flex-direction: column; align-items: stretch; }
-      .search-input { flex: 1; width: auto; }
-      .list-row { flex-direction: column; align-items: flex-start; }
-      .seri-center { align-self: center; margin: 4px 0; }
-      .list-meta { align-self: flex-end; align-items: flex-end; }
-      .list-num { width: auto; }
+    @supports (padding: max(0px)) {
+      .topbar {
+        padding-left: max(24px, env(safe-area-inset-left));
+        padding-right: max(24px, env(safe-area-inset-right));
+      }
+      .content {
+        padding-left: max(24px, env(safe-area-inset-left));
+        padding-right: max(24px, env(safe-area-inset-right));
+        padding-bottom: max(36px, env(safe-area-inset-bottom));
+      }
     }
-    @media (max-width: 380px) {
+
+    @media (max-width: 860px) {
+      .topbar { padding: 16px 18px; gap: 12px; }
+      .content { padding: 4px 18px 28px; }
+      .panel-card { padding: 18px 18px; border-radius: 18px; }
+      .daftar-card { padding: 18px; }
+      .stat-value { font-size: 28px; }
+      .list-num { font-size: 22px; width: 46px; }
+    }
+
+    @media (max-width: 640px) {
+      body { min-height: 100dvh; }
+      .topbar { padding: 10px 12px max(10px, env(safe-area-inset-bottom)) 12px; gap: 8px 10px; flex-wrap: wrap; align-items: flex-start; }
+      .topbar .brand { gap: 10px; flex: 1 1 auto; min-width: 0; }
+      .brand h1 { font-size: clamp(15px, 4.2vw, 18px); line-height: 1.15; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+      .brand .eyebrow { font-size: 10px; letter-spacing: 3px; }
+      .brand .brand-logo { width: 36px; height: 36px; border-radius: 10px; }
+      .brand .brand-logo.ppg { width: 124px; height: 36px; }
+      .theme-toggle { padding: 7px 9px; min-width: 36px; min-height: 36px; justify-content: center; font-size: 11px; margin-left: auto; }
+      .theme-toggle .label-txt { display: none; }
+      .clock { order: 3; width: 100%; flex-direction: row; justify-content: space-between; align-items: center; background: var(--card); border: 1px solid var(--card-border); border-radius: 10px; padding: 8px 12px; }
+      .clock .time { font-size: 18px; }
+      .clock .date { font-size: 11px; margin-top: 0; text-align: right; max-width: 55%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .content { padding: 4px 12px max(20px, env(safe-area-inset-bottom)) 12px; }
+      .panel-card { padding: 12px; border-radius: 14px; margin-bottom: 12px; }
+      .toolbar { flex-direction: column; align-items: stretch; gap: 10px; }
+      .toolbar .tool-group { width: 100%; }
+      .toolbar .tool-group:first-child { justify-content: space-between; }
+      .toolbar .tool-group:last-child { justify-content: flex-start; gap: 8px; }
+      .tool-label { font-size: 12px; }
+      .loket-select { flex: 1; min-width: 0; font-size: 13px; padding: 9px 32px 9px 10px; min-height: 38px; }
+      .btn-tool, .btn-sync { min-height: 36px; padding: 8px 12px; font-size: 12px; }
+      .btn-tool { flex: 0 0 auto; }
+      #panel-settings { margin-top: 12px; padding-top: 12px; }
+      .settings-row { gap: 8px; }
+      .stat-grid { gap: 8px; margin-bottom: 12px; }
+      .stat-card { padding: 12px 10px; border-radius: 12px; }
+      .stat-label { font-size: 11px; letter-spacing: 0.3px; }
+      .stat-value { font-size: 24px; margin-top: 4px; }
+      .daftar-card { padding: 12px; }
+      .daftar-head { flex-direction: column; align-items: stretch; gap: 10px; margin-bottom: 12px; }
+      .daftar-title { font-size: 16px; }
+      .daftar-controls { width: 100%; gap: 8px; flex-wrap: wrap; }
+      .search-input { flex: 1 1 160px; width: auto; min-width: 0; font-size: 13px; padding: 9px 10px; min-height: 38px; }
+      .tab-bar { flex: 1 1 100%; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; scrollbar-width: none; overscroll-behavior-x: contain; gap: 4px; padding: 3px; flex-wrap: nowrap; }
+      .tab-bar::-webkit-scrollbar { display: none; }
+      .tab-btn { padding: 7px 10px; font-size: 12px; white-space: nowrap; flex-shrink: 0; }
+      .tab-count { font-size: 10px; padding: 1px 6px; }
+      .list { gap: 8px; }
+      .list-row { flex-direction: column; align-items: stretch; gap: 8px; padding: 11px 11px; border-radius: 12px; }
+      .list-main { width: 100%; gap: 10px; align-items: flex-start; }
+      .list-num { width: auto; min-width: 44px; font-size: 20px; line-height: 1; }
+      .list-info { flex: 1; min-width: 0; }
+      .list-name { font-size: 14px; line-height: 1.3; }
+      .meta-line { font-size: 11px; margin-top: 3px; word-break: break-word; }
+      .seri-row { margin-top: 4px; flex-wrap: wrap; }
+      .seri-badge { font-size: 12px; padding: 3px 8px; }
+      .seri-center { align-self: stretch; margin: 2px 0; padding: 6px 8px; background: var(--card); border: 1px solid var(--card-border); border-radius: 10px; justify-content: center; }
+      .seri-center .seri-label { font-size: 9px; }
+      .seri-center .seri-badge { font-size: 15px; padding: 4px 12px; }
+      .seri-center .copy-btn { width: 30px; height: 30px; flex-shrink: 0; }
+      .list-actions { width: 100%; flex-wrap: wrap; gap: 7px; justify-content: flex-start; }
+      .btn-action { min-height: 38px; padding: 8px 12px; font-size: 12px; flex: 1 1 auto; justify-content: center; }
+      .btn-action.berkas-siap { flex: 1 1 110px; }
+      .btn-action.primary, .btn-action.emerald, .btn-action.amber { flex: 1 1 120px; }
+      .list-meta { align-self: stretch; flex-direction: row; justify-content: space-between; align-items: center; text-align: left; width: 100%; flex-wrap: wrap; gap: 8px; }
+      .list-meta .meta-line { text-align: left; }
+      .pagination { flex-direction: column; align-items: stretch; gap: 10px; margin-top: 12px; }
+      .pagination-info { text-align: center; font-size: 11px; }
+      .pagination-controls { width: 100%; justify-content: space-between; gap: 8px; }
+      .page-btn { min-width: 32px; height: 32px; padding: 0 8px; font-size: 12px; }
+      .perpage-label { font-size: 10px; gap: 4px; }
+      .perpage-select { padding: 6px 26px 6px 8px; font-size: 11px; }
+      #auth-overlay { padding: 12px; align-items: flex-start; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+      #auth-overlay .auth-card { margin: 12px auto; width: 100%; max-width: 100%; }
+    }
+
+    /* Small phones — iPhone SE, narrow Android */
+    @media (max-width: 400px) {
+      .topbar { padding: 8px 10px; gap: 6px 8px; }
       .brand .eyebrow { display: none; }
       .brand .brand-sub { display: none; }
-      .brand .brand-logo { width: 34px; height: 34px; }
-      .brand .brand-logo.ppg { width: 126px; height: 34px; }
-      .brand .brand-logos { gap: 4px; }
+      .brand .brand-logo { width: 32px; height: 32px; border-radius: 9px; }
+      .brand .brand-logo.ppg { width: 108px; height: 32px; }
+      .content { padding: 4px 10px max(16px, env(safe-area-inset-bottom)) 10px; }
+      .toolbar .tool-group:last-child { gap: 6px; }
+      .btn-tool, .btn-sync { padding: 7px 10px; font-size: 11px; min-height: 34px; }
+      .stat-grid { gap: 6px; }
+      .stat-card { padding: 10px 8px; }
+      .stat-value { font-size: 22px; }
+      .tab-btn { padding: 6px 9px; font-size: 11px; gap: 6px; }
+      .list-row { padding: 10px 10px; }
+      .list-num { font-size: 18px; min-width: 38px; }
+      .list-name { font-size: 13px; }
+      .seri-center .seri-badge { font-size: 14px; padding: 3px 10px; }
+      .btn-action { font-size: 11px; padding: 7px 10px; min-height: 34px; }
+    }
+
+    /* Extra-narrow — cegah overflow horizontal */
+    @media (max-width: 360px) {
+      .topbar, .content, .panel-card, .toolbar, .stat-grid, .daftar-card, .list-row { min-width: 0; max-width: 100%; }
+      .content { overflow-x: hidden; }
+      .toolbar .tool-group:last-child { flex-wrap: wrap; }
+      .btn-tool, .btn-sync { flex: 1 1 100%; justify-content: center; }
+      .tab-bar { gap: 3px; }
+      .list-actions { gap: 6px; }
+      .btn-action { flex: 1 1 100%; }
+      .seri-center { padding: 5px 6px; }
+      .seri-center .seri-badge { font-size: 13px; letter-spacing: 0.03em; word-break: break-all; }
+    }
+
+    /* Landscape phone — tinggi sempit: kurangi padding, list scroll */
+    @media (max-height: 520px) and (max-width: 900px) {
+      .topbar { padding: 8px 12px; }
+      .clock { padding: 6px 10px; }
+      .content { padding-top: 2px; }
+      .stat-grid { gap: 6px; margin-bottom: 8px; }
+      .stat-card { padding: 8px 10px; }
+      .daftar-card { padding: 10px 12px; }
+      .list { max-height: 55vh; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; padding-right: 2px; }
     }
 
     @media (prefers-reduced-motion: reduce) {
