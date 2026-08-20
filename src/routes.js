@@ -33,7 +33,10 @@ import { createRequire } from 'module';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const DATA_CSV_PATH = path.resolve(__dirname, '..', 'data.csv');
-const DATA_XLSX_PATH = path.resolve(__dirname, '..', 'ABSENSI PENGAMBILAN SERTIFIKAT.xlsx');
+const DATA_DARURAT_PATH = path.resolve(__dirname, '..', 'DATA DARURAT.xlsx');
+const DATA_ABSENSI_PATH = path.resolve(__dirname, '..', 'ABSENSI PENGAMBILAN SERTIFIKAT.xlsx');
+// Kompatibilitas: fallback lama
+const DATA_XLSX_PATH = DATA_DARURAT_PATH;
 
 function normalizeNoSeri(raw) {
   let s = String(raw ?? '').trim().replace(/\s+/g, '');
@@ -278,16 +281,17 @@ export function createRouter(io) {
   });
 
   // Download/sync data terbaru → import ke SQLite (skip duplikat no_seri).
-  // Prioritas sumber: (1) file lokal ABSENSI PENGAMBILAN SERTIFIKAT.xlsx (887 peserta, master baru),
-  // (2) Google Sheets publik sebagai fallback. Dipakai untuk refresh data dari dashboard.
+  // Prioritas sumber: (1) DATA DARURAT.xlsx (932 peserta, master baru),
+  // (2) ABSENSI lama (887) sebagai fallback, (3) Google Sheets. Dipakai untuk refresh data dari dashboard.
   router.post('/sync/download', requirePanitia, async (req, res) => {
     let pesertaList;
     let sourceLabel;
-    // 1) Coba file XLSX lokal dulu (master baru)
-    if (fs.existsSync(DATA_XLSX_PATH)) {
+    // 1) Coba file XLSX lokal dulu (DATA DARURAT prioritas)
+    const xlsxSyncPath = fs.existsSync(DATA_DARURAT_PATH) ? DATA_DARURAT_PATH : (fs.existsSync(DATA_ABSENSI_PATH) ? DATA_ABSENSI_PATH : null);
+    if (xlsxSyncPath) {
       try {
-        pesertaList = readAllPesertaFromXlsxFile(DATA_XLSX_PATH);
-        sourceLabel = 'ABSENSI PENGAMBILAN SERTIFIKAT.xlsx';
+        pesertaList = readAllPesertaFromXlsxFile(xlsxSyncPath);
+        sourceLabel = path.basename(xlsxSyncPath);
       } catch (e) {
         console.warn('Sync: gagal baca XLSX lokal, fallback ke Sheets:', e.message);
       }

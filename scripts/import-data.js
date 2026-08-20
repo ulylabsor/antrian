@@ -118,14 +118,15 @@ function readAllPesertaFromCsv() {
 }
 
 /**
- * Sumber baru: ABSENSI PENGAMBILAN SERTIFIKAT.xlsx
- * Sheet1: baris 1-2 judul, baris 5 header (No., Nama, No Akun, NIM, No. Seri, ...),
- *         data mulai baris 6 s.d. 892 (887 peserta). Kolom B=Nama, E=No. Seri.
+ * Sumber utama: DATA DARURAT.xlsx (932 peserta, header baris 1: No | No Akun | NIM | Nama Lengkap | No Seri).
+ * Fallback: ABSENSI PENGAMBILAN SERTIFIKAT.xlsx (887 peserta, header baris 5). Dipilih otomatis.
  */
 function readAllPesertaFromXlsx() {
-  const xlsxPath = path.resolve(__dirname, '..', 'ABSENSI PENGAMBILAN SERTIFIKAT.xlsx');
+  const daruratPath = path.resolve(__dirname, '..', 'DATA DARURAT.xlsx');
+  const absensiPath = path.resolve(__dirname, '..', 'ABSENSI PENGAMBILAN SERTIFIKAT.xlsx');
+  const xlsxPath = fs.existsSync(daruratPath) ? daruratPath : absensiPath;
   if (!fs.existsSync(xlsxPath)) {
-    throw new Error(`File tidak ditemukan: ${xlsxPath}`);
+    throw new Error(`File tidak ditemukan: ${daruratPath} / ${absensiPath}`);
   }
   let XLSX;
   try {
@@ -176,27 +177,37 @@ async function main() {
 
   let pesertaList;
   let source;
-  // Urutan sumber: Google Sheets -> XLSX ABSENSI -> CSV fallback
-  try {
-    console.log('Mengambil data dari Google Sheets...');
-    pesertaList = await readAllPeserta();
-    source = 'Google Sheets';
-  } catch (err) {
-    console.warn(`Gagal mengambil dari Google Sheets: ${err.message}`);
-    const xlsxPath = path.resolve(__dirname, '..', 'ABSENSI PENGAMBILAN SERTIFIKAT.xlsx');
-    if (fs.existsSync(xlsxPath)) {
+  // Sumber utama: DATA DARURAT.xlsx (932 peserta), fallback ABSENSI -> CSV -> Google Sheets
+  const daruratPath = path.resolve(__dirname, '..', 'DATA DARURAT.xlsx');
+  const absensiPath = path.resolve(__dirname, '..', 'ABSENSI PENGAMBILAN SERTIFIKAT.xlsx');
+  const xlsxLocal = fs.existsSync(daruratPath) ? daruratPath : (fs.existsSync(absensiPath) ? absensiPath : null);
+  if (xlsxLocal) {
+    try {
+      const label = path.basename(xlsxLocal);
+      console.log(`Membaca dari ${label} ...`);
+      pesertaList = readAllPesertaFromXlsx();
+      source = `${label} (lokal)`;
+    } catch (err2) {
+      console.warn(`Gagal membaca XLSX: ${err2.message}`);
+      console.log('Mencoba fallback: Google Sheets / data.csv ...');
       try {
-        console.log('Mencoba membaca dari ABSENSI PENGAMBILAN SERTIFIKAT.xlsx ...');
-        pesertaList = readAllPesertaFromXlsx();
-        source = 'ABSENSI PENGAMBILAN SERTIFIKAT.xlsx (lokal)';
-      } catch (err2) {
-        console.warn(`Gagal membaca XLSX: ${err2.message}`);
-        console.log('Mencoba fallback: membaca dari data.csv lokal...');
+        console.log('Mengambil data dari Google Sheets...');
+        pesertaList = await readAllPeserta();
+        source = 'Google Sheets';
+      } catch (err) {
+        console.warn(`Gagal mengambil dari Google Sheets: ${err.message}`);
         pesertaList = readAllPesertaFromCsv();
         source = 'data.csv (fallback lokal)';
       }
-    } else {
-      console.log('File XLSX tidak ditemukan, fallback ke data.csv ...');
+    }
+  } else {
+    try {
+      console.log('Mengambil data dari Google Sheets...');
+      pesertaList = await readAllPeserta();
+      source = 'Google Sheets';
+    } catch (err) {
+      console.warn(`Gagal mengambil dari Google Sheets: ${err.message}`);
+      console.log('Fallback ke data.csv ...');
       pesertaList = readAllPesertaFromCsv();
       source = 'data.csv (fallback lokal)';
     }
