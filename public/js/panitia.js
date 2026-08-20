@@ -30,27 +30,31 @@ let pendingHighlight = null; // { nomor, flash: 'gold'|'emerald'|'blue'|'amber' 
 // ============================================================
 let antrianMasukMuted = false; // toggle via UI bila panitia ingin senyap
 let antrianMasukNotifiedIds = new Set(); // cegah bunyi dobel untuk nomor yang sama (reconnect/burst)
+// Return Promise boolean: true jika play dijadwalkan, false jika diblokir/error
 function playAntrianMasukSound() {
-  if (antrianMasukMuted) return;
-  const el = document.getElementById('antrian-masuk-audio');
-  if (!el) {
-    // Fallback: buat Audio on-the-fly bila elemen belum ada (mis. load via /panitia tanpa .html cache)
-    try { const a = new Audio('/notif-antrian-masuk.mp3'); a.volume = 0.95; a.play().then(() => {}).catch(e => console.warn('notif play failed (el missing):', e && e.message)); } catch (e) { console.warn('notif Audio ctor failed:', e && e.message); }
-    return;
-  }
+  if (antrianMasukMuted) return Promise.resolve(false);
+  // Pola yang jalan di TTS: new Audio() dipicu gesture. Pakai itu juga untuk notif.
+  // Jangan andalkan <audio display:none/offscreen> — beberapa browser skip preload/decode.
   try {
-    el.currentTime = 0;
-    el.volume = 0.95;
-    el.muted = false;
-    const p = el.play();
-    if (p && typeof p.then === 'function') p.then(() => {
-      // ok
-    }).catch(e => {
-      console.warn('notif play blocked:', e && e.message, e && e.name);
-      // Coba fallback via Audio baru (kadang <audio> preload blocked tapi new Audio masih bisa setelah gesture)
-      try { const a = new Audio('/notif-antrian-masuk.mp3'); a.volume = 0.95; a.play().catch(() => {}); } catch {}
-    });
-  } catch (e) { console.warn('notif play error:', e && e.message); }
+    const a = new Audio('/notif-antrian-masuk.mp3');
+    a.volume = 0.95;
+    const p = a.play();
+    if (p && typeof p.then === 'function') {
+      return p.then(() => true).catch(e => {
+        console.warn('notif play blocked:', e && e.message, e && e.name);
+        // Fallback: coba <audio> element bila ada
+        const el = document.getElementById('antrian-masuk-audio');
+        if (el) {
+          try { el.currentTime = 0; el.volume = 0.95; el.muted = false; const p2 = el.play(); if (p2 && p2.catch) p2.catch(() => {}); } catch {}
+        }
+        return false;
+      });
+    }
+    return Promise.resolve(true);
+  } catch (e) {
+    console.warn('notif Audio ctor failed:', e && e.message);
+    return Promise.resolve(false);
+  }
 }
 window.playAntrianMasukSound = playAntrianMasukSound;
 
@@ -946,9 +950,18 @@ window.initPanitiaDashboard = function initPanitiaDashboard() {
     audioUnlocked = true;
     const wasMuted = antrianMasukMuted;
     antrianMasukMuted = false;
-    playAntrianMasukSound();
+    const pr = playAntrianMasukSound();
     antrianMasukMuted = wasMuted;
     if (toggleNotifEl) toggleNotifEl.checked = !antrianMasukMuted;
+    // Instrumentasi: kasih feedback terlihat, bukan silent fail
+    if (pr && typeof pr.then === 'function') {
+      pr.then(ok => {
+        if (ok) { if (typeof showToast === 'function') showToast('Tes suara diputar ✓', 'success', 2500); }
+        else { if (typeof showToast === 'function') showToast('Browser memblokir audio — klik lagi atau cek volume/izin suara situs', 'warning', 4500); }
+      });
+    } else {
+      if (typeof showToast === 'function') showToast('Tes suara diputar', 'info', 2500);
+    }
   });
 
   // Per page selector untuk Selesai

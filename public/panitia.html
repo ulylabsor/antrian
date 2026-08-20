@@ -856,8 +856,8 @@
 
   </div>
 
-  <!-- Notifikasi antrian masuk: preload supaya siap bunyi saat tab Menunggu -->
-  <audio id="antrian-masuk-audio" src="/notif-antrian-masuk.mp3" preload="auto" style="display:none" aria-hidden="true"></audio>
+  <!-- Notifikasi antrian masuk: preload supaya siap bunyi saat tab Menunggu (offscreen, jangan display:none — preload di-skip di hidden) -->
+  <audio id="antrian-masuk-audio" src="/notif-antrian-masuk.mp3" preload="auto" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none"></audio>
   <script src="/socket.io/socket.io.js"></script>
   <script>
     /* ===== Theme (shared key with index.html + info.html) ===== */
