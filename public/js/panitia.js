@@ -35,19 +35,24 @@ function playAntrianMasukSound() {
   const el = document.getElementById('antrian-masuk-audio');
   if (!el) {
     // Fallback: buat Audio on-the-fly bila elemen belum ada (mis. load via /panitia tanpa .html cache)
-    try { const a = new Audio('/notif-antrian-masuk.mp3'); a.volume = 0.95; a.play().catch(() => {}); } catch {}
+    try { const a = new Audio('/notif-antrian-masuk.mp3'); a.volume = 0.95; a.play().then(() => {}).catch(e => console.warn('notif play failed (el missing):', e && e.message)); } catch (e) { console.warn('notif Audio ctor failed:', e && e.message); }
     return;
   }
   try {
     el.currentTime = 0;
     el.volume = 0.95;
+    el.muted = false;
     const p = el.play();
-    if (p && typeof p.catch === 'function') p.catch(() => {
-      // Autoplay diblokir (belum ada interaksi) — coba via WebAudio unlock di gesture berikutnya;
-      // tidak perlu toast, biarkan senyap sekali, next event akan coba lagi setelah user klik.
+    if (p && typeof p.then === 'function') p.then(() => {
+      // ok
+    }).catch(e => {
+      console.warn('notif play blocked:', e && e.message, e && e.name);
+      // Coba fallback via Audio baru (kadang <audio> preload blocked tapi new Audio masih bisa setelah gesture)
+      try { const a = new Audio('/notif-antrian-masuk.mp3'); a.volume = 0.95; a.play().catch(() => {}); } catch {}
     });
-  } catch {}
+  } catch (e) { console.warn('notif play error:', e && e.message); }
 }
+window.playAntrianMasukSound = playAntrianMasukSound;
 
 function maybeNotifyAntrianMasuk(peserta) {
   // Hanya bunyikan bila ada peserta baru masuk ke Menunggu.
@@ -914,29 +919,37 @@ window.initPanitiaDashboard = function initPanitiaDashboard() {
       if (!antrianMasukMuted) playAntrianMasukSound();
     });
   }
+  // Unlock audio pada gesture pertama SELAIN tombol Tes — bantu autoplay policy
+  // bila event antrian:baru datang sebelum panitia pernah klik. Tes Suara
+  // sudah handle unlock sendiri, jadi skip bila target adalah btn-test-notif.
+  // Deklarasi di atas handler Tes agar tidak TDZ (handler pakai audioUnlocked).
+  let audioUnlocked = false;
+  function unlockAntrianAudio(e) {
+    if (audioUnlocked) return;
+    if (e && e.target && e.target.closest && e.target.closest('#btn-test-notif')) return;
+    audioUnlocked = true;
+    const el = document.getElementById('antrian-masuk-audio');
+    if (!el) return;
+    // Load explisit agar preload terjamin sebelum play pertama
+    try { el.load(); } catch {}
+    el.muted = true;
+    const p = el.play();
+    if (p && typeof p.then === 'function') p.then(() => { el.pause(); el.currentTime = 0; el.muted = false; }).catch(() => { el.muted = false; });
+    else { el.muted = false; }
+  }
+  document.addEventListener('click', unlockAntrianAudio, { capture: true });
+  document.addEventListener('keydown', unlockAntrianAudio, { capture: true });
+
   const btnTestNotif = document.getElementById('btn-test-notif');
-  if (btnTestNotif) btnTestNotif.addEventListener('click', () => {
+  if (btnTestNotif) btnTestNotif.addEventListener('click', (e) => {
+    e.stopPropagation();
+    audioUnlocked = true;
     const wasMuted = antrianMasukMuted;
     antrianMasukMuted = false;
     playAntrianMasukSound();
     antrianMasukMuted = wasMuted;
     if (toggleNotifEl) toggleNotifEl.checked = !antrianMasukMuted;
   });
-  // Unlock audio pada gesture pertama (klik di mana saja) — bantu autoplay policy
-  // bila event antrian:baru datang sebelum panitia pernah klik.
-  let audioUnlocked = false;
-  function unlockAntrianAudio() {
-    if (audioUnlocked) return;
-    audioUnlocked = true;
-    const el = document.getElementById('antrian-masuk-audio');
-    if (!el) return;
-    el.muted = true;
-    const p = el.play();
-    if (p && typeof p.then === 'function') p.then(() => { el.pause(); el.currentTime = 0; el.muted = false; }).catch(() => { el.muted = false; });
-    else { el.muted = false; }
-  }
-  document.addEventListener('click', unlockAntrianAudio, { once: true, capture: true });
-  document.addEventListener('keydown', unlockAntrianAudio, { once: true, capture: true });
 
   // Per page selector untuk Selesai
   const perpageSel = document.getElementById('perpage-selesai');
