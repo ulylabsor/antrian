@@ -16,6 +16,7 @@ data.csv
 data.csv.bak
 *.xlsx
 ABSENSI*.xlsx
+!public/notif-antrian-masuk.mp3
 
 # backup history git lokal
 backup-pre-*.bundle

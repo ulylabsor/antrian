@@ -25,6 +25,48 @@ const firstLoadByStatus = { menunggu: true, dipanggil: true, selesai: true };
 let pendingHighlight = null; // { nomor, flash: 'gold'|'emerald'|'blue'|'amber' } — dipakai lintas loadDaftar (mis. panggil → flash di tab tujuan)
 
 // ============================================================
+// Notifikasi antrian masuk (tab Menunggu) — bunyi notif-antrian-masuk.mp3
+// Dipicu realtime saat peserta baru ambil nomor antrian.
+// ============================================================
+let antrianMasukMuted = false; // toggle via UI bila panitia ingin senyap
+let antrianMasukNotifiedIds = new Set(); // cegah bunyi dobel untuk nomor yang sama (reconnect/burst)
+function playAntrianMasukSound() {
+  if (antrianMasukMuted) return;
+  const el = document.getElementById('antrian-masuk-audio');
+  if (!el) {
+    // Fallback: buat Audio on-the-fly bila elemen belum ada (mis. load via /panitia tanpa .html cache)
+    try { const a = new Audio('/notif-antrian-masuk.mp3'); a.volume = 0.95; a.play().catch(() => {}); } catch {}
+    return;
+  }
+  try {
+    el.currentTime = 0;
+    el.volume = 0.95;
+    const p = el.play();
+    if (p && typeof p.catch === 'function') p.catch(() => {
+      // Autoplay diblokir (belum ada interaksi) — coba via WebAudio unlock di gesture berikutnya;
+      // tidak perlu toast, biarkan senyap sekali, next event akan coba lagi setelah user klik.
+    });
+  } catch {}
+}
+
+function maybeNotifyAntrianMasuk(peserta) {
+  // Hanya bunyikan bila ada peserta baru masuk ke Menunggu.
+  // Dedupe by nomor_antrian + id untuk mencegah burst dobel.
+  const key = peserta && (peserta.nomor_antrian ?? peserta.id ?? JSON.stringify(peserta));
+  if (key != null) {
+    const k = String(key);
+    if (antrianMasukNotifiedIds.has(k)) return;
+    antrianMasukNotifiedIds.add(k);
+    // Batasi memori set
+    if (antrianMasukNotifiedIds.size > 400) {
+      const first = antrianMasukNotifiedIds.values().next().value;
+      antrianMasukNotifiedIds.delete(first);
+    }
+  }
+  playAntrianMasukSound();
+}
+
+// ============================================================
 // TTS — Text-to-Speech bahasa Indonesia (via Google TTS server-side)
 // Sama seperti di sisi peserta, supaya panitia juga mendengar
 // konfirmasi suara saat memanggil / memanggil ulang antrian.
@@ -800,7 +842,11 @@ window.initPanitiaDashboard = function initPanitiaDashboard() {
   socket.emit('panitia:join');
 
   // Socket listeners (dipindah dari top-level)
-  socket.on('antrian:baru', () => {
+  socket.on('antrian:baru', (payload) => {
+    // Bunyikan notifikasi masuk (mp3). Browser butuh user gesture sekali
+    // untuk unlock audio; bila masih blocked, akan senyap kali ini dan
+    // berbunyi di event berikutnya setelah panitia klik apa pun.
+    maybeNotifyAntrianMasuk(payload || {});
     if (currentFilter === 'menunggu') loadDaftar(currentFilter);
     loadStatistik();
   });
@@ -855,6 +901,42 @@ window.initPanitiaDashboard = function initPanitiaDashboard() {
     // Re-render daftar untuk update timelapse (data sudah di-cache di client)
     loadDaftar(currentFilter);
   }, 30000);
+
+  // Toggle notifikasi antrian masuk — persist di localStorage
+  const NOTIF_KEY = 'panitia_notif_masuk';
+  try { const v = localStorage.getItem(NOTIF_KEY); if (v === '0' || v === 'off' || v === 'false') antrianMasukMuted = true; } catch {}
+  const toggleNotifEl = document.getElementById('toggle-notif-masuk');
+  if (toggleNotifEl) {
+    toggleNotifEl.checked = !antrianMasukMuted;
+    toggleNotifEl.addEventListener('change', () => {
+      antrianMasukMuted = !toggleNotifEl.checked;
+      try { localStorage.setItem(NOTIF_KEY, antrianMasukMuted ? '0' : '1'); } catch {}
+      if (!antrianMasukMuted) playAntrianMasukSound();
+    });
+  }
+  const btnTestNotif = document.getElementById('btn-test-notif');
+  if (btnTestNotif) btnTestNotif.addEventListener('click', () => {
+    const wasMuted = antrianMasukMuted;
+    antrianMasukMuted = false;
+    playAntrianMasukSound();
+    antrianMasukMuted = wasMuted;
+    if (toggleNotifEl) toggleNotifEl.checked = !antrianMasukMuted;
+  });
+  // Unlock audio pada gesture pertama (klik di mana saja) — bantu autoplay policy
+  // bila event antrian:baru datang sebelum panitia pernah klik.
+  let audioUnlocked = false;
+  function unlockAntrianAudio() {
+    if (audioUnlocked) return;
+    audioUnlocked = true;
+    const el = document.getElementById('antrian-masuk-audio');
+    if (!el) return;
+    el.muted = true;
+    const p = el.play();
+    if (p && typeof p.then === 'function') p.then(() => { el.pause(); el.currentTime = 0; el.muted = false; }).catch(() => { el.muted = false; });
+    else { el.muted = false; }
+  }
+  document.addEventListener('click', unlockAntrianAudio, { once: true, capture: true });
+  document.addEventListener('keydown', unlockAntrianAudio, { once: true, capture: true });
 
   // Per page selector untuk Selesai
   const perpageSel = document.getElementById('perpage-selesai');
